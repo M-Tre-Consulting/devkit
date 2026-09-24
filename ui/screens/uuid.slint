@@ -1,0 +1,77 @@
+import { AppBar, Icons, TextField, OutlinedCard, ScrollView, MaterialPalette, MaterialStyleMetrics, MaterialTypography, MaterialText } from "@material";
+
+export component UuidScreen inherits VerticalLayout {
+    callback back();
+
+    AppBar {
+        title: "UUID Generator";
+        show_background: true;
+        leading_button: {
+            icon: Icons.arrow_back,
+            tooltip: "Back",
+            enabled: true
+        };
+        leading_button_clicked => {
+            root.back();
+        }
+    }
+
+    ScrollView {
+        vertical-stretch: 1;
+
+        VerticalLayout {
+            padding: MaterialStyleMetrics.padding_16;
+            spacing: MaterialStyleMetrics.spacing_16;
+            alignment: start;
+
+            HorizontalLayout {
+                alignment: center;
+                MaterialText {
+                    text: "Coming soon";
+                    style: MaterialTypography.label_large;
+                    color: MaterialPalette.on_surface_variant;
+                }
+            }
+
+            MaterialText {
+                text: "CONFIGURATION";
+                style: MaterialTypography.title_small;
+                color: MaterialPalette.primary;
+            }
+
+            TextField {
+                label: "UUID Version (v4 random / v7 timestamp)";
+                enabled: false;
+            }
+
+            MaterialText {
+                text: "GENERATED UUIDS";
+                style: MaterialTypography.title_small;
+                color: MaterialPalette.primary;
+            }
+
+            OutlinedCard {
+                VerticalLayout {
+                    padding: MaterialStyleMetrics.padding_16;
+                    spacing: MaterialStyleMetrics.spacing_8;
+
+                    MaterialText {
+                        text: "UUID: —";
+                        style: MaterialTypography.body_medium;
+                        color: MaterialPalette.on_surface_variant;
+                    }
+                    MaterialText {
+                        text: "URN: —";
+                        style: MaterialTypography.body_medium;
+                        color: MaterialPalette.on_surface_variant;
+                    }
+                    MaterialText {
+                        text: "Hex (raw): —";
+                        style: MaterialTypography.body_medium;
+                        color: MaterialPalette.on_surface_variant;
+                    }
+                }
+            }
+        }
+    }
+}
