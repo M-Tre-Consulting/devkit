@@ -17,8 +17,8 @@ export component HomeScreen inherits VerticalLayout {
 
     // Compact title row with entrance animation (content-forward, minimal chrome)
     title_bar := HorizontalLayout {
-        padding_left: MaterialStyleMetrics.padding_20;
-        padding_right: MaterialStyleMetrics.padding_20;
+        padding_left: MaterialStyleMetrics.padding_16;
+        padding_right: MaterialStyleMetrics.padding_16;
         padding_top: root.status_bar_inset + (root.is_entered ? 12px : 24px);
         padding_bottom: MaterialStyleMetrics.padding_8;
         alignment: start;
@@ -35,7 +35,7 @@ export component HomeScreen inherits VerticalLayout {
 
         MaterialText {
             text: "DevKit";
-            style: MaterialTypography.headline_small;
+            style: MaterialTypography.title_large;
             color: MaterialPalette.on_surface;
         }
     }

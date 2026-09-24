@@ -14,15 +14,15 @@ export component FavoritesScreen inherits VerticalLayout {
 
     // Top Title Bar
     title_bar := HorizontalLayout {
-        padding_left: MaterialStyleMetrics.padding_20;
-        padding_right: MaterialStyleMetrics.padding_20;
+        padding_left: MaterialStyleMetrics.padding_16;
+        padding_right: MaterialStyleMetrics.padding_16;
         padding_top: root.status_bar_inset + 12px;
         padding_bottom: MaterialStyleMetrics.padding_8;
         alignment: start;
 
         MaterialText {
             text: "Favorites";
-            style: MaterialTypography.headline_small;
+            style: MaterialTypography.title_large;
             color: MaterialPalette.on_surface;
         }
     }

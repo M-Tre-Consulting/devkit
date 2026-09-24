@@ -62,7 +62,7 @@ export component ToolCard inherits Rectangle {
 
             VerticalLayout {
                 padding: MaterialStyleMetrics.padding_16;
-                spacing: MaterialStyleMetrics.spacing_12;
+                spacing: MaterialStyleMetrics.spacing_8;
                 alignment: space-between;
 
                 HorizontalLayout {
@@ -101,7 +101,7 @@ export component ToolCard inherits Rectangle {
 
                     if root.description != "" : MaterialText {
                         text: root.description;
-                        style: MaterialTypography.body_small;
+                        style: MaterialTypography.body_medium;
                         color: MaterialPalette.on_surface_variant;
                         overflow: elide;
                         wrap: word-wrap;
