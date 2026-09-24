@@ -1,0 +1,184 @@
+import { Icons, ScrollView, MaterialPalette, MaterialStyleMetrics, MaterialTypography, MaterialText, Icon } from "@material";
+import { ToolCard } from "../components/tool-card.slint";
+import { SectionHeader } from "../components/section-header.slint";
+import { AppIcons } from "../components/app-icons.slint";
+
+export component FavoritesScreen inherits VerticalLayout {
+    in property <bool> is_wide: root.width >= 600px;
+    in property <length> status_bar_inset: 24px;
+    in property <[bool]> tool_favorites: [false, false, false, false, false, false, false];
+    callback open_tool(int);
+    callback toggle_favorite(int);
+
+    property <bool> has_favorites: root.tool_favorites[1] || root.tool_favorites[2] || root.tool_favorites[3] || root.tool_favorites[4] || root.tool_favorites[5] || root.tool_favorites[6];
+
+    // Top Title Bar
+    title_bar := HorizontalLayout {
+        padding_left: MaterialStyleMetrics.padding_20;
+        padding_right: MaterialStyleMetrics.padding_20;
+        padding_top: root.status_bar_inset + 12px;
+        padding_bottom: MaterialStyleMetrics.padding_8;
+        alignment: start;
+
+        MaterialText {
+            text: "Favorites";
+            style: MaterialTypography.headline_small;
+            color: MaterialPalette.on_surface;
+        }
+    }
+
+    if !root.has_favorites : VerticalLayout {
+        vertical-stretch: 1;
+        alignment: center;
+        padding_bottom: 80px;
+
+        VerticalLayout {
+            alignment: center;
+            spacing: MaterialStyleMetrics.spacing_12;
+            padding: MaterialStyleMetrics.padding_24;
+
+            HorizontalLayout {
+                alignment: center;
+                Rectangle {
+                    width: 72px;
+                    height: 72px;
+                    border_radius: 36px;
+                    background: MaterialPalette.surface_container_high;
+
+                    VerticalLayout {
+                        alignment: center;
+                        HorizontalLayout {
+                            alignment: center;
+                            Icon {
+                                source: AppIcons.star_outline;
+                                colorize: MaterialPalette.on_surface_variant.with_alpha(50%);
+                                width: 36px;
+                                height: 36px;
+                            }
+                        }
+                    }
+                }
+            }
+
+            MaterialText {
+                text: "No favorites yet";
+                style: MaterialTypography.title_large;
+                color: MaterialPalette.on_surface;
+                horizontal_alignment: center;
+            }
+
+            MaterialText {
+                text: "Pin your most frequently used tools for one-tap access.";
+                style: MaterialTypography.body_medium;
+                color: MaterialPalette.on_surface_variant;
+                horizontal_alignment: center;
+                wrap: word-wrap;
+            }
+
+            HorizontalLayout {
+                alignment: center;
+                Rectangle {
+                    border_radius: MaterialStyleMetrics.border_radius_8;
+                    background: MaterialPalette.primary_container.with_alpha(35%);
+
+                    HorizontalLayout {
+                        padding_left: MaterialStyleMetrics.padding_12;
+                        padding_right: MaterialStyleMetrics.padding_12;
+                        padding_top: MaterialStyleMetrics.padding_8;
+                        padding_bottom: MaterialStyleMetrics.padding_8;
+                        spacing: 6px;
+                        alignment: center;
+
+                        Icon {
+                            source: AppIcons.star;
+                            colorize: #f59e0b;
+                            width: 16px;
+                            height: 16px;
+                        }
+
+                        MaterialText {
+                            text: "Tap the star on any tool card in Home";
+                            style: MaterialTypography.label_medium;
+                            color: MaterialPalette.on_surface;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    if root.has_favorites : ScrollView {
+        vertical-stretch: 1;
+
+        VerticalLayout {
+            padding_left: MaterialStyleMetrics.padding_16;
+            padding_right: MaterialStyleMetrics.padding_16;
+            padding_top: MaterialStyleMetrics.padding_8;
+            padding_bottom: 112px;
+            spacing: MaterialStyleMetrics.spacing_16;
+            alignment: start;
+
+            SectionHeader {
+                title: "PINNED TOOLS";
+            }
+
+            VerticalLayout {
+                spacing: MaterialStyleMetrics.spacing_12;
+
+                if root.tool_favorites[1] : ToolCard {
+                    title: "Subnet Calculator";
+                    description: "IPv4 CIDR, netmask & range";
+                    icon: AppIcons.lan;
+                    is_favorite: true;
+                    clicked => { root.open_tool(1); }
+                    toggle_favorite => { root.toggle_favorite(1); }
+                }
+
+                if root.tool_favorites[2] : ToolCard {
+                    title: "Hash Calculator";
+                    description: "MD5, SHA-256 checksums";
+                    icon: AppIcons.lock;
+                    is_favorite: true;
+                    clicked => { root.open_tool(2); }
+                    toggle_favorite => { root.toggle_favorite(2); }
+                }
+
+                if root.tool_favorites[3] : ToolCard {
+                    title: "Base64";
+                    description: "Encode & decode strings";
+                    icon: AppIcons.code;
+                    is_favorite: true;
+                    clicked => { root.open_tool(3); }
+                    toggle_favorite => { root.toggle_favorite(3); }
+                }
+
+                if root.tool_favorites[4] : ToolCard {
+                    title: "UUID Generator";
+                    description: "Generate unique identifiers";
+                    icon: AppIcons.fingerprint;
+                    is_favorite: true;
+                    clicked => { root.open_tool(4); }
+                    toggle_favorite => { root.toggle_favorite(4); }
+                }
+
+                if root.tool_favorites[5] : ToolCard {
+                    title: "Timestamp";
+                    description: "Epoch & date conversions";
+                    icon: AppIcons.timer;
+                    is_favorite: true;
+                    clicked => { root.open_tool(5); }
+                    toggle_favorite => { root.toggle_favorite(5); }
+                }
+
+                if root.tool_favorites[6] : ToolCard {
+                    title: "Regex Tester";
+                    description: "Evaluate pattern matches";
+                    icon: AppIcons.regex;
+                    is_favorite: true;
+                    clicked => { root.open_tool(6); }
+                    toggle_favorite => { root.toggle_favorite(6); }
+                }
+            }
+        }
+    }
+}
