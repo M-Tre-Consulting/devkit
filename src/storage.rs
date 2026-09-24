@@ -120,3 +120,13 @@ pub fn toggle_favorite(tool_id: i32) -> (bool, HashSet<i32>) {
     save_favorites(&favorites);
     (is_fav, favorites)
 }
+
+/// Clear all saved recent tools.
+pub fn clear_recents() {
+    let _ = fs::remove_file(recents_file());
+}
+
+/// Clear all saved favorite tools.
+pub fn clear_favorites() {
+    let _ = fs::remove_file(favorites_file());
+}

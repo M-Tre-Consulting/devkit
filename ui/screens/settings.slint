@@ -1,0 +1,370 @@
+import { Icons, ScrollView, Switch, HorizontalDivider, MaterialPalette, MaterialStyleMetrics, MaterialTypography, MaterialText, StateLayerArea, Icon } from "@material";
+import { SectionHeader } from "../components/section-header.slint";
+import { AppIcons } from "../components/app-icons.slint";
+
+export component SettingsScreen inherits VerticalLayout {
+    in property <length> status_bar_inset: 24px;
+    callback clear_recents();
+    callback clear_favorites();
+
+    // Local toggle state properties (stubbed for future engine wiring)
+    property <bool> dark_theme_enabled: true;
+    property <bool> dynamic_color_enabled: true;
+
+    // Top Title Bar
+    title_bar := HorizontalLayout {
+        padding_left: MaterialStyleMetrics.padding_16;
+        padding_right: MaterialStyleMetrics.padding_16;
+        padding_top: root.status_bar_inset + 12px;
+        padding_bottom: MaterialStyleMetrics.padding_8;
+        alignment: start;
+
+        MaterialText {
+            text: "Settings";
+            style: MaterialTypography.title_large;
+            color: MaterialPalette.on_surface;
+        }
+    }
+
+    ScrollView {
+        vertical-stretch: 1;
+
+        VerticalLayout {
+            padding_left: MaterialStyleMetrics.padding_16;
+            padding_right: MaterialStyleMetrics.padding_16;
+            padding_top: MaterialStyleMetrics.padding_8;
+            padding_bottom: 112px;
+            spacing: MaterialStyleMetrics.spacing_16;
+            alignment: start;
+
+            // Section 1: Appearance
+            SectionHeader {
+                title: "APPEARANCE";
+            }
+
+            Rectangle {
+                border_radius: MaterialStyleMetrics.border_radius_16;
+                background: MaterialPalette.surface_container;
+                border_width: 1px;
+                border_color: MaterialPalette.outline_variant.with_alpha(15%);
+
+                VerticalLayout {
+                    // Dark theme toggle
+                    HorizontalLayout {
+                        padding: MaterialStyleMetrics.padding_16;
+                        alignment: space-between;
+
+                        VerticalLayout {
+                            alignment: center;
+                            spacing: MaterialStyleMetrics.spacing_4;
+
+                            MaterialText {
+                                text: "Dark Theme";
+                                style: MaterialTypography.title_medium;
+                                color: MaterialPalette.on_surface;
+                            }
+                            MaterialText {
+                                text: "Follow system display appearance";
+                                style: MaterialTypography.body_small;
+                                color: MaterialPalette.on_surface_variant;
+                            }
+                        }
+
+                        Switch {
+                            checked: root.dark_theme_enabled;
+                            checked_state_changed(checked) => {
+                                // TODO: Wire to theme engine
+                                root.dark_theme_enabled = checked;
+                            }
+                        }
+                    }
+
+                    HorizontalDivider {}
+
+                    // Dynamic colors toggle
+                    HorizontalLayout {
+                        padding: MaterialStyleMetrics.padding_16;
+                        alignment: space-between;
+
+                        VerticalLayout {
+                            alignment: center;
+                            spacing: MaterialStyleMetrics.spacing_4;
+
+                            MaterialText {
+                                text: "Dynamic Colors";
+                                style: MaterialTypography.title_medium;
+                                color: MaterialPalette.on_surface;
+                            }
+                            MaterialText {
+                                text: "Extract accents from wallpaper (Monet)";
+                                style: MaterialTypography.body_small;
+                                color: MaterialPalette.on_surface_variant;
+                            }
+                        }
+
+                        Switch {
+                            checked: root.dynamic_color_enabled;
+                            checked_state_changed(checked) => {
+                                // TODO: Wire to dynamic color Monet provider
+                                root.dynamic_color_enabled = checked;
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Section 2: Preferences
+            SectionHeader {
+                title: "TOOL PREFERENCES";
+            }
+
+            Rectangle {
+                border_radius: MaterialStyleMetrics.border_radius_16;
+                background: MaterialPalette.surface_container;
+                border_width: 1px;
+                border_color: MaterialPalette.outline_variant.with_alpha(15%);
+
+                VerticalLayout {
+                    HorizontalLayout {
+                        padding: MaterialStyleMetrics.padding_16;
+                        alignment: space-between;
+
+                        VerticalLayout {
+                            alignment: center;
+                            spacing: MaterialStyleMetrics.spacing_4;
+
+                            MaterialText {
+                                text: "Default Hash Algorithm";
+                                style: MaterialTypography.title_medium;
+                                color: MaterialPalette.on_surface;
+                            }
+                            MaterialText {
+                                text: "Pre-select SHA-256 on tool open";
+                                style: MaterialTypography.body_small;
+                                color: MaterialPalette.on_surface_variant;
+                            }
+                        }
+
+                        HorizontalLayout {
+                            alignment: center;
+                            spacing: 4px;
+                            MaterialText {
+                                text: "SHA-256";
+                                style: MaterialTypography.label_medium;
+                                color: MaterialPalette.primary;
+                            }
+                        }
+                    }
+
+                    HorizontalDivider {}
+
+                    HorizontalLayout {
+                        padding: MaterialStyleMetrics.padding_16;
+                        alignment: space-between;
+
+                        VerticalLayout {
+                            alignment: center;
+                            spacing: MaterialStyleMetrics.spacing_4;
+
+                            MaterialText {
+                                text: "Timestamp Output";
+                                style: MaterialTypography.title_medium;
+                                color: MaterialPalette.on_surface;
+                            }
+                            MaterialText {
+                                text: "Format timestamp conversions in UTC";
+                                style: MaterialTypography.body_small;
+                                color: MaterialPalette.on_surface_variant;
+                            }
+                        }
+
+                        HorizontalLayout {
+                            alignment: center;
+                            spacing: 4px;
+                            MaterialText {
+                                text: "ISO 8601";
+                                style: MaterialTypography.label_medium;
+                                color: MaterialPalette.primary;
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Section 3: Data & Storage
+            SectionHeader {
+                title: "DATA & STORAGE";
+            }
+
+            Rectangle {
+                border_radius: MaterialStyleMetrics.border_radius_16;
+                background: MaterialPalette.surface_container;
+                border_width: 1px;
+                border_color: MaterialPalette.outline_variant.with_alpha(15%);
+
+                VerticalLayout {
+                    Rectangle {
+                        border_radius: MaterialStyleMetrics.border_radius_16;
+
+                        StateLayerArea {
+                            width: 100%;
+                            height: 100%;
+                            border_radius: parent.border_radius;
+                            color: MaterialPalette.error;
+
+                            clicked => {
+                                root.clear_recents();
+                            }
+
+                            HorizontalLayout {
+                                padding: MaterialStyleMetrics.padding_16;
+                                alignment: space-between;
+
+                                VerticalLayout {
+                                    alignment: center;
+                                    spacing: MaterialStyleMetrics.spacing_4;
+
+                                    MaterialText {
+                                        text: "Clear Recent Tools";
+                                        style: MaterialTypography.title_medium;
+                                        color: MaterialPalette.on_surface;
+                                    }
+                                    MaterialText {
+                                        text: "Reset recently used history list";
+                                        style: MaterialTypography.body_small;
+                                        color: MaterialPalette.on_surface_variant;
+                                    }
+                                }
+
+                                VerticalLayout {
+                                    alignment: center;
+                                    Icon {
+                                        source: AppIcons.history;
+                                        colorize: MaterialPalette.error;
+                                        width: 20px;
+                                        height: 20px;
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    HorizontalDivider {}
+
+                    Rectangle {
+                        border_radius: MaterialStyleMetrics.border_radius_16;
+
+                        StateLayerArea {
+                            width: 100%;
+                            height: 100%;
+                            border_radius: parent.border_radius;
+                            color: MaterialPalette.error;
+
+                            clicked => {
+                                root.clear_favorites();
+                            }
+
+                            HorizontalLayout {
+                                padding: MaterialStyleMetrics.padding_16;
+                                alignment: space-between;
+
+                                VerticalLayout {
+                                    alignment: center;
+                                    spacing: MaterialStyleMetrics.spacing_4;
+
+                                    MaterialText {
+                                        text: "Clear All Favorites";
+                                        style: MaterialTypography.title_medium;
+                                        color: MaterialPalette.on_surface;
+                                    }
+                                    MaterialText {
+                                        text: "Unpin all pinned tools from Favorites";
+                                        style: MaterialTypography.body_small;
+                                        color: MaterialPalette.on_surface_variant;
+                                    }
+                                }
+
+                                VerticalLayout {
+                                    alignment: center;
+                                    Icon {
+                                        source: AppIcons.star_outline;
+                                        colorize: MaterialPalette.error;
+                                        width: 20px;
+                                        height: 20px;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Section 4: About
+            SectionHeader {
+                title: "ABOUT";
+            }
+
+            Rectangle {
+                border_radius: MaterialStyleMetrics.border_radius_16;
+                background: MaterialPalette.surface_container;
+                border_width: 1px;
+                border_color: MaterialPalette.outline_variant.with_alpha(15%);
+
+                VerticalLayout {
+                    HorizontalLayout {
+                        padding: MaterialStyleMetrics.padding_16;
+                        alignment: space-between;
+
+                        VerticalLayout {
+                            alignment: center;
+                            spacing: MaterialStyleMetrics.spacing_4;
+
+                            MaterialText {
+                                text: "DevKit";
+                                style: MaterialTypography.title_medium;
+                                color: MaterialPalette.on_surface;
+                            }
+                            MaterialText {
+                                text: "Version 0.1.0 • Built with Rust & Slint";
+                                style: MaterialTypography.body_small;
+                                color: MaterialPalette.on_surface_variant;
+                            }
+                        }
+
+                        VerticalLayout {
+                            alignment: center;
+                            MaterialText {
+                                text: "v0.1.0";
+                                style: MaterialTypography.label_medium;
+                                color: MaterialPalette.on_surface_variant;
+                            }
+                        }
+                    }
+
+                    HorizontalDivider {}
+
+                    HorizontalLayout {
+                        padding: MaterialStyleMetrics.padding_16;
+                        alignment: space-between;
+
+                        VerticalLayout {
+                            alignment: center;
+                            spacing: MaterialStyleMetrics.spacing_4;
+
+                            MaterialText {
+                                text: "Application ID";
+                                style: MaterialTypography.title_medium;
+                                color: MaterialPalette.on_surface;
+                            }
+                            MaterialText {
+                                text: "it.mtreconsulting.devkit";
+                                style: MaterialTypography.body_small;
+                                color: MaterialPalette.on_surface_variant;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

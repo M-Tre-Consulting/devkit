@@ -2,6 +2,7 @@ import { Icons, MaterialPalette, MaterialTypography, MaterialText, MaterialStyle
 import { HomeScreen } from "./screens/home.slint";
 import { RecentScreen } from "./screens/recent.slint";
 import { FavoritesScreen } from "./screens/favorites.slint";
+import { SettingsScreen } from "./screens/settings.slint";
 import { SubnetScreen } from "./screens/subnet.slint";
 import { HashScreen } from "./screens/hash.slint";
 import { Base64Screen } from "./screens/base64.slint";
@@ -26,6 +27,8 @@ export component AppWindow inherits Window {
     callback switch_mode(int);
     callback open_tool(int);
     callback toggle_favorite(int);
+    callback clear_recents();
+    callback clear_favorites();
     callback back();
 
     property <int> last_tool: 1;
@@ -86,19 +89,13 @@ export component AppWindow inherits Window {
             }
         }
 
-        if root.current_mode == 3 : Rectangle {
-            y: root.status_bar_inset;
-            height: parent.height - root.status_bar_inset;
-            VerticalLayout {
-                padding_left: MaterialStyleMetrics.padding_20;
-                padding_right: MaterialStyleMetrics.padding_20;
-                padding_top: 12px;
-                alignment: start;
-                MaterialText {
-                    text: "Settings";
-                    style: MaterialTypography.headline_small;
-                    color: MaterialPalette.on_surface;
-                }
+        if root.current_mode == 3 : SettingsScreen {
+            status_bar_inset: root.status_bar_inset;
+            clear_recents => {
+                root.clear_recents();
+            }
+            clear_favorites => {
+                root.clear_favorites();
             }
         }
     }
