@@ -1,11 +1,138 @@
-import { FilledButton } from "@material";
+import { NavigationBar, NavigationItem, Icons, MaterialPalette, MaterialTypography, MaterialText } from "@material";
+export { MaterialWindowAdapter } from "@material";
 
 export component AppWindow inherits Window {
     title: "DevKit";
     min_width: 360px;
     min_height: 640px;
+    background: MaterialPalette.surface;
 
-    FilledButton {
-        text: "Hello DevKit";
+    in-out property <int> current_screen: 0;
+    callback navigate(int);
+    callback back();
+
+    VerticalLayout {
+        alignment: space-between;
+
+        // Content Area
+        VerticalLayout {
+            vertical-stretch: 1;
+            padding: 16px;
+            alignment: center;
+
+            if root.current_screen == 0 : VerticalLayout {
+                alignment: center;
+                spacing: 8px;
+                MaterialText {
+                    text: "DevKit Home";
+                    style: MaterialTypography.headline_medium;
+                    horizontal_alignment: center;
+                    color: MaterialPalette.on_surface;
+                }
+                MaterialText {
+                    text: "Select a tool to get started";
+                    style: MaterialTypography.body_large;
+                    horizontal_alignment: center;
+                    color: MaterialPalette.on_surface_variant;
+                }
+            }
+
+            if root.current_screen == 1 : VerticalLayout {
+                alignment: center;
+                MaterialText {
+                    text: "Subnet Calculator";
+                    style: MaterialTypography.headline_medium;
+                    horizontal_alignment: center;
+                }
+            }
+
+            if root.current_screen == 2 : VerticalLayout {
+                alignment: center;
+                MaterialText {
+                    text: "Hash Calculator";
+                    style: MaterialTypography.headline_medium;
+                    horizontal_alignment: center;
+                }
+            }
+
+            if root.current_screen == 3 : VerticalLayout {
+                alignment: center;
+                MaterialText {
+                    text: "Base64 Encoder";
+                    style: MaterialTypography.headline_medium;
+                    horizontal_alignment: center;
+                }
+            }
+
+            if root.current_screen == 4 : VerticalLayout {
+                alignment: center;
+                MaterialText {
+                    text: "UUID Generator";
+                    style: MaterialTypography.headline_medium;
+                    horizontal_alignment: center;
+                }
+            }
+
+            if root.current_screen == 5 : VerticalLayout {
+                alignment: center;
+                MaterialText {
+                    text: "Timestamp Converter";
+                    style: MaterialTypography.headline_medium;
+                    horizontal_alignment: center;
+                }
+            }
+
+            if root.current_screen == 6 : VerticalLayout {
+                alignment: center;
+                MaterialText {
+                    text: "Regex Tester";
+                    style: MaterialTypography.headline_medium;
+                    horizontal_alignment: center;
+                }
+            }
+        }
+
+        // Bottom Navigation Bar
+        nav_bar := NavigationBar {
+            current_index: root.current_screen <= 3 ? root.current_screen : -1;
+            items: [
+                {
+                    icon: Icons.menu,
+                    selected_icon: Icons.menu,
+                    text: "Home",
+                    show_badge: false,
+                    badge: ""
+                },
+                {
+                    icon: Icons.keyboard,
+                    selected_icon: Icons.keyboard,
+                    text: "Subnet",
+                    show_badge: false,
+                    badge: ""
+                },
+                {
+                    icon: Icons.check,
+                    selected_icon: Icons.check,
+                    text: "Hash",
+                    show_badge: false,
+                    badge: ""
+                },
+                {
+                    icon: Icons.schedule,
+                    selected_icon: Icons.schedule,
+                    text: "Time",
+                    show_badge: false,
+                    badge: ""
+                },
+            ];
+
+            index_changed(index) => {
+                if index == 3 {
+                    root.navigate(5); // Timestamp
+                } else {
+                    root.navigate(index);
+                }
+            }
+        }
     }
 }
