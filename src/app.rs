@@ -27,8 +27,15 @@ pub fn update_favorites(ui: &crate::AppWindow) {
     ui.set_tool_favorites(model);
 }
 
+pub fn update_recents(ui: &crate::AppWindow) {
+    let recents = crate::storage::load_recents();
+    let model = ModelRc::new(VecModel::from(recents));
+    ui.set_recent_tools(model);
+}
+
 pub fn setup_app_state(ui: &crate::AppWindow) {
     update_favorites(ui);
+    update_recents(ui);
 
     let nav_state = Rc::new(RefCell::new(NavigationState::new()));
 
@@ -49,6 +56,7 @@ pub fn setup_app_state(ui: &crate::AppWindow) {
         let _ = crate::storage::record_tool_opened(tool_id);
         state_clone.borrow_mut().open_tool(tool_id);
         if let Some(ui) = ui_handle.upgrade() {
+            update_recents(&ui);
             ui.set_active_tool(tool_id);
         }
     });

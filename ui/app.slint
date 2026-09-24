@@ -1,5 +1,6 @@
 import { Icons, MaterialPalette, MaterialTypography, MaterialText, MaterialStyleMetrics } from "@material";
 import { HomeScreen } from "./screens/home.slint";
+import { RecentScreen } from "./screens/recent.slint";
 import { FavoritesScreen } from "./screens/favorites.slint";
 import { SubnetScreen } from "./screens/subnet.slint";
 import { HashScreen } from "./screens/hash.slint";
@@ -21,6 +22,7 @@ export component AppWindow inherits Window {
     in-out property <int> active_tool: 0;
     in-out property <length> status_bar_inset: 24px;
     in-out property <[bool]> tool_favorites: [false, false, false, false, false, false, false];
+    in-out property <[int]> recent_tools: [];
     callback switch_mode(int);
     callback open_tool(int);
     callback toggle_favorite(int);
@@ -61,19 +63,15 @@ export component AppWindow inherits Window {
             }
         }
 
-        if root.current_mode == 1 : Rectangle {
-            y: root.status_bar_inset;
-            height: parent.height - root.status_bar_inset;
-            VerticalLayout {
-                padding_left: MaterialStyleMetrics.padding_20;
-                padding_right: MaterialStyleMetrics.padding_20;
-                padding_top: 12px;
-                alignment: start;
-                MaterialText {
-                    text: "Recent Tools";
-                    style: MaterialTypography.headline_small;
-                    color: MaterialPalette.on_surface;
-                }
+        if root.current_mode == 1 : RecentScreen {
+            status_bar_inset: root.status_bar_inset;
+            recent_tools: root.recent_tools;
+            tool_favorites: root.tool_favorites;
+            open_tool(id) => {
+                root.open_tool(id);
+            }
+            toggle_favorite(id) => {
+                root.toggle_favorite(id);
             }
         }
 
