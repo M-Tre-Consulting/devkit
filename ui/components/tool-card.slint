@@ -1,0 +1,51 @@
+import { Card, Icon, MaterialPalette, MaterialStyleMetrics, MaterialTypography, MaterialText } from "@material";
+
+export component ToolCard inherits Card {
+    in property <image> icon;
+    in property <string> title;
+    in property <string> description;
+
+    clickable: true;
+
+    VerticalLayout {
+        padding: MaterialStyleMetrics.padding_16;
+        spacing: MaterialStyleMetrics.spacing_8;
+        alignment: space-between;
+
+        HorizontalLayout {
+            alignment: start;
+            Rectangle {
+                width: 44px;
+                height: 44px;
+                border_radius: MaterialStyleMetrics.border_radius_12;
+                background: MaterialPalette.primary_container;
+
+                if root.icon.width > 0 && root.icon.height > 0 : Icon {
+                    source: root.icon;
+                    colorize: MaterialPalette.on_primary_container;
+                    width: 24px;
+                    height: 24px;
+                }
+            }
+        }
+
+        VerticalLayout {
+            spacing: MaterialStyleMetrics.spacing_4;
+
+            MaterialText {
+                text: root.title;
+                style: MaterialTypography.title_medium;
+                color: MaterialPalette.on_surface;
+                overflow: elide;
+            }
+
+            if root.description != "" : MaterialText {
+                text: root.description;
+                style: MaterialTypography.body_small;
+                color: MaterialPalette.on_surface_variant;
+                overflow: elide;
+                wrap: word-wrap;
+            }
+        }
+    }
+}

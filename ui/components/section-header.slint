@@ -1,0 +1,16 @@
+import { MaterialPalette, MaterialStyleMetrics, MaterialTypography, MaterialText } from "@material";
+
+export component SectionHeader inherits HorizontalLayout {
+    in property <string> title;
+
+    padding_top: MaterialStyleMetrics.padding_8;
+    padding_bottom: MaterialStyleMetrics.padding_4;
+    padding_left: MaterialStyleMetrics.padding_4;
+    padding_right: MaterialStyleMetrics.padding_4;
+
+    MaterialText {
+        text: root.title;
+        style: MaterialTypography.title_small;
+        color: MaterialPalette.primary;
+    }
+}
