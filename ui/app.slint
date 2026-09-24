@@ -1,6 +1,7 @@
 import { NavigationBar, NavigationItem, Icons, MaterialPalette, MaterialTypography, MaterialText } from "@material";
 import { HomeScreen } from "./screens/home.slint";
 import { SubnetScreen } from "./screens/subnet.slint";
+import { HashScreen } from "./screens/hash.slint";
 export { MaterialWindowAdapter } from "@material";
 
 export component AppWindow inherits Window {
@@ -32,12 +33,9 @@ export component AppWindow inherits Window {
                 }
             }
 
-            if root.current_screen == 2 : VerticalLayout {
-                alignment: center;
-                MaterialText {
-                    text: "Hash Calculator";
-                    style: MaterialTypography.headline_medium;
-                    horizontal_alignment: center;
+            if root.current_screen == 2 : HashScreen {
+                back => {
+                    root.back();
                 }
             }
 
