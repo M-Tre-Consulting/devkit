@@ -3,7 +3,7 @@ use std::rc::Rc;
 use slint::ComponentHandle;
 #[cfg(target_os = "android")]
 use slint::Global;
-use crate::navigation::{NavigationState, Screen};
+use crate::navigation::{AppMode, NavigationState};
 
 pub fn run() -> Result<(), slint::PlatformError> {
     let ui = crate::AppWindow::new()?;
@@ -18,20 +18,31 @@ pub fn setup_navigation(ui: &crate::AppWindow) {
 
     let state_clone = nav_state.clone();
     let ui_handle = ui.as_weak();
-    ui.on_navigate(move |screen_id| {
-        let screen = Screen::from_id(screen_id);
-        state_clone.borrow_mut().navigate_to(screen);
+    ui.on_switch_mode(move |mode_id| {
+        let mode = AppMode::from_id(mode_id);
+        state_clone.borrow_mut().switch_mode(mode);
         if let Some(ui) = ui_handle.upgrade() {
-            ui.set_current_screen(screen.id());
+            ui.set_current_mode(mode.id());
+            ui.set_active_tool(0);
+        }
+    });
+
+    let state_clone = nav_state.clone();
+    let ui_handle = ui.as_weak();
+    ui.on_open_tool(move |tool_id| {
+        state_clone.borrow_mut().open_tool(tool_id);
+        if let Some(ui) = ui_handle.upgrade() {
+            ui.set_active_tool(tool_id);
         }
     });
 
     let state_clone = nav_state.clone();
     let ui_handle = ui.as_weak();
     ui.on_back(move || {
-        let screen = state_clone.borrow_mut().navigate_back();
+        let mode = state_clone.borrow_mut().close_tool();
         if let Some(ui) = ui_handle.upgrade() {
-            ui.set_current_screen(screen.id());
+            ui.set_active_tool(0);
+            ui.set_current_mode(mode.id());
         }
     });
 }

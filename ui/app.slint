@@ -1,4 +1,4 @@
-import { Icons, MaterialPalette, MaterialTypography, MaterialText } from "@material";
+import { Icons, MaterialPalette, MaterialTypography, MaterialText, MaterialStyleMetrics } from "@material";
 import { HomeScreen } from "./screens/home.slint";
 import { SubnetScreen } from "./screens/subnet.slint";
 import { HashScreen } from "./screens/hash.slint";
@@ -7,6 +7,7 @@ import { UuidScreen } from "./screens/uuid.slint";
 import { TimestampScreen } from "./screens/timestamp.slint";
 import { RegexScreen } from "./screens/regex.slint";
 import { PillNavBar } from "./components/pill-nav-bar.slint";
+import { AppIcons } from "./components/app-icons.slint";
 export { MaterialWindowAdapter } from "@material";
 
 export component AppWindow inherits Window {
@@ -15,23 +16,25 @@ export component AppWindow inherits Window {
     min_height: 640px;
     background: MaterialPalette.surface;
 
-    in-out property <int> current_screen: 0;
+    in-out property <int> current_mode: 0;
+    in-out property <int> active_tool: 0;
     in-out property <length> status_bar_inset: 24px;
-    callback navigate(int);
+    callback switch_mode(int);
+    callback open_tool(int);
     callback back();
 
     property <int> last_tool: 1;
-    changed current_screen => {
-        if root.current_screen > 0 {
-            root.last_tool = root.current_screen;
+    changed active_tool => {
+        if root.active_tool > 0 {
+            root.last_tool = root.active_tool;
         }
     }
 
-    property <bool> is_tool: root.current_screen > 0;
-    property <int> displayed_tool: root.is_tool ? root.current_screen : root.last_tool;
+    property <bool> is_tool: root.active_tool > 0;
+    property <int> displayed_tool: root.is_tool ? root.active_tool : root.last_tool;
 
-    // Base layer: Home Screen with scale and fade transition
-    home_container := Rectangle {
+    // Base layer: Mode Screens (0: Home, 1: Recent, 2: Favorites, 3: Settings)
+    mode_container := Rectangle {
         x: (parent.width - self.width) / 2;
         y: (parent.height - self.height) / 2;
         width: parent.width * (root.is_tool ? 0.96 : 1.0);
@@ -44,10 +47,58 @@ export component AppWindow inherits Window {
             easing: cubic-bezier(0.05, 0.7, 0.1, 1.0);
         }
 
-        HomeScreen {
+        if root.current_mode == 0 : HomeScreen {
             status_bar_inset: root.status_bar_inset;
             open_tool(id) => {
-                root.navigate(id);
+                root.open_tool(id);
+            }
+        }
+
+        if root.current_mode == 1 : Rectangle {
+            y: root.status_bar_inset;
+            height: parent.height - root.status_bar_inset;
+            VerticalLayout {
+                padding_left: MaterialStyleMetrics.padding_20;
+                padding_right: MaterialStyleMetrics.padding_20;
+                padding_top: 12px;
+                alignment: start;
+                MaterialText {
+                    text: "Recent Tools";
+                    style: MaterialTypography.headline_small;
+                    color: MaterialPalette.on_surface;
+                }
+            }
+        }
+
+        if root.current_mode == 2 : Rectangle {
+            y: root.status_bar_inset;
+            height: parent.height - root.status_bar_inset;
+            VerticalLayout {
+                padding_left: MaterialStyleMetrics.padding_20;
+                padding_right: MaterialStyleMetrics.padding_20;
+                padding_top: 12px;
+                alignment: start;
+                MaterialText {
+                    text: "Favorites";
+                    style: MaterialTypography.headline_small;
+                    color: MaterialPalette.on_surface;
+                }
+            }
+        }
+
+        if root.current_mode == 3 : Rectangle {
+            y: root.status_bar_inset;
+            height: parent.height - root.status_bar_inset;
+            VerticalLayout {
+                padding_left: MaterialStyleMetrics.padding_20;
+                padding_right: MaterialStyleMetrics.padding_20;
+                padding_top: 12px;
+                alignment: start;
+                MaterialText {
+                    text: "Settings";
+                    style: MaterialTypography.headline_small;
+                    color: MaterialPalette.on_surface;
+                }
             }
         }
     }
@@ -99,23 +150,15 @@ export component AppWindow inherits Window {
     pill_nav := PillNavBar {
         x: (root.width - self.width) / 2;
         y: root.height - self.height - 20px;
-        active_index: root.current_screen == 0 ? 0 : root.current_screen == 1 ? 1 : root.current_screen == 2 ? 2 : root.current_screen == 5 ? 3 : -1;
+        active_index: root.current_mode;
         items: [
-            { icon: Icons.menu, label: "Home" },
-            { icon: Icons.keyboard, label: "Subnet" },
-            { icon: Icons.check, label: "Hash" },
-            { icon: Icons.schedule, label: "Time" },
+            { icon: AppIcons.home, label: "Home" },
+            { icon: AppIcons.history, label: "Recent" },
+            { icon: AppIcons.star, label: "Favorites" },
+            { icon: AppIcons.settings, label: "Settings" },
         ];
         select(index) => {
-            if index == 0 {
-                root.navigate(0);
-            } else if index == 1 {
-                root.navigate(1);
-            } else if index == 2 {
-                root.navigate(2);
-            } else if index == 3 {
-                root.navigate(5); // Timestamp
-            }
+            root.switch_mode(index);
         }
     }
 }

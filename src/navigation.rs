@@ -1,3 +1,45 @@
+//! Navigation state and routing models.
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub enum AppMode {
+    #[default]
+    Home = 0,
+    Recent = 1,
+    Favorites = 2,
+    Settings = 3,
+}
+
+impl AppMode {
+    pub const ALL: [AppMode; 4] = [
+        AppMode::Home,
+        AppMode::Recent,
+        AppMode::Favorites,
+        AppMode::Settings,
+    ];
+
+    pub fn id(&self) -> i32 {
+        *self as i32
+    }
+
+    pub fn from_id(id: i32) -> Self {
+        match id {
+            1 => AppMode::Recent,
+            2 => AppMode::Favorites,
+            3 => AppMode::Settings,
+            _ => AppMode::Home,
+        }
+    }
+
+    pub fn title(&self) -> &'static str {
+        match self {
+            AppMode::Home => "DevKit",
+            AppMode::Recent => "Recent Tools",
+            AppMode::Favorites => "Favorites",
+            AppMode::Settings => "Settings",
+        }
+    }
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum Screen {
     #[default]
@@ -60,22 +102,29 @@ impl Screen {
 
 #[derive(Debug, Clone, Default)]
 pub struct NavigationState {
-    pub current_screen: Screen,
+    pub current_mode: AppMode,
+    pub active_tool: i32,
 }
 
 impl NavigationState {
     pub fn new() -> Self {
         Self {
-            current_screen: Screen::Home,
+            current_mode: AppMode::Home,
+            active_tool: 0,
         }
     }
 
-    pub fn navigate_to(&mut self, screen: Screen) {
-        self.current_screen = screen;
+    pub fn switch_mode(&mut self, mode: AppMode) {
+        self.current_mode = mode;
+        self.active_tool = 0;
     }
 
-    pub fn navigate_back(&mut self) -> Screen {
-        self.current_screen = Screen::Home;
-        self.current_screen
+    pub fn open_tool(&mut self, tool_id: i32) {
+        self.active_tool = tool_id;
+    }
+
+    pub fn close_tool(&mut self) -> AppMode {
+        self.active_tool = 0;
+        self.current_mode
     }
 }
