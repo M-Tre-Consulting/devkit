@@ -16,6 +16,7 @@ export component AppWindow inherits Window {
     background: MaterialPalette.surface;
 
     in-out property <int> current_screen: 0;
+    in-out property <length> status_bar_inset: 24px;
     callback navigate(int);
     callback back();
 
@@ -44,6 +45,7 @@ export component AppWindow inherits Window {
         }
 
         HomeScreen {
+            status_bar_inset: root.status_bar_inset;
             open_tool(id) => {
                 root.navigate(id);
             }
@@ -53,9 +55,9 @@ export component AppWindow inherits Window {
     // Overlay layer: Tool Screen with slide and fade transition
     tool_container := Rectangle {
         x: root.is_tool ? 0px : (root.width * 0.15);
-        y: 0px;
+        y: root.status_bar_inset;
         width: 100%;
-        height: 100%;
+        height: parent.height - root.status_bar_inset;
         opacity: root.is_tool ? 1.0 : 0.0;
         visible: self.opacity > 0.01;
 

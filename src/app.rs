@@ -7,6 +7,8 @@ use crate::navigation::{NavigationState, Screen};
 
 pub fn run() -> Result<(), slint::PlatformError> {
     let ui = crate::AppWindow::new()?;
+    let inset = crate::platform::android::get_status_bar_inset();
+    ui.set_status_bar_inset(inset);
     setup_navigation(&ui);
     ui.run()
 }
@@ -36,8 +38,11 @@ pub fn setup_navigation(ui: &crate::AppWindow) {
 
 #[cfg(target_os = "android")]
 pub fn android_main(android_app: slint::android::AndroidApp) {
+    let inset = crate::platform::android::query_status_bar_inset(&android_app);
+    crate::platform::android::set_status_bar_inset(inset);
     slint::android::init(android_app).unwrap();
     let ui = crate::AppWindow::new().unwrap();
+    ui.set_status_bar_inset(inset);
     crate::MaterialWindowAdapter::get(&ui).set_disable_hover(true);
     setup_navigation(&ui);
     ui.run().unwrap();

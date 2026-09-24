@@ -4,6 +4,7 @@ import { SectionHeader } from "../components/section-header.slint";
 
 export component HomeScreen inherits VerticalLayout {
     in property <bool> is_wide: root.width >= 600px;
+    in property <length> status_bar_inset: 24px;
     callback open_tool(int);
 
     property <bool> is_entered: false;
@@ -15,7 +16,7 @@ export component HomeScreen inherits VerticalLayout {
     title_bar := HorizontalLayout {
         padding_left: MaterialStyleMetrics.padding_20;
         padding_right: MaterialStyleMetrics.padding_20;
-        padding_top: 32px + (root.is_entered ? 0px : 12px);
+        padding_top: root.status_bar_inset + (root.is_entered ? 12px : 24px);
         padding_bottom: MaterialStyleMetrics.padding_8;
         alignment: start;
         opacity: root.is_entered ? 1.0 : 0.0;
