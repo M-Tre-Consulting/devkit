@@ -5,6 +5,7 @@ import { HashScreen } from "./screens/hash.slint";
 import { Base64Screen } from "./screens/base64.slint";
 import { UuidScreen } from "./screens/uuid.slint";
 import { TimestampScreen } from "./screens/timestamp.slint";
+import { RegexScreen } from "./screens/regex.slint";
 export { MaterialWindowAdapter } from "@material";
 
 export component AppWindow inherits Window {
@@ -60,12 +61,9 @@ export component AppWindow inherits Window {
                 }
             }
 
-            if root.current_screen == 6 : VerticalLayout {
-                alignment: center;
-                MaterialText {
-                    text: "Regex Tester";
-                    style: MaterialTypography.headline_medium;
-                    horizontal_alignment: center;
+            if root.current_screen == 6 : RegexScreen {
+                back => {
+                    root.back();
                 }
             }
         }
