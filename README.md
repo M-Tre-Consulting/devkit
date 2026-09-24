@@ -66,7 +66,7 @@ cargo check --target aarch64-linux-android --lib
 Build the debug APK using `cargo-apk`:
 
 ```bash
-cargo apk build --target aarch64-linux-android --lib
+PATH=/opt/android-studio/jbr/bin:$PATH cargo apk build --target aarch64-linux-android --lib
 ```
 
 ### Install and Run on Android Device / Emulator
@@ -74,7 +74,7 @@ cargo apk build --target aarch64-linux-android --lib
 Ensure an Android device with USB debugging enabled (or an active emulator) is connected via `adb`:
 
 ```bash
-cargo apk run --target aarch64-linux-android --lib
+PATH=/opt/android-studio/jbr/bin:$PATH cargo apk run --target aarch64-linux-android --lib
 ```
 
 ## Project Structure
