@@ -27,6 +27,12 @@ export component IconButton {
     accessible-checked: root.checked;
     accessible-action-default => { base.clicked(); }
 
+    property <float> press_scale: base.pressed ? 0.90 : 1.0;
+    animate press_scale {
+        duration: base.pressed ? 100ms : 150ms;
+        easing: cubic-bezier(0.05, 0.7, 0.1, 1.0);
+    }
+
     base := BaseButton {
         icon: root.checked ? root.checked_icon : root.icon;
         border_radius: self.height / 2;
@@ -35,7 +41,7 @@ export component IconButton {
         button_vertical_padding: 0;
         width: self.height;
         display_background: false;
-        icon_size: root.inline ? MaterialStyleMetrics.icon_size_18 : MaterialStyleMetrics.icon_size_24;
+        icon_size: (root.inline ? MaterialStyleMetrics.icon_size_18 : MaterialStyleMetrics.icon_size_24) * root.press_scale;
         min_layout_width: root.inline ? MaterialStyleMetrics.icon_size_18 : MaterialStyleMetrics.size_40;
         min_layout_height: self.min_layout_width;
         clip_ripple: !root.inline;

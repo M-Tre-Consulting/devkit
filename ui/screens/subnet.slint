@@ -3,6 +3,9 @@ import { AppBar, Icons, TextField, OutlinedCard, ScrollView, MaterialPalette, Ma
 export component SubnetScreen inherits VerticalLayout {
     callback back();
 
+    property <bool> is_entered: false;
+    init => { self.is_entered = true; }
+
     AppBar {
         title: "Subnet Calculator";
         show_background: true;
@@ -18,6 +21,13 @@ export component SubnetScreen inherits VerticalLayout {
 
     ScrollView {
         vertical-stretch: 1;
+        opacity: root.is_entered ? 1.0 : 0.0;
+
+        animate opacity {
+            duration: 200ms;
+            delay: 150ms;
+            easing: cubic-bezier(0.05, 0.7, 0.1, 1.0);
+        }
 
         VerticalLayout {
             padding: MaterialStyleMetrics.padding_16;
