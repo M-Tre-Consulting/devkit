@@ -1,6 +1,8 @@
 use std::cell::RefCell;
 use std::rc::Rc;
 use slint::ComponentHandle;
+#[cfg(target_os = "android")]
+use slint::Global;
 use crate::navigation::{NavigationState, Screen};
 
 pub fn run() -> Result<(), slint::PlatformError> {
