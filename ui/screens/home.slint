@@ -1,0 +1,141 @@
+import { AppBar, Icons, ScrollView, MaterialPalette, MaterialStyleMetrics } from "@material";
+import { ToolCard } from "../components/tool-card.slint";
+import { SectionHeader } from "../components/section-header.slint";
+
+export component HomeScreen inherits VerticalLayout {
+    in property <bool> is_wide: root.width >= 600px;
+    callback open_tool(int);
+
+    // Top App Bar
+    AppBar {
+        title: "DevKit";
+        show_background: true;
+    }
+
+    // Scrollable Tool Grid
+    ScrollView {
+        vertical-stretch: 1;
+
+        VerticalLayout {
+            padding: MaterialStyleMetrics.padding_16;
+            spacing: MaterialStyleMetrics.spacing_16;
+            alignment: start;
+
+            SectionHeader {
+                title: "DEVELOPER TOOLS";
+            }
+
+            if !root.is_wide : VerticalLayout {
+                spacing: MaterialStyleMetrics.spacing_12;
+
+                HorizontalLayout {
+                    spacing: MaterialStyleMetrics.spacing_12;
+                    ToolCard {
+                        horizontal-stretch: 1;
+                        title: "Subnet Calculator";
+                        description: "IPv4 CIDR, netmask & range";
+                        icon: Icons.keyboard;
+                        clicked => { root.open_tool(1); }
+                    }
+                    ToolCard {
+                        horizontal-stretch: 1;
+                        title: "Hash Calculator";
+                        description: "MD5, SHA-256 checksums";
+                        icon: Icons.check;
+                        clicked => { root.open_tool(2); }
+                    }
+                }
+
+                HorizontalLayout {
+                    spacing: MaterialStyleMetrics.spacing_12;
+                    ToolCard {
+                        horizontal-stretch: 1;
+                        title: "Base64";
+                        description: "Encode & decode strings";
+                        icon: Icons.edit;
+                        clicked => { root.open_tool(3); }
+                    }
+                    ToolCard {
+                        horizontal-stretch: 1;
+                        title: "UUID Generator";
+                        description: "Generate unique identifiers";
+                        icon: Icons.menu;
+                        clicked => { root.open_tool(4); }
+                    }
+                }
+
+                HorizontalLayout {
+                    spacing: MaterialStyleMetrics.spacing_12;
+                    ToolCard {
+                        horizontal-stretch: 1;
+                        title: "Timestamp";
+                        description: "Epoch & date conversions";
+                        icon: Icons.schedule;
+                        clicked => { root.open_tool(5); }
+                    }
+                    ToolCard {
+                        horizontal-stretch: 1;
+                        title: "Regex Tester";
+                        description: "Evaluate pattern matches";
+                        icon: Icons.calendar_today;
+                        clicked => { root.open_tool(6); }
+                    }
+                }
+            }
+
+            if root.is_wide : VerticalLayout {
+                spacing: MaterialStyleMetrics.spacing_12;
+
+                HorizontalLayout {
+                    spacing: MaterialStyleMetrics.spacing_12;
+                    ToolCard {
+                        horizontal-stretch: 1;
+                        title: "Subnet Calculator";
+                        description: "IPv4 CIDR, netmask & range";
+                        icon: Icons.keyboard;
+                        clicked => { root.open_tool(1); }
+                    }
+                    ToolCard {
+                        horizontal-stretch: 1;
+                        title: "Hash Calculator";
+                        description: "MD5, SHA-256 checksums";
+                        icon: Icons.check;
+                        clicked => { root.open_tool(2); }
+                    }
+                    ToolCard {
+                        horizontal-stretch: 1;
+                        title: "Base64";
+                        description: "Encode & decode strings";
+                        icon: Icons.edit;
+                        clicked => { root.open_tool(3); }
+                    }
+                }
+
+                HorizontalLayout {
+                    spacing: MaterialStyleMetrics.spacing_12;
+                    ToolCard {
+                        horizontal-stretch: 1;
+                        title: "UUID Generator";
+                        description: "Generate unique identifiers";
+                        icon: Icons.menu;
+                        clicked => { root.open_tool(4); }
+                    }
+                    ToolCard {
+                        horizontal-stretch: 1;
+                        title: "Timestamp";
+                        description: "Epoch & date conversions";
+                        icon: Icons.schedule;
+                        clicked => { root.open_tool(5); }
+                    }
+                    ToolCard {
+                        horizontal-stretch: 1;
+                        title: "Regex Tester";
+                        description: "Evaluate pattern matches";
+                        icon: Icons.calendar_today;
+                        clicked => { root.open_tool(6); }
+                    }
+                }
+            }
+        }
+    }
+}
