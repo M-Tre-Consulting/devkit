@@ -3,8 +3,30 @@ name = "devkit"
 version = "0.1.0"
 edition = "2021"
 
+[lib]
+crate-type = ["lib", "cdylib"]
+path = "src/lib.rs"
+name = "devkit"
+
+[[bin]]
+name = "devkit"
+path = "src/main.rs"
+
 [dependencies]
 slint = { version = "1.18", features = ["backend-android-activity-06"] }
 
 [build-dependencies]
 slint-build = { version = "1.18" }
+
+[package.metadata.android]
+package = "it.mtreconsulting.devkit"
+apk_name = "devkit"
+label = "DevKit"
+min_sdk = 26
+target_sdk = 35
+min_sdk_version = 26
+target_sdk_version = 35
+target_archs = ["arm64-v8a", "armeabi-v7a", "x86_64"]
+
+[package.metadata.android.application]
+label = "DevKit"

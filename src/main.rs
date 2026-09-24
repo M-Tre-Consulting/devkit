@@ -1,6 +1,6 @@
-slint::include_modules!();
+use slint::ComponentHandle;
 
 fn main() {
-    let app = AppWindow::new().unwrap();
+    let app = devkit::AppWindow::new().unwrap();
     app.run().unwrap();
 }
