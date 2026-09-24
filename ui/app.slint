@@ -19,51 +19,77 @@ export component AppWindow inherits Window {
     callback navigate(int);
     callback back();
 
-    // Content area filling the full window
-    content_area := VerticalLayout {
-        width: 100%;
-        height: 100%;
+    property <int> last_tool: 1;
+    changed current_screen => {
+        if root.current_screen > 0 {
+            root.last_tool = root.current_screen;
+        }
+    }
 
-        if root.current_screen == 0 : HomeScreen {
+    property <bool> is_tool: root.current_screen > 0;
+    property <int> displayed_tool: root.is_tool ? root.current_screen : root.last_tool;
+
+    // Base layer: Home Screen with scale and fade transition
+    home_container := Rectangle {
+        x: (parent.width - self.width) / 2;
+        y: (parent.height - self.height) / 2;
+        width: parent.width * (root.is_tool ? 0.96 : 1.0);
+        height: parent.height * (root.is_tool ? 0.96 : 1.0);
+        opacity: root.is_tool ? 0.0 : 1.0;
+        visible: self.opacity > 0.01;
+
+        animate width, height, opacity {
+            duration: root.is_tool ? 240ms : 220ms;
+            easing: cubic-bezier(0.05, 0.7, 0.1, 1.0);
+        }
+
+        HomeScreen {
             open_tool(id) => {
                 root.navigate(id);
             }
         }
+    }
 
-        if root.current_screen == 1 : SubnetScreen {
-            back => {
-                root.back();
-            }
+    // Overlay layer: Tool Screen with slide and fade transition
+    tool_container := Rectangle {
+        x: root.is_tool ? 0px : (root.width * 0.15);
+        y: 0px;
+        width: 100%;
+        height: 100%;
+        opacity: root.is_tool ? 1.0 : 0.0;
+        visible: self.opacity > 0.01;
+
+        animate x {
+            duration: root.is_tool ? 280ms : 200ms;
+            easing: root.is_tool ? cubic-bezier(0.05, 0.7, 0.1, 1.0) : cubic-bezier(0.3, 0.0, 0.8, 0.15);
+        }
+        animate opacity {
+            duration: root.is_tool ? 260ms : 200ms;
+            easing: root.is_tool ? cubic-bezier(0.05, 0.7, 0.1, 1.0) : cubic-bezier(0.3, 0.0, 0.8, 0.15);
         }
 
-        if root.current_screen == 2 : HashScreen {
-            back => {
-                root.back();
-            }
+        if root.displayed_tool == 1 : SubnetScreen {
+            back => { root.back(); }
         }
 
-        if root.current_screen == 3 : Base64Screen {
-            back => {
-                root.back();
-            }
+        if root.displayed_tool == 2 : HashScreen {
+            back => { root.back(); }
         }
 
-        if root.current_screen == 4 : UuidScreen {
-            back => {
-                root.back();
-            }
+        if root.displayed_tool == 3 : Base64Screen {
+            back => { root.back(); }
         }
 
-        if root.current_screen == 5 : TimestampScreen {
-            back => {
-                root.back();
-            }
+        if root.displayed_tool == 4 : UuidScreen {
+            back => { root.back(); }
         }
 
-        if root.current_screen == 6 : RegexScreen {
-            back => {
-                root.back();
-            }
+        if root.displayed_tool == 5 : TimestampScreen {
+            back => { root.back(); }
+        }
+
+        if root.displayed_tool == 6 : RegexScreen {
+            back => { root.back(); }
         }
     }
 
