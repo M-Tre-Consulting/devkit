@@ -9,6 +9,7 @@ export component ToolCard inherits Rectangle {
     in property <int> entrance_index: 0;
     in property <bool> is_entered: true;
     in property <bool> is_favorite: false;
+    in property <color> accent_color: MaterialPalette.primary;
 
     callback clicked();
     callback toggle_favorite();
@@ -71,11 +72,11 @@ export component ToolCard inherits Rectangle {
                         width: 48px;
                         height: 48px;
                         border_radius: MaterialStyleMetrics.border_radius_12;
-                        background: MaterialPalette.primary_container;
+                        background: root.accent_color.with_alpha(18%);
 
                         if root.icon.width > 0 && root.icon.height > 0 : Icon {
                             source: root.icon;
-                            colorize: MaterialPalette.on_primary_container;
+                            colorize: root.accent_color;
                             width: 24px;
                             height: 24px;
                         }
