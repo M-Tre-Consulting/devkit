@@ -2,6 +2,7 @@ import { NavigationBar, NavigationItem, Icons, MaterialPalette, MaterialTypograp
 import { HomeScreen } from "./screens/home.slint";
 import { SubnetScreen } from "./screens/subnet.slint";
 import { HashScreen } from "./screens/hash.slint";
+import { Base64Screen } from "./screens/base64.slint";
 export { MaterialWindowAdapter } from "@material";
 
 export component AppWindow inherits Window {
@@ -39,12 +40,9 @@ export component AppWindow inherits Window {
                 }
             }
 
-            if root.current_screen == 3 : VerticalLayout {
-                alignment: center;
-                MaterialText {
-                    text: "Base64 Encoder";
-                    style: MaterialTypography.headline_medium;
-                    horizontal_alignment: center;
+            if root.current_screen == 3 : Base64Screen {
+                back => {
+                    root.back();
                 }
             }
 

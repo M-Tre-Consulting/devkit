@@ -1,0 +1,77 @@
+import { AppBar, Icons, TextField, OutlinedCard, ScrollView, MaterialPalette, MaterialStyleMetrics, MaterialTypography, MaterialText } from "@material";
+
+export component Base64Screen inherits VerticalLayout {
+    callback back();
+
+    AppBar {
+        title: "Base64";
+        show_background: true;
+        leading_button: {
+            icon: Icons.arrow_back,
+            tooltip: "Back",
+            enabled: true
+        };
+        leading_button_clicked => {
+            root.back();
+        }
+    }
+
+    ScrollView {
+        vertical-stretch: 1;
+
+        VerticalLayout {
+            padding: MaterialStyleMetrics.padding_16;
+            spacing: MaterialStyleMetrics.spacing_16;
+            alignment: start;
+
+            HorizontalLayout {
+                alignment: center;
+                MaterialText {
+                    text: "Coming soon";
+                    style: MaterialTypography.label_large;
+                    color: MaterialPalette.on_surface_variant;
+                }
+            }
+
+            MaterialText {
+                text: "INPUT TEXT / BYTES";
+                style: MaterialTypography.title_small;
+                color: MaterialPalette.primary;
+            }
+
+            TextField {
+                label: "Plain text or base64 to process...";
+                enabled: false;
+            }
+
+            MaterialText {
+                text: "CONVERTED OUTPUT";
+                style: MaterialTypography.title_small;
+                color: MaterialPalette.primary;
+            }
+
+            OutlinedCard {
+                VerticalLayout {
+                    padding: MaterialStyleMetrics.padding_16;
+                    spacing: MaterialStyleMetrics.spacing_8;
+
+                    MaterialText {
+                        text: "Encoded (Standard): —";
+                        style: MaterialTypography.body_medium;
+                        color: MaterialPalette.on_surface_variant;
+                    }
+                    MaterialText {
+                        text: "Encoded (URL-Safe): —";
+                        style: MaterialTypography.body_medium;
+                        color: MaterialPalette.on_surface_variant;
+                    }
+                    MaterialText {
+                        text: "Decoded: —";
+                        style: MaterialTypography.body_medium;
+                        color: MaterialPalette.on_surface_variant;
+                    }
+                }
+            }
+        }
+    }
+}
