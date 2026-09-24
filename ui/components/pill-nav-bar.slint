@@ -1,4 +1,4 @@
-import { Icon, Icons, MaterialPalette, MaterialStyleMetrics, StateLayerArea } from "@material";
+import { Icon, Icons, MaterialPalette, MaterialStyleMetrics, MaterialTypography, MaterialText, StateLayerArea } from "@material";
 
 export struct NavItem {
     icon: image,
@@ -10,13 +10,14 @@ export component PillNavBar inherits Rectangle {
     in property <int> active_index: 0;
     callback select(int);
 
-    // Geometry parameters (Material 3 Expressive compact floating pill)
-    property <length> item_width: 56px;
+    // Geometry parameters (Material 3 Expressive compact floating pill with active label)
+    property <length> icon_width: 50px;
+    property <length> extra_width: 52px;
     property <length> item_height: 48px;
     property <length> inner_padding: 4px;
 
-    // Self-contained pill dimensions: wraps only its items
-    width: root.items.length * root.item_width + root.inner_padding * 2;
+    // Self-contained pill dimensions: wraps items in their resting layout
+    width: root.items.length * root.icon_width + (root.active_index >= 0 ? root.extra_width : 0px) + root.inner_padding * 2;
     height: root.item_height + root.inner_padding * 2;
     border_radius: self.height / 2;
     background: MaterialPalette.surface_container_high.with_alpha(92%);
@@ -30,13 +31,19 @@ export component PillNavBar inherits Rectangle {
     border_width: 1px;
     border_color: MaterialPalette.outline_variant.with_alpha(20%);
 
+    // Smoothly animate pill width if items or active state change
+    animate width {
+        duration: 280ms;
+        easing: cubic-bezier(0.05, 0.7, 0.1, 1.0);
+    }
+
     // =========================================================================
     // Single Animated Moving Indicator Pill (Material 3 Emphasized Decelerate)
     // =========================================================================
     indicator := Rectangle {
-        x: root.inner_padding + (root.active_index >= 0 ? root.active_index : 0) * root.item_width;
+        x: root.inner_padding + (root.active_index >= 0 ? root.active_index : 0) * root.icon_width;
         y: root.inner_padding;
-        width: root.item_width;
+        width: root.icon_width + (root.active_index >= 0 ? root.extra_width : 0px);
         height: root.item_height;
         border_radius: self.height / 2;
         background: MaterialPalette.secondary_container;
@@ -51,23 +58,31 @@ export component PillNavBar inherits Rectangle {
     }
 
     // =========================================================================
-    // Interactive Navigation Items Row (Icon-Only)
+    // Interactive Navigation Items Row
+    // Inactive: Icon only (50px)
+    // Active: Icon + Label side-by-side (50px + 52px = 102px)
     // =========================================================================
     items_row := HorizontalLayout {
         x: root.inner_padding;
         y: root.inner_padding;
-        width: root.items.length * root.item_width;
         height: root.item_height;
+        spacing: 0px;
 
         for item[index] in root.items : item_cell := Rectangle {
-            width: root.item_width;
-            height: root.item_height;
-
             property <bool> is_active: index == root.active_index;
-            property <color> icon_color: is_active ? MaterialPalette.on_secondary_container : MaterialPalette.on_surface_variant;
+            property <color> content_color: is_active ? MaterialPalette.on_secondary_container : MaterialPalette.on_surface_variant;
+
+            width: root.icon_width + (self.is_active ? root.extra_width : 0px);
+
+            // Animate cell width to smoothly expand/collapse active item
+            animate width {
+                duration: self.is_active ? 240ms : 180ms;
+                delay: self.is_active ? 40ms : 0ms;
+                easing: cubic-bezier(0.05, 0.7, 0.1, 1.0);
+            }
 
             // Delayed color transition: starts 40ms after indicator slide begins
-            animate icon_color {
+            animate content_color {
                 duration: 180ms;
                 delay: 40ms;
                 easing: cubic-bezier(0.05, 0.7, 0.1, 1.0);
@@ -77,7 +92,7 @@ export component PillNavBar inherits Rectangle {
                 width: 100%;
                 height: 100%;
                 border_radius: self.height / 2;
-                color: item_cell.icon_color;
+                color: item_cell.content_color;
 
                 clicked => {
                     root.select(index);
@@ -85,19 +100,54 @@ export component PillNavBar inherits Rectangle {
 
                 HorizontalLayout {
                     alignment: center;
+                    spacing: 6px;
+                    padding_left: 8px;
+                    padding_right: 8px;
 
                     VerticalLayout {
                         alignment: center;
 
                         Icon {
                             source: item.icon;
-                            width: touch_area.pressed ? 22px : 24px;
+                            width: touch_area.pressed ? 20px : 22px;
                             height: self.width;
-                            colorize: item_cell.icon_color;
+                            colorize: item_cell.content_color;
 
                             animate width {
                                 duration: 100ms;
                                 easing: ease-out;
+                            }
+                        }
+                    }
+
+                    label_container := Rectangle {
+                        clip: true;
+                        width: item_cell.is_active ? (root.extra_width - 6px) : 0px;
+                        opacity: item_cell.is_active ? 1.0 : 0.0;
+
+                        // Outgoing collapses over 180ms; incoming expands over 240ms with 40ms delay
+                        animate width {
+                            duration: item_cell.is_active ? 240ms : 180ms;
+                            delay: item_cell.is_active ? 40ms : 0ms;
+                            easing: cubic-bezier(0.05, 0.7, 0.1, 1.0);
+                        }
+                        animate opacity {
+                            duration: item_cell.is_active ? 220ms : 160ms;
+                            delay: item_cell.is_active ? 40ms : 0ms;
+                            easing: cubic-bezier(0.05, 0.7, 0.1, 1.0);
+                        }
+
+                        VerticalLayout {
+                            alignment: center;
+                            width: 100%;
+                            height: 100%;
+
+                            MaterialText {
+                                text: item.label;
+                                style: MaterialTypography.label_medium;
+                                color: item_cell.content_color;
+                                vertical_alignment: center;
+                                overflow: elide;
                             }
                         }
                     }
