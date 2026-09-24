@@ -1,5 +1,6 @@
 pub mod app;
 pub mod navigation;
+pub mod tools;
 
 slint::include_modules!();
 
