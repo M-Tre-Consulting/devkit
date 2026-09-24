@@ -3,7 +3,6 @@ import { AppIcons } from "./app-icons.slint";
 
 export component ToolCard inherits Rectangle {
     in property <image> icon;
-    in property <string> icon_symbol;
     in property <string> title;
     in property <string> description;
     in property <int> entrance_index: 0;
@@ -74,18 +73,11 @@ export component ToolCard inherits Rectangle {
                         border_radius: MaterialStyleMetrics.border_radius_12;
                         background: root.accent_color.with_alpha(18%);
 
-                        if root.icon.width > 0 && root.icon.height > 0 : Icon {
+                        Icon {
                             source: root.icon;
                             colorize: root.accent_color;
                             width: 24px;
                             height: 24px;
-                        }
-
-                        if (root.icon.width == 0 || root.icon.height == 0) && root.icon_symbol != "" : MaterialText {
-                            text: root.icon_symbol;
-                            style: MaterialTypography.title_large;
-                            horizontal_alignment: center;
-                            vertical_alignment: center;
                         }
                     }
                 }
