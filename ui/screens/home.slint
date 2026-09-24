@@ -1,4 +1,4 @@
-import { MediumAppBar, Icons, ScrollView, MaterialPalette, MaterialStyleMetrics } from "@material";
+import { Icons, ScrollView, MaterialPalette, MaterialStyleMetrics, MaterialTypography, MaterialText } from "@material";
 import { ToolCard } from "../components/tool-card.slint";
 import { SectionHeader } from "../components/section-header.slint";
 
@@ -6,10 +6,19 @@ export component HomeScreen inherits VerticalLayout {
     in property <bool> is_wide: root.width >= 600px;
     callback open_tool(int);
 
-    // Material 3 Medium Top App Bar
-    MediumAppBar {
-        title: "DevKit";
-        show_background: true;
+    // Compact title row (content-forward, minimal chrome matching reference)
+    HorizontalLayout {
+        padding_left: MaterialStyleMetrics.padding_20;
+        padding_right: MaterialStyleMetrics.padding_20;
+        padding_top: 32px; // Status bar safe area padding
+        padding_bottom: MaterialStyleMetrics.padding_8;
+        alignment: start;
+
+        MaterialText {
+            text: "DevKit";
+            style: MaterialTypography.headline_small;
+            color: MaterialPalette.on_surface;
+        }
     }
 
     // Scrollable Tool Grid
