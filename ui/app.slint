@@ -1,4 +1,4 @@
-import { NavigationBar, NavigationItem, Icons, MaterialPalette, MaterialTypography, MaterialText } from "@material";
+import { NavigationBar, NavigationItem, Elevation, Icons, MaterialPalette, MaterialTypography, MaterialText } from "@material";
 import { HomeScreen } from "./screens/home.slint";
 import { SubnetScreen } from "./screens/subnet.slint";
 import { HashScreen } from "./screens/hash.slint";
@@ -18,95 +18,110 @@ export component AppWindow inherits Window {
     callback navigate(int);
     callback back();
 
-    VerticalLayout {
-        alignment: space-between;
+    // Content area filling the full window
+    content_area := VerticalLayout {
+        width: 100%;
+        height: 100%;
 
-        // Content Area
-        VerticalLayout {
-            vertical-stretch: 1;
-
-            if root.current_screen == 0 : HomeScreen {
-                open_tool(id) => {
-                    root.navigate(id);
-                }
-            }
-
-            if root.current_screen == 1 : SubnetScreen {
-                back => {
-                    root.back();
-                }
-            }
-
-            if root.current_screen == 2 : HashScreen {
-                back => {
-                    root.back();
-                }
-            }
-
-            if root.current_screen == 3 : Base64Screen {
-                back => {
-                    root.back();
-                }
-            }
-
-            if root.current_screen == 4 : UuidScreen {
-                back => {
-                    root.back();
-                }
-            }
-
-            if root.current_screen == 5 : TimestampScreen {
-                back => {
-                    root.back();
-                }
-            }
-
-            if root.current_screen == 6 : RegexScreen {
-                back => {
-                    root.back();
-                }
+        if root.current_screen == 0 : HomeScreen {
+            open_tool(id) => {
+                root.navigate(id);
             }
         }
 
-        // Bottom Navigation Bar
-        nav_bar := NavigationBar {
-            current_index: root.current_screen <= 3 ? root.current_screen : -1;
-            items: [
-                {
-                    icon: Icons.menu,
-                    selected_icon: Icons.menu,
-                    text: "Home",
-                    show_badge: false,
-                    badge: ""
-                },
-                {
-                    icon: Icons.keyboard,
-                    selected_icon: Icons.keyboard,
-                    text: "Subnet",
-                    show_badge: false,
-                    badge: ""
-                },
-                {
-                    icon: Icons.check,
-                    selected_icon: Icons.check,
-                    text: "Hash",
-                    show_badge: false,
-                    badge: ""
-                },
-                {
-                    icon: Icons.schedule,
-                    selected_icon: Icons.schedule,
-                    text: "Time",
-                    show_badge: false,
-                    badge: ""
-                },
-            ];
+        if root.current_screen == 1 : SubnetScreen {
+            back => {
+                root.back();
+            }
+        }
 
-            index_changed(index) => {
-                if index == 3 {
-                    root.navigate(5); // Timestamp
-                } else {
-                    root.navigate(index);
+        if root.current_screen == 2 : HashScreen {
+            back => {
+                root.back();
+            }
+        }
+
+        if root.current_screen == 3 : Base64Screen {
+            back => {
+                root.back();
+            }
+        }
+
+        if root.current_screen == 4 : UuidScreen {
+            back => {
+                root.back();
+            }
+        }
+
+        if root.current_screen == 5 : TimestampScreen {
+            back => {
+                root.back();
+            }
+        }
+
+        if root.current_screen == 6 : RegexScreen {
+            back => {
+                root.back();
+            }
+        }
+    }
+
+    // Floating pill navigation bar anchored above the bottom edge
+    pill_container := Elevation {
+        x: (root.width - self.width) / 2;
+        y: root.height - self.height - 16px;
+        width: min(root.width - 32px, 420px);
+        height: 72px;
+        border_radius: self.height / 2;
+        level: 2;
+        background: MaterialPalette.surface_container;
+
+        Rectangle {
+            border_radius: parent.border_radius;
+            clip: true;
+
+            nav_bar := NavigationBar {
+                width: 100%;
+                height: 100%;
+                border_radius: parent.border_radius;
+                current_index: root.current_screen <= 3 ? root.current_screen : -1;
+                items: [
+                    {
+                        icon: Icons.menu,
+                        selected_icon: Icons.menu,
+                        text: "Home",
+                        show_badge: false,
+                        badge: ""
+                    },
+                    {
+                        icon: Icons.keyboard,
+                        selected_icon: Icons.keyboard,
+                        text: "Subnet",
+                        show_badge: false,
+                        badge: ""
+                    },
+                    {
+                        icon: Icons.check,
+                        selected_icon: Icons.check,
+                        text: "Hash",
+                        show_badge: false,
+                        badge: ""
+                    },
+                    {
+                        icon: Icons.schedule,
+                        selected_icon: Icons.schedule,
+                        text: "Time",
+                        show_badge: false,
+                        badge: ""
+                    },
+                ];
+
+                index_changed(index) => {
+                    if index == 3 {
+                        root.navigate(5); // Timestamp
+                    } else {
+                        root.navigate(index);
+                    }
                 }
             }
         }

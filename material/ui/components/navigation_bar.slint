@@ -11,6 +11,7 @@ import { StateLayer, Ripple } from "./state_layer.slint";
 import { Icon } from "./icon.slint";
 import { NavigationItem } from "../items/navigation_item.slint";
 import { BaseNavigationItemTemplate, BaseNavigation } from "./base_navigation.slint";
+import { MaterialAnimations } from "../styling/material_animations.slint";
 
 export component NavigationItemTemplate inherits BaseNavigationItemTemplate {
     property <bool> has_icon: root.icon.width > 0 && root.icon.height > 0;
@@ -39,9 +40,12 @@ export component NavigationItemTemplate inherits BaseNavigationItemTemplate {
                     alignment: center;
 
                     background_layer := Rectangle {
-                        min_width: state_layout.min_width;
+                        min_width: root.selected ? max(64px, state_layout.min_width) : state_layout.min_width;
                         min_height: max(MaterialStyleMetrics.size_32, state_layout.min_height);
                         border_radius: self.height / 2;
+
+                        animate background { duration: MaterialAnimations.standard_decelerate_duration; easing: MaterialAnimations.emphasized_easing; }
+                        animate min_width { duration: MaterialAnimations.standard_decelerate_duration; easing: MaterialAnimations.emphasized_easing; }
 
                         state_layer := StateLayer {
                             background: root.color;
@@ -122,9 +126,11 @@ export component NavigationItemTemplate inherits BaseNavigationItemTemplate {
 }
 
 export component NavigationBar inherits BaseNavigation {
+    in property <length> border_radius;
     min_height: max(MaterialStyleMetrics.size_80, layout.min_height);
 
     Rectangle {
+        border_radius: root.border_radius;
         background: MaterialPalette.surface_container;
 
         layout := HorizontalLayout {
