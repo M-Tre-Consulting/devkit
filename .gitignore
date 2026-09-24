@@ -1,0 +1,14 @@
+# Rust build output
+/target
+Cargo.lock
+
+# Android build outputs & IDE
+/android/.gradle
+/android/build
+*.apk
+*.aab
+.idea/
+*.iml
+local.properties
+.gradle/
+build/
