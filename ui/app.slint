@@ -1,4 +1,4 @@
-import { NavigationBar, NavigationItem, Elevation, Icons, MaterialPalette, MaterialTypography, MaterialText } from "@material";
+import { Icons, MaterialPalette, MaterialTypography, MaterialText } from "@material";
 import { HomeScreen } from "./screens/home.slint";
 import { SubnetScreen } from "./screens/subnet.slint";
 import { HashScreen } from "./screens/hash.slint";
@@ -6,6 +6,7 @@ import { Base64Screen } from "./screens/base64.slint";
 import { UuidScreen } from "./screens/uuid.slint";
 import { TimestampScreen } from "./screens/timestamp.slint";
 import { RegexScreen } from "./screens/regex.slint";
+import { PillNavBar } from "./components/pill-nav-bar.slint";
 export { MaterialWindowAdapter } from "@material";
 
 export component AppWindow inherits Window {
@@ -67,62 +68,25 @@ export component AppWindow inherits Window {
     }
 
     // Floating pill navigation bar anchored above the bottom edge
-    pill_container := Elevation {
+    pill_nav := PillNavBar {
         x: (root.width - self.width) / 2;
-        y: root.height - self.height - 16px;
-        width: min(root.width - 32px, 420px);
-        height: 72px;
-        border_radius: self.height / 2;
-        level: 2;
-        background: MaterialPalette.surface_container;
-
-        Rectangle {
-            border_radius: parent.border_radius;
-            clip: true;
-
-            nav_bar := NavigationBar {
-                width: 100%;
-                height: 100%;
-                border_radius: parent.border_radius;
-                current_index: root.current_screen <= 3 ? root.current_screen : -1;
-                items: [
-                    {
-                        icon: Icons.menu,
-                        selected_icon: Icons.menu,
-                        text: "Home",
-                        show_badge: false,
-                        badge: ""
-                    },
-                    {
-                        icon: Icons.keyboard,
-                        selected_icon: Icons.keyboard,
-                        text: "Subnet",
-                        show_badge: false,
-                        badge: ""
-                    },
-                    {
-                        icon: Icons.check,
-                        selected_icon: Icons.check,
-                        text: "Hash",
-                        show_badge: false,
-                        badge: ""
-                    },
-                    {
-                        icon: Icons.schedule,
-                        selected_icon: Icons.schedule,
-                        text: "Time",
-                        show_badge: false,
-                        badge: ""
-                    },
-                ];
-
-                index_changed(index) => {
-                    if index == 3 {
-                        root.navigate(5); // Timestamp
-                    } else {
-                        root.navigate(index);
-                    }
-                }
+        y: root.height - self.height - 20px;
+        active_index: root.current_screen == 0 ? 0 : root.current_screen == 1 ? 1 : root.current_screen == 2 ? 2 : root.current_screen == 5 ? 3 : -1;
+        items: [
+            { icon: Icons.menu, label: "Home" },
+            { icon: Icons.keyboard, label: "Subnet" },
+            { icon: Icons.check, label: "Hash" },
+            { icon: Icons.schedule, label: "Time" },
+        ];
+        select(index) => {
+            if index == 0 {
+                root.navigate(0);
+            } else if index == 1 {
+                root.navigate(1);
+            } else if index == 2 {
+                root.navigate(2);
+            } else if index == 3 {
+                root.navigate(5); // Timestamp
             }
         }
     }

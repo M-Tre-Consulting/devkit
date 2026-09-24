@@ -1,0 +1,118 @@
+import { Icon, Icons, MaterialPalette, MaterialStyleMetrics, MaterialTypography, MaterialText, StateLayerArea } from "@material";
+
+export struct NavItem {
+    icon: image,
+    label: string,
+}
+
+export component PillNavBar inherits Rectangle {
+    in property <[NavItem]> items;
+    in property <int> active_index: 0;
+    callback select(int);
+
+    // Geometry parameters
+    property <length> item_width: 76px;
+    property <length> item_height: 52px;
+    property <length> inner_padding: 6px;
+
+    // Self-contained pill dimensions: wraps only its items
+    width: root.items.length * root.item_width + root.inner_padding * 2;
+    height: root.item_height + root.inner_padding * 2;
+    border_radius: self.height / 2;
+    background: MaterialPalette.surface_container_high;
+
+    // Material 3 elevation drop shadow for floating pill effect
+    drop_shadow_blur: 16px;
+    drop_shadow_offset_y: 4px;
+    drop_shadow_color: MaterialPalette.shadow_30;
+
+    // Subtle outline for tonal contrast against scrolling content
+    border_width: 1px;
+    border_color: MaterialPalette.outline_variant.with_alpha(20%);
+
+    // =========================================================================
+    // Single Animated Moving Indicator Pill (Material 3 Expressive Motion)
+    // =========================================================================
+    indicator := Rectangle {
+        x: root.inner_padding + (root.active_index >= 0 ? root.active_index : 0) * root.item_width;
+        y: root.inner_padding;
+        width: root.item_width;
+        height: root.item_height;
+        border_radius: self.height / 2;
+        background: MaterialPalette.secondary_container;
+        opacity: root.active_index >= 0 ? 1.0 : 0.0;
+
+        // Smooth physical interpolation across items
+        animate x {
+            duration: 280ms;
+            easing: cubic-bezier(0.2, 0, 0, 1);
+        }
+        animate width {
+            duration: 280ms;
+            easing: cubic-bezier(0.2, 0, 0, 1);
+        }
+        animate opacity {
+            duration: 200ms;
+            easing: cubic-bezier(0.2, 0, 0, 1);
+        }
+    }
+
+    // =========================================================================
+    // Interactive Navigation Items Row
+    // =========================================================================
+    items_row := HorizontalLayout {
+        x: root.inner_padding;
+        y: root.inner_padding;
+        width: root.items.length * root.item_width;
+        height: root.item_height;
+
+        for item[index] in root.items : item_cell := Rectangle {
+            width: root.item_width;
+            height: root.item_height;
+
+            property <bool> is_active: index == root.active_index;
+            property <color> text_color: is_active ? MaterialPalette.on_secondary_container : MaterialPalette.on_surface_variant;
+
+            // Animated color transition between active and inactive states
+            animate text_color {
+                duration: 200ms;
+                easing: cubic-bezier(0.2, 0, 0, 1);
+            }
+
+            StateLayerArea {
+                width: 100%;
+                height: 100%;
+                border_radius: self.height / 2;
+                color: item_cell.text_color;
+
+                clicked => {
+                    root.select(index);
+                }
+
+                VerticalLayout {
+                    alignment: center;
+                    spacing: 2px;
+                    padding_top: 2px;
+                    padding_bottom: 2px;
+
+                    HorizontalLayout {
+                        alignment: center;
+                        Icon {
+                            source: item.icon;
+                            width: 22px;
+                            height: 22px;
+                            colorize: item_cell.text_color;
+                        }
+                    }
+
+                    MaterialText {
+                        text: item.label;
+                        style: MaterialTypography.label_small;
+                        color: item_cell.text_color;
+                        horizontal_alignment: center;
+                    }
+                }
+            }
+        }
+    }
+}
