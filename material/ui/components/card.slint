@@ -13,6 +13,8 @@ component BaseCard {
     in property <color> border_color;
     in property <length> border_width;
 
+    in property <length> border_radius: MaterialStyleMetrics.border_radius_16;
+
     callback clicked();
 
     forward_focus: state_layer;
@@ -26,7 +28,7 @@ component BaseCard {
 
     background_layer := Rectangle {
         background: root.background;
-        border_radius: MaterialStyleMetrics.border_radius_12;
+        border_radius: root.border_radius;
         border_width: root.border_width;
         border_color: root.border_color;
     }
@@ -53,6 +55,7 @@ component BaseCard {
 
 export component ElevatedCard {
     in property <bool> clickable <=> base.clickable;
+    in property <length> border_radius <=> base.border_radius;
 
     callback clicked <=> base.clicked;
 
@@ -73,6 +76,8 @@ export component ElevatedCard {
 
 export component FilledCard {
     in property <bool> clickable <=> base.clickable;
+    in property <length> border_radius <=> base.border_radius;
+    in property <color> background: MaterialPalette.surface_container_highest;
 
     callback clicked <=> base.clicked;
 
@@ -84,7 +89,7 @@ export component FilledCard {
     base := BaseCard {
         width: 100%;
         height: 100%;
-        background: MaterialPalette.surface_container_highest;
+        background: root.background;
 
         @children
     }
@@ -92,6 +97,7 @@ export component FilledCard {
 
 export component OutlinedCard {
     in property <bool> clickable <=> base.clickable;
+    in property <length> border_radius <=> base.border_radius;
 
     callback clicked <=> base.clicked;
 

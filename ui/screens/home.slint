@@ -1,4 +1,4 @@
-import { AppBar, Icons, ScrollView, MaterialPalette, MaterialStyleMetrics } from "@material";
+import { MediumAppBar, Icons, ScrollView, MaterialPalette, MaterialStyleMetrics } from "@material";
 import { ToolCard } from "../components/tool-card.slint";
 import { SectionHeader } from "../components/section-header.slint";
 
@@ -6,8 +6,8 @@ export component HomeScreen inherits VerticalLayout {
     in property <bool> is_wide: root.width >= 600px;
     callback open_tool(int);
 
-    // Top App Bar
-    AppBar {
+    // Material 3 Medium Top App Bar
+    MediumAppBar {
         title: "DevKit";
         show_background: true;
     }
@@ -17,7 +17,10 @@ export component HomeScreen inherits VerticalLayout {
         vertical-stretch: 1;
 
         VerticalLayout {
-            padding: MaterialStyleMetrics.padding_16;
+            padding_left: MaterialStyleMetrics.padding_16;
+            padding_right: MaterialStyleMetrics.padding_16;
+            padding_top: MaterialStyleMetrics.padding_8;
+            padding_bottom: 112px; // Clears the floating pill nav bar at bottom
             spacing: MaterialStyleMetrics.spacing_16;
             alignment: start;
 
@@ -25,6 +28,7 @@ export component HomeScreen inherits VerticalLayout {
                 title: "DEVELOPER TOOLS";
             }
 
+            // Phone width layout: 2 columns
             if !root.is_wide : VerticalLayout {
                 spacing: MaterialStyleMetrics.spacing_12;
 
@@ -35,6 +39,7 @@ export component HomeScreen inherits VerticalLayout {
                         title: "Subnet Calculator";
                         description: "IPv4 CIDR, netmask & range";
                         icon: Icons.keyboard;
+                        icon_symbol: "🌐";
                         clicked => { root.open_tool(1); }
                     }
                     ToolCard {
@@ -42,6 +47,7 @@ export component HomeScreen inherits VerticalLayout {
                         title: "Hash Calculator";
                         description: "MD5, SHA-256 checksums";
                         icon: Icons.check;
+                        icon_symbol: "🔒";
                         clicked => { root.open_tool(2); }
                     }
                 }
@@ -53,6 +59,7 @@ export component HomeScreen inherits VerticalLayout {
                         title: "Base64";
                         description: "Encode & decode strings";
                         icon: Icons.edit;
+                        icon_symbol: "🔤";
                         clicked => { root.open_tool(3); }
                     }
                     ToolCard {
@@ -60,6 +67,7 @@ export component HomeScreen inherits VerticalLayout {
                         title: "UUID Generator";
                         description: "Generate unique identifiers";
                         icon: Icons.menu;
+                        icon_symbol: "🆔";
                         clicked => { root.open_tool(4); }
                     }
                 }
@@ -71,6 +79,7 @@ export component HomeScreen inherits VerticalLayout {
                         title: "Timestamp";
                         description: "Epoch & date conversions";
                         icon: Icons.schedule;
+                        icon_symbol: "⏱️";
                         clicked => { root.open_tool(5); }
                     }
                     ToolCard {
@@ -78,11 +87,13 @@ export component HomeScreen inherits VerticalLayout {
                         title: "Regex Tester";
                         description: "Evaluate pattern matches";
                         icon: Icons.calendar_today;
+                        icon_symbol: "🔍";
                         clicked => { root.open_tool(6); }
                     }
                 }
             }
 
+            // Tablet / wide width layout: 3 columns
             if root.is_wide : VerticalLayout {
                 spacing: MaterialStyleMetrics.spacing_12;
 
@@ -93,6 +104,7 @@ export component HomeScreen inherits VerticalLayout {
                         title: "Subnet Calculator";
                         description: "IPv4 CIDR, netmask & range";
                         icon: Icons.keyboard;
+                        icon_symbol: "🌐";
                         clicked => { root.open_tool(1); }
                     }
                     ToolCard {
@@ -100,6 +112,7 @@ export component HomeScreen inherits VerticalLayout {
                         title: "Hash Calculator";
                         description: "MD5, SHA-256 checksums";
                         icon: Icons.check;
+                        icon_symbol: "🔒";
                         clicked => { root.open_tool(2); }
                     }
                     ToolCard {
@@ -107,6 +120,7 @@ export component HomeScreen inherits VerticalLayout {
                         title: "Base64";
                         description: "Encode & decode strings";
                         icon: Icons.edit;
+                        icon_symbol: "🔤";
                         clicked => { root.open_tool(3); }
                     }
                 }
@@ -118,6 +132,7 @@ export component HomeScreen inherits VerticalLayout {
                         title: "UUID Generator";
                         description: "Generate unique identifiers";
                         icon: Icons.menu;
+                        icon_symbol: "🆔";
                         clicked => { root.open_tool(4); }
                     }
                     ToolCard {
@@ -125,6 +140,7 @@ export component HomeScreen inherits VerticalLayout {
                         title: "Timestamp";
                         description: "Epoch & date conversions";
                         icon: Icons.schedule;
+                        icon_symbol: "⏱️";
                         clicked => { root.open_tool(5); }
                     }
                     ToolCard {
@@ -132,6 +148,7 @@ export component HomeScreen inherits VerticalLayout {
                         title: "Regex Tester";
                         description: "Evaluate pattern matches";
                         icon: Icons.calendar_today;
+                        icon_symbol: "🔍";
                         clicked => { root.open_tool(6); }
                     }
                 }

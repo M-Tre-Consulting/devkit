@@ -1,22 +1,26 @@
-import { Card, Icon, MaterialPalette, MaterialStyleMetrics, MaterialTypography, MaterialText } from "@material";
+import { FilledCard, Icon, MaterialPalette, MaterialStyleMetrics, MaterialTypography, MaterialText } from "@material";
 
-export component ToolCard inherits Card {
+export component ToolCard inherits FilledCard {
     in property <image> icon;
+    // TODO: Replace temporary glyph/emoji stand-ins with dedicated Material Symbol SVG icons when available in Slint Material
+    in property <string> icon_symbol;
     in property <string> title;
     in property <string> description;
 
     clickable: true;
+    border_radius: MaterialStyleMetrics.border_radius_16;
+    background: MaterialPalette.surface_container_low;
 
     VerticalLayout {
         padding: MaterialStyleMetrics.padding_16;
-        spacing: MaterialStyleMetrics.spacing_8;
+        spacing: MaterialStyleMetrics.spacing_12;
         alignment: space-between;
 
         HorizontalLayout {
             alignment: start;
             Rectangle {
-                width: 44px;
-                height: 44px;
+                width: 48px;
+                height: 48px;
                 border_radius: MaterialStyleMetrics.border_radius_12;
                 background: MaterialPalette.primary_container;
 
@@ -25,6 +29,13 @@ export component ToolCard inherits Card {
                     colorize: MaterialPalette.on_primary_container;
                     width: 24px;
                     height: 24px;
+                }
+
+                if (root.icon.width == 0 || root.icon.height == 0) && root.icon_symbol != "" : MaterialText {
+                    text: root.icon_symbol;
+                    style: MaterialTypography.title_large;
+                    horizontal_alignment: center;
+                    vertical_alignment: center;
                 }
             }
         }
