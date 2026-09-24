@@ -1,6 +1,7 @@
 pub mod app;
 pub mod navigation;
 pub mod platform;
+pub mod storage;
 pub mod tools;
 
 slint::include_modules!();
