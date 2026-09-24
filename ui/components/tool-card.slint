@@ -1,15 +1,17 @@
 import { Icon, MaterialPalette, MaterialStyleMetrics, MaterialTypography, MaterialText, StateLayerArea } from "@material";
+import { AppIcons } from "./app-icons.slint";
 
 export component ToolCard inherits Rectangle {
     in property <image> icon;
-    // TODO: Replace temporary glyph/emoji stand-ins with dedicated Material Symbol SVG icons when available in Slint Material
     in property <string> icon_symbol;
     in property <string> title;
     in property <string> description;
     in property <int> entrance_index: 0;
     in property <bool> is_entered: true;
+    in property <bool> is_favorite: false;
 
     callback clicked();
+    callback toggle_favorite();
 
     min_height: 124px;
 
@@ -103,6 +105,44 @@ export component ToolCard inherits Rectangle {
                         color: MaterialPalette.on_surface_variant;
                         overflow: elide;
                         wrap: word-wrap;
+                    }
+                }
+            }
+        }
+
+        // Star favorite button in top-right corner
+        star_btn := Rectangle {
+            x: parent.width - self.width - 8px;
+            y: 8px;
+            width: 36px;
+            height: 36px;
+            border_radius: 18px;
+
+            star_touch := StateLayerArea {
+                width: 100%;
+                height: 100%;
+                border_radius: parent.border_radius;
+                color: #f59e0b;
+
+                clicked => {
+                    root.toggle_favorite();
+                }
+
+                VerticalLayout {
+                    alignment: center;
+                    HorizontalLayout {
+                        alignment: center;
+                        Icon {
+                            source: root.is_favorite ? AppIcons.star : AppIcons.star_outline;
+                            colorize: root.is_favorite ? #f59e0b : MaterialPalette.on_surface_variant.with_alpha(45%);
+                            width: 22px;
+                            height: 22px;
+
+                            animate colorize {
+                                duration: 150ms;
+                                easing: cubic-bezier(0.05, 0.7, 0.1, 1.0);
+                            }
+                        }
                     }
                 }
             }

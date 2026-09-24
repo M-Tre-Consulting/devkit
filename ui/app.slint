@@ -19,8 +19,10 @@ export component AppWindow inherits Window {
     in-out property <int> current_mode: 0;
     in-out property <int> active_tool: 0;
     in-out property <length> status_bar_inset: 24px;
+    in-out property <[bool]> tool_favorites: [false, false, false, false, false, false, false];
     callback switch_mode(int);
     callback open_tool(int);
+    callback toggle_favorite(int);
     callback back();
 
     property <int> last_tool: 1;
@@ -49,8 +51,12 @@ export component AppWindow inherits Window {
 
         if root.current_mode == 0 : HomeScreen {
             status_bar_inset: root.status_bar_inset;
+            tool_favorites: root.tool_favorites;
             open_tool(id) => {
                 root.open_tool(id);
+            }
+            toggle_favorite(id) => {
+                root.toggle_favorite(id);
             }
         }
 

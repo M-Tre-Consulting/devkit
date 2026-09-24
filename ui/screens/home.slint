@@ -1,11 +1,14 @@
 import { Icons, ScrollView, MaterialPalette, MaterialStyleMetrics, MaterialTypography, MaterialText } from "@material";
 import { ToolCard } from "../components/tool-card.slint";
 import { SectionHeader } from "../components/section-header.slint";
+import { AppIcons } from "../components/app-icons.slint";
 
 export component HomeScreen inherits VerticalLayout {
     in property <bool> is_wide: root.width >= 600px;
     in property <length> status_bar_inset: 24px;
+    in property <[bool]> tool_favorites: [false, false, false, false, false, false, false];
     callback open_tool(int);
+    callback toggle_favorite(int);
 
     property <bool> is_entered: false;
     init => {
@@ -63,21 +66,23 @@ export component HomeScreen inherits VerticalLayout {
                         horizontal-stretch: 1;
                         title: "Subnet Calculator";
                         description: "IPv4 CIDR, netmask & range";
-                        icon: Icons.keyboard;
-                        icon_symbol: "🌐";
+                        icon: AppIcons.lan;
                         entrance_index: 0;
                         is_entered: root.is_entered;
+                        is_favorite: root.tool_favorites[1];
                         clicked => { root.open_tool(1); }
+                        toggle_favorite => { root.toggle_favorite(1); }
                     }
                     ToolCard {
                         horizontal-stretch: 1;
                         title: "Hash Calculator";
                         description: "MD5, SHA-256 checksums";
-                        icon: Icons.check;
-                        icon_symbol: "🔒";
+                        icon: AppIcons.lock;
                         entrance_index: 1;
                         is_entered: root.is_entered;
+                        is_favorite: root.tool_favorites[2];
                         clicked => { root.open_tool(2); }
+                        toggle_favorite => { root.toggle_favorite(2); }
                     }
                 }
 
@@ -87,21 +92,23 @@ export component HomeScreen inherits VerticalLayout {
                         horizontal-stretch: 1;
                         title: "Base64";
                         description: "Encode & decode strings";
-                        icon: Icons.edit;
-                        icon_symbol: "🔤";
+                        icon: AppIcons.code;
                         entrance_index: 2;
                         is_entered: root.is_entered;
+                        is_favorite: root.tool_favorites[3];
                         clicked => { root.open_tool(3); }
+                        toggle_favorite => { root.toggle_favorite(3); }
                     }
                     ToolCard {
                         horizontal-stretch: 1;
                         title: "UUID Generator";
                         description: "Generate unique identifiers";
-                        icon: Icons.menu;
-                        icon_symbol: "🆔";
+                        icon: AppIcons.fingerprint;
                         entrance_index: 3;
                         is_entered: root.is_entered;
+                        is_favorite: root.tool_favorites[4];
                         clicked => { root.open_tool(4); }
+                        toggle_favorite => { root.toggle_favorite(4); }
                     }
                 }
 
@@ -111,21 +118,23 @@ export component HomeScreen inherits VerticalLayout {
                         horizontal-stretch: 1;
                         title: "Timestamp";
                         description: "Epoch & date conversions";
-                        icon: Icons.schedule;
-                        icon_symbol: "⏱️";
+                        icon: AppIcons.timer;
                         entrance_index: 4;
                         is_entered: root.is_entered;
+                        is_favorite: root.tool_favorites[5];
                         clicked => { root.open_tool(5); }
+                        toggle_favorite => { root.toggle_favorite(5); }
                     }
                     ToolCard {
                         horizontal-stretch: 1;
                         title: "Regex Tester";
                         description: "Evaluate pattern matches";
-                        icon: Icons.calendar_today;
-                        icon_symbol: "🔍";
+                        icon: AppIcons.regex;
                         entrance_index: 5;
                         is_entered: root.is_entered;
+                        is_favorite: root.tool_favorites[6];
                         clicked => { root.open_tool(6); }
+                        toggle_favorite => { root.toggle_favorite(6); }
                     }
                 }
             }
@@ -140,31 +149,34 @@ export component HomeScreen inherits VerticalLayout {
                         horizontal-stretch: 1;
                         title: "Subnet Calculator";
                         description: "IPv4 CIDR, netmask & range";
-                        icon: Icons.keyboard;
-                        icon_symbol: "🌐";
+                        icon: AppIcons.lan;
                         entrance_index: 0;
                         is_entered: root.is_entered;
+                        is_favorite: root.tool_favorites[1];
                         clicked => { root.open_tool(1); }
+                        toggle_favorite => { root.toggle_favorite(1); }
                     }
                     ToolCard {
                         horizontal-stretch: 1;
                         title: "Hash Calculator";
                         description: "MD5, SHA-256 checksums";
-                        icon: Icons.check;
-                        icon_symbol: "🔒";
+                        icon: AppIcons.lock;
                         entrance_index: 1;
                         is_entered: root.is_entered;
+                        is_favorite: root.tool_favorites[2];
                         clicked => { root.open_tool(2); }
+                        toggle_favorite => { root.toggle_favorite(2); }
                     }
                     ToolCard {
                         horizontal-stretch: 1;
                         title: "Base64";
                         description: "Encode & decode strings";
-                        icon: Icons.edit;
-                        icon_symbol: "🔤";
+                        icon: AppIcons.code;
                         entrance_index: 2;
                         is_entered: root.is_entered;
+                        is_favorite: root.tool_favorites[3];
                         clicked => { root.open_tool(3); }
+                        toggle_favorite => { root.toggle_favorite(3); }
                     }
                 }
 
@@ -174,31 +186,34 @@ export component HomeScreen inherits VerticalLayout {
                         horizontal-stretch: 1;
                         title: "UUID Generator";
                         description: "Generate unique identifiers";
-                        icon: Icons.menu;
-                        icon_symbol: "🆔";
+                        icon: AppIcons.fingerprint;
                         entrance_index: 3;
                         is_entered: root.is_entered;
+                        is_favorite: root.tool_favorites[4];
                         clicked => { root.open_tool(4); }
+                        toggle_favorite => { root.toggle_favorite(4); }
                     }
                     ToolCard {
                         horizontal-stretch: 1;
                         title: "Timestamp";
                         description: "Epoch & date conversions";
-                        icon: Icons.schedule;
-                        icon_symbol: "⏱️";
+                        icon: AppIcons.timer;
                         entrance_index: 4;
                         is_entered: root.is_entered;
+                        is_favorite: root.tool_favorites[5];
                         clicked => { root.open_tool(5); }
+                        toggle_favorite => { root.toggle_favorite(5); }
                     }
                     ToolCard {
                         horizontal-stretch: 1;
                         title: "Regex Tester";
                         description: "Evaluate pattern matches";
-                        icon: Icons.calendar_today;
-                        icon_symbol: "🔍";
+                        icon: AppIcons.regex;
                         entrance_index: 5;
                         is_entered: root.is_entered;
+                        is_favorite: root.tool_favorites[6];
                         clicked => { root.open_tool(6); }
+                        toggle_favorite => { root.toggle_favorite(6); }
                     }
                 }
             }
