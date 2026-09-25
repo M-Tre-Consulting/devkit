@@ -6,3 +6,4 @@ pub mod timestamp;
 pub mod uuid;
 pub mod json_yaml;
 pub mod cron;
+pub mod gzip;
