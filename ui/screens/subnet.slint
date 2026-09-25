@@ -1,11 +1,32 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2026 MTRE Consulting
 
-import { Icons, TextField, OutlinedCard, ScrollView, MaterialPalette, MaterialStyleMetrics, MaterialTypography, MaterialText } from "@material";
+import { Icons, TextField, OutlinedCard, ScrollView, MaterialPalette, MaterialStyleMetrics, MaterialTypography, MaterialText, StateLayerArea, Icon } from "@material";
 import { TopBar } from "../components/top-bar.slint";
+import { ToolErrorBanner } from "../components/tool-error-banner.slint";
+import { ToolActionButton } from "../components/tool-action-button.slint";
+import { AppIcons } from "../components/app-icons.slint";
 
 export component SubnetScreen inherits VerticalLayout {
+    in property <length> status_bar_inset: 24px;
+    in property <length> nav_bar_inset: 16px;
     callback back();
+
+    in-out property <string> ip_input: "192.168.1.1/24";
+    in-out property <string> error_message: "";
+    in-out property <string> network_address: "192.168.1.0";
+    in-out property <string> broadcast_address: "192.168.1.255";
+    in-out property <string> first_host: "192.168.1.1";
+    in-out property <string> last_host: "192.168.1.254";
+    in-out property <string> host_count: "254";
+    in-out property <string> netmask: "255.255.255.0";
+    in-out property <string> wildcard_mask: "0.0.0.255";
+    in-out property <string> cidr_notation: "/24";
+    in-out property <bool> is_loading: false;
+
+    callback calculate();
+    callback clear();
+    callback copy(string);
 
     property <bool> is_entered: false;
     init => { self.is_entered = true; }
@@ -28,65 +49,231 @@ export component SubnetScreen inherits VerticalLayout {
         }
 
         VerticalLayout {
-            padding: MaterialStyleMetrics.padding_16;
+            padding_left: MaterialStyleMetrics.padding_16;
+            padding_right: MaterialStyleMetrics.padding_16;
+            padding_top: MaterialStyleMetrics.padding_16;
+            padding_bottom: 96px + root.nav_bar_inset;
             spacing: MaterialStyleMetrics.spacing_16;
             alignment: start;
 
-            HorizontalLayout {
-                alignment: center;
-                MaterialText {
-                    text: "Coming soon";
-                    style: MaterialTypography.label_large;
-                    color: MaterialPalette.on_surface_variant;
-                }
+            // Error display
+            ToolErrorBanner {
+                message: root.error_message;
             }
 
+            // Input Section
             MaterialText {
                 text: "NETWORK INPUT";
-                style: MaterialTypography.title_small;
+                style: MaterialTypography.label_large;
                 color: MaterialPalette.primary;
             }
 
             TextField {
                 label: "IP Address / CIDR (e.g. 192.168.1.1/24)";
-                enabled: false;
+                text <=> root.ip_input;
+                enabled: true;
             }
 
+            ToolActionButton {
+                text: "Calculate Subnet";
+                enabled: root.ip_input != "" && !root.is_loading;
+                has_clear: true;
+                clicked => { root.calculate(); }
+                clear => {
+                    root.ip_input = "";
+                    root.network_address = "";
+                    root.broadcast_address = "";
+                    root.first_host = "";
+                    root.last_host = "";
+                    root.host_count = "";
+                    root.netmask = "";
+                    root.wildcard_mask = "";
+                    root.cidr_notation = "";
+                    root.error_message = "";
+                    root.clear();
+                }
+            }
+
+            // Output Section
             MaterialText {
-                text: "NETWORK DETAILS";
+                text: "SUBNET DETAILS";
                 style: MaterialTypography.title_small;
                 color: MaterialPalette.primary;
             }
 
-            OutlinedCard {
+            Rectangle {
+                background: MaterialPalette.surface_container;
+                border_radius: MaterialStyleMetrics.border_radius_16;
+                border_width: 1px;
+                border_color: MaterialPalette.outline_variant.with_alpha(15%);
+
                 VerticalLayout {
                     padding: MaterialStyleMetrics.padding_16;
-                    spacing: MaterialStyleMetrics.spacing_8;
+                    spacing: MaterialStyleMetrics.spacing_12;
 
-                    MaterialText {
-                        text: "Netmask: —";
-                        style: MaterialTypography.body_medium;
-                        color: MaterialPalette.on_surface_variant;
+                    // Network Address Row
+                    HorizontalLayout {
+                        alignment: space-between;
+                        VerticalLayout {
+                            alignment: center;
+                            MaterialText {
+                                text: "Network Address";
+                                style: MaterialTypography.body_small;
+                                color: MaterialPalette.on_surface_variant;
+                            }
+                            MaterialText {
+                                text: root.network_address != "" ? root.network_address : "—";
+                                style: MaterialTypography.body_medium;
+                                color: MaterialPalette.on_surface;
+                            }
+                        }
+                        if root.network_address != "" : Rectangle {
+                            width: 32px;
+                            height: 32px;
+                            border_radius: 16px;
+                            StateLayerArea {
+                                width: 100%;
+                                height: 100%;
+                                border_radius: parent.border_radius;
+                                color: MaterialPalette.primary;
+                                clicked => { root.copy(root.network_address); }
+                                HorizontalLayout {
+                                    alignment: center;
+                                    VerticalLayout {
+                                        alignment: center;
+                                        Icon {
+                                            source: AppIcons.copy;
+                                            colorize: MaterialPalette.primary;
+                                            width: 16px;
+                                            height: 16px;
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     }
-                    MaterialText {
-                        text: "Network Address: —";
-                        style: MaterialTypography.body_medium;
-                        color: MaterialPalette.on_surface_variant;
+
+                    // Usable Host Range
+                    VerticalLayout {
+                        spacing: MaterialStyleMetrics.spacing_4;
+                        MaterialText {
+                            text: "Usable Host Range";
+                            style: MaterialTypography.body_small;
+                            color: MaterialPalette.on_surface_variant;
+                        }
+                        MaterialText {
+                            text: (root.first_host != "" && root.last_host != "") ? "\{root.first_host} – \{root.last_host}" : "—";
+                            style: MaterialTypography.body_medium;
+                            color: MaterialPalette.on_surface;
+                        }
                     }
-                    MaterialText {
-                        text: "Broadcast Address: —";
-                        style: MaterialTypography.body_medium;
-                        color: MaterialPalette.on_surface_variant;
+
+                    // Broadcast Address Row
+                    HorizontalLayout {
+                        alignment: space-between;
+                        VerticalLayout {
+                            alignment: center;
+                            MaterialText {
+                                text: "Broadcast Address";
+                                style: MaterialTypography.body_small;
+                                color: MaterialPalette.on_surface_variant;
+                            }
+                            MaterialText {
+                                text: root.broadcast_address != "" ? root.broadcast_address : "—";
+                                style: MaterialTypography.body_medium;
+                                color: MaterialPalette.on_surface;
+                            }
+                        }
+                        if root.broadcast_address != "" : Rectangle {
+                            width: 32px;
+                            height: 32px;
+                            border_radius: 16px;
+                            StateLayerArea {
+                                width: 100%;
+                                height: 100%;
+                                border_radius: parent.border_radius;
+                                color: MaterialPalette.primary;
+                                clicked => { root.copy(root.broadcast_address); }
+                                HorizontalLayout {
+                                    alignment: center;
+                                    VerticalLayout {
+                                        alignment: center;
+                                        Icon {
+                                            source: AppIcons.copy;
+                                            colorize: MaterialPalette.primary;
+                                            width: 16px;
+                                            height: 16px;
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     }
-                    MaterialText {
-                        text: "Usable Host Range: —";
-                        style: MaterialTypography.body_medium;
-                        color: MaterialPalette.on_surface_variant;
+
+                    // Netmask & CIDR
+                    HorizontalLayout {
+                        spacing: MaterialStyleMetrics.spacing_16;
+                        VerticalLayout {
+                            horizontal-stretch: 1;
+                            spacing: MaterialStyleMetrics.spacing_4;
+                            MaterialText {
+                                text: "Netmask";
+                                style: MaterialTypography.body_small;
+                                color: MaterialPalette.on_surface_variant;
+                            }
+                            MaterialText {
+                                text: root.netmask != "" ? root.netmask : "—";
+                                style: MaterialTypography.body_medium;
+                                color: MaterialPalette.on_surface;
+                            }
+                        }
+                        VerticalLayout {
+                            horizontal-stretch: 1;
+                            spacing: MaterialStyleMetrics.spacing_4;
+                            MaterialText {
+                                text: "Wildcard Mask";
+                                style: MaterialTypography.body_small;
+                                color: MaterialPalette.on_surface_variant;
+                            }
+                            MaterialText {
+                                text: root.wildcard_mask != "" ? root.wildcard_mask : "—";
+                                style: MaterialTypography.body_medium;
+                                color: MaterialPalette.on_surface;
+                            }
+                        }
                     }
-                    MaterialText {
-                        text: "Total Usable Hosts: —";
-                        style: MaterialTypography.body_medium;
-                        color: MaterialPalette.on_surface_variant;
+
+                    // Total Usable Hosts & CIDR
+                    HorizontalLayout {
+                        spacing: MaterialStyleMetrics.spacing_16;
+                        VerticalLayout {
+                            horizontal-stretch: 1;
+                            spacing: MaterialStyleMetrics.spacing_4;
+                            MaterialText {
+                                text: "Total Usable Hosts";
+                                style: MaterialTypography.body_small;
+                                color: MaterialPalette.on_surface_variant;
+                            }
+                            MaterialText {
+                                text: root.host_count != "" ? root.host_count : "—";
+                                style: MaterialTypography.title_medium;
+                                color: MaterialPalette.primary;
+                            }
+                        }
+                        VerticalLayout {
+                            horizontal-stretch: 1;
+                            spacing: MaterialStyleMetrics.spacing_4;
+                            MaterialText {
+                                text: "CIDR";
+                                style: MaterialTypography.body_small;
+                                color: MaterialPalette.on_surface_variant;
+                            }
+                            MaterialText {
+                                text: root.cidr_notation != "" ? root.cidr_notation : "—";
+                                style: MaterialTypography.title_medium;
+                                color: MaterialPalette.primary;
+                            }
+                        }
                     }
                 }
             }

@@ -53,10 +53,18 @@ pub enum Screen {
     Uuid,
     Timestamp,
     Regex,
+    JsonYaml,
+    Cron,
+    Gzip,
+    Formatter,
+    Chmod,
+    Color,
+    Contrast,
+    Jwt,
 }
 
 impl Screen {
-    pub const ALL: [Screen; 7] = [
+    pub const ALL: [Screen; 15] = [
         Screen::Home,
         Screen::Subnet,
         Screen::Hash,
@@ -64,6 +72,14 @@ impl Screen {
         Screen::Uuid,
         Screen::Timestamp,
         Screen::Regex,
+        Screen::JsonYaml,
+        Screen::Cron,
+        Screen::Gzip,
+        Screen::Formatter,
+        Screen::Chmod,
+        Screen::Color,
+        Screen::Contrast,
+        Screen::Jwt,
     ];
 
     pub fn title(&self) -> &'static str {
@@ -75,6 +91,14 @@ impl Screen {
             Screen::Uuid => "UUID Generator",
             Screen::Timestamp => "Timestamp Converter",
             Screen::Regex => "Regex Tester",
+            Screen::JsonYaml => "JSON ↔ YAML Converter",
+            Screen::Cron => "CRON Parser",
+            Screen::Gzip => "GZip Compressor",
+            Screen::Formatter => "Code Formatter",
+            Screen::Chmod => "Chmod Calculator",
+            Screen::Color => "Color Converter",
+            Screen::Contrast => "Contrast Checker",
+            Screen::Jwt => "JWT Decoder",
         }
     }
 
@@ -87,6 +111,14 @@ impl Screen {
             Screen::Uuid => 4,
             Screen::Timestamp => 5,
             Screen::Regex => 6,
+            Screen::JsonYaml => 7,
+            Screen::Cron => 8,
+            Screen::Gzip => 9,
+            Screen::Formatter => 10,
+            Screen::Chmod => 11,
+            Screen::Color => 12,
+            Screen::Contrast => 13,
+            Screen::Jwt => 14,
         }
     }
 
@@ -98,10 +130,19 @@ impl Screen {
             4 => Screen::Uuid,
             5 => Screen::Timestamp,
             6 => Screen::Regex,
+            7 => Screen::JsonYaml,
+            8 => Screen::Cron,
+            9 => Screen::Gzip,
+            10 => Screen::Formatter,
+            11 => Screen::Chmod,
+            12 => Screen::Color,
+            13 => Screen::Contrast,
+            14 => Screen::Jwt,
             _ => Screen::Home,
         }
     }
 }
+
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum BackNavigationOutcome {
