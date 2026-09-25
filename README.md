@@ -1,136 +1,84 @@
 # DevKit
 
-A fully-Rust Android developer toolbox built with Slint and the official Slint Material 3 component library. A "Dev Toolbox for GNOME, but on Android."
+A Rust + Slint dev toolbox for Android, built to test whether Slint is a viable UI framework for mobile.
 
-- **Application ID:** `it.mtreconsulting.devkit`
-- **Crate Name:** `devkit`
-- **Display Name:** `DevKit`
-- **Current Status:** Scaffolding complete — navigation shell, responsive tool grid, and tool stubs implemented.
+Status: Experimental — functional prototype, not production-ready.
 
-## Tech Stack
+## What this is
 
-- **Language:** Rust (plus unavoidable JNI/Kotlin glue where Android requires it)
-- **UI Framework:** [Slint](https://slint.dev/)
-- **Design System:** Official Slint Material 3 components (`@material`)
-- **Target:** Android (`arm64-v8a`, `armeabi-v7a`, `x86_64` for emulator)
-- **Slint Backend:** `backend-android-activity-06`
-- **Build System:** Cargo + `cargo-apk`
+DevKit is a fully-Rust Android application using Slint for its user interface. It provides a developer toolbox covering common utility workflows: a subnet calculator, hash calculator, base64 encoder/decoder, UUID generator, timestamp converter, and regex tester. The project exists primarily as an empirical testbed for Slint on Android to evaluate rendering performance, Material 3 design fidelity, animation capabilities, and the ergonomics of writing a complete mobile UI in Rust. The developer tool concepts serve as a realistic workload to test these properties, rather than being the end goal themselves.
+
+## What this is not
+
+- Not production-ready.
+- Not a polished replacement for existing dev tool applications.
+- Not affiliated with Google, GNOME, or the Slint project.
+- Not a general statement about whether Rust should be used for mobile apps, but an inquiry into whether Slint specifically is ready for that role.
+
+## Why it exists
+
+Most existing Rust-on-Android architectures rely on a Kotlin UI layer built with Jetpack Compose, relegating Rust to background logic communicated over JNI bindings. Slint is one of the few frameworks attempting a unified, fully-Rust UI stack on mobile without JVM-side UI frameworks. DevKit exists to evaluate whether writing a native-feeling mobile interface entirely in Rust and Slint is practical, whether the layout and animation ergonomics hold up, and whether the resulting application achieves acceptable runtime performance on real hardware.
+
+## Tech stack
+
+- **Language:** Rust (2021 edition)
+- **UI Framework:** [Slint](https://slint.dev)
+- **Design System:** Slint Material 3 component library
+- **Android Runtime:** `android-activity` (`backend-android-activity-06`) via `cargo-apk`
 - **Minimum SDK:** 26 (Android 8.0)
 - **Target SDK:** 35 (Android 15)
 
-## Prerequisites
+## Screenshots
 
-1. **Rust Toolchain:**
-   Ensure `rustc` and `cargo` are installed. Add the Android targets:
-   ```bash
-   rustup target add aarch64-linux-android armv7-linux-androideabi x86_64-linux-android
-   ```
+Screenshots will be added as visual polish and component styling stabilize.
 
-2. **cargo-apk:**
-   Install `cargo-apk` for building and packaging Android APKs:
-   ```bash
-   cargo install cargo-apk
-   ```
+<!-- TODO: add home, tool, and pill screenshots -->
 
-3. **Android SDK & NDK:**
-   - Set `ANDROID_HOME` pointing to your Android SDK directory (e.g., `~/Android/Sdk`).
-   - Install Android SDK Platform 35 and Build-Tools.
-   - Install Android NDK and set `ANDROID_NDK_ROOT` pointing to your NDK directory.
-   - Ensure `JAVA_HOME` is set to JDK 17+ (e.g., Android Studio's bundled JBR at `/opt/android-studio/jbr`).
+## Building and running
 
-## Build Instructions
+### Prerequisites
 
-### Run on Desktop (Linux / macOS / Windows)
+- Rust stable toolchain with Android targets added (`rustup target add aarch64-linux-android`)
+- `cargo-apk` installed (`cargo install cargo-apk`)
+- Android SDK (API 35 platform and build-tools) and NDK (r26+)
+- A JDK 17+ installation (e.g., Android Studio's bundled JBR)
 
-DevKit can run natively on desktop for rapid UI development and testing:
+Supported target architectures: `aarch64-linux-android`, `armeabi-v7a`, `x86_64`.
 
-```bash
-# Build binary
-cargo build
+### Run command
 
-# Run application
-cargo run
-```
-
-### Check Android Rust Library Compilation
-
-To verify that the Rust codebase and Slint components compile for Android target:
-
-```bash
-JAVA_HOME=/opt/android-studio/jbr ANDROID_HOME=$HOME/Android/Sdk \
-cargo check --target aarch64-linux-android --lib
-```
-
-### Build Android APK
-
-Build the debug APK using `cargo-apk`:
-
-```bash
-PATH=/opt/android-studio/jbr/bin:$PATH cargo apk build --target aarch64-linux-android --lib
-```
-
-### Install and Run on Android Device / Emulator
-
-Ensure an Android device with USB debugging enabled (or an active emulator) is connected via `adb`:
+To compile and launch directly on a connected device or running emulator:
 
 ```bash
 PATH=/opt/android-studio/jbr/bin:$PATH cargo apk run --target aarch64-linux-android --lib
 ```
 
-## Project Structure
+> Note: Setting `JAVA_HOME` alone is not sufficient because `apksigner` requires the `java` binary to be present directly in `PATH`.
+
+## Project structure
 
 ```
-devkit/
-├── Cargo.toml
-├── build.rs
-├── .gitignore
-├── README.md
-├── ui/
-│   ├── components/
-│   │   ├── tool-card.slint       # Material Card with icon, title, description
-│   │   └── section-header.slint  # Section title with Material typography
-│   ├── screens/
-│   │   ├── home.slint            # Responsive tool grid (2 cols phone, 3+ wide)
-│   │   ├── subnet.slint          # Subnet Calculator stub
-│   │   ├── hash.slint            # Hash Calculator stub
-│   │   ├── base64.slint          # Base64 Encoder stub
-│   │   ├── uuid.slint            # UUID Generator stub
-│   │   ├── timestamp.slint       # Timestamp Converter stub
-│   │   └── regex.slint           # Regex Tester stub
-│   └── app.slint                 # Main application window & NavigationBar shell
-├── src/
-│   ├── main.rs                   # Desktop entry point
-│   ├── lib.rs                    # Dual bin/lib root & android_main entry point
-│   ├── app.rs                    # Slint app bootstrap & navigation event loop
-│   ├── navigation.rs             # Screen routing enum and state
-│   ├── tools/
-│   │   ├── mod.rs                # Tool modules declaration
-│   │   ├── subnet.rs             # Subnet calculator API stubs
-│   │   ├── hash.rs               # Hash calculator API stubs
-│   │   ├── base64.rs             # Base64 encoder API stubs
-│   │   ├── uuid.rs               # UUID generator API stubs
-│   │   ├── timestamp.rs          # Timestamp converter API stubs
-│   │   └── regex.rs              # Regex tester API stubs
-│   └── platform/
-│       ├── mod.rs                # Platform conditional modules
-│       └── android.rs            # JNI bridge stubs (system colors, font scale)
-├── material/                     # Official Slint Material 3 component library
-└── android/                      # Gradle build files & AndroidManifest.xml
-    ├── build.gradle
-    ├── settings.gradle
-    ├── gradle.properties
-    └── app/
-        ├── build.gradle
-        └── src/main/AndroidManifest.xml
+ui/                      Slint UI markup, components, and screen layouts
+├── components/          Shared UI components (floating pill nav bar, tool cards, headers)
+└── screens/             Screen definitions for modes and tool placeholder views
+src/                     Rust application backend and lifecycle glue
+├── platform/            Android JNI bridge and native system integration
+└── tools/               Tool interface definitions and computation stubs
 ```
 
-## Implemented Tools (Stubs)
+## Roadmap
 
-| Tool | Screen | Module | Status |
-| --- | --- | --- | --- |
-| **Subnet Calculator** | `ui/screens/subnet.slint` | `src/tools/subnet.rs` | Scaffolded |
-| **Hash Calculator** | `ui/screens/hash.slint` | `src/tools/hash.rs` | Scaffolded |
-| **Base64 Encoder** | `ui/screens/base64.slint` | `src/tools/base64.rs` | Scaffolded |
-| **UUID Generator** | `ui/screens/uuid.slint` | `src/tools/uuid.rs` | Scaffolded |
-| **Timestamp Converter** | `ui/screens/timestamp.slint` | `src/tools/timestamp.rs` | Scaffolded |
-| **Regex Tester** | `ui/screens/regex.slint` | `src/tools/regex.rs` | Scaffolded |
+- Implement actual calculation and conversion logic across all tool modules
+- Query and apply dynamic color tokens (Monet) from system wallpaper
+- Incorporate Material 3 Expressive motion curves and container transforms
+- Support adaptive layouts for foldable and tablet screen form factors
+- Add unit tests for tool computation and UI state models
+
+## License
+
+License: TBD
+
+## Acknowledgements
+
+- The [Slint](https://slint.dev) project team and the authors of the Slint Material 3 component library.
+- Material Design 3 is a design system developed by Google and used here under its public specifications.
