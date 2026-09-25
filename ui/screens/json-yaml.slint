@@ -1,15 +1,30 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2026 MTRE Consulting
 
-import { Icons, TextField, OutlinedCard, ScrollView, MaterialPalette, MaterialStyleMetrics, MaterialTypography, MaterialText, OutlineButton, Icon } from "@material";
+import { Icons, TextField, ScrollView, MaterialPalette, MaterialStyleMetrics, MaterialTypography, MaterialText, StateLayerArea, Icon } from "@material";
 import { TopBar } from "../components/top-bar.slint";
+import { ToolErrorBanner } from "../components/tool-error-banner.slint";
+import { ToolActionButton } from "../components/tool-action-button.slint";
+import { ToolOutputArea } from "../components/tool-output-area.slint";
 import { AppIcons } from "../components/app-icons.slint";
 
 export component JsonYamlScreen inherits VerticalLayout {
+    in property <length> status_bar_inset: 24px;
+    in property <length> nav_bar_inset: 16px;
     callback back();
 
+    in-out property <string> source_text: "{\"name\": \"DevKit\", \"version\": \"0.1.0\"}";
+    in-out property <int> direction: 0; // 0=JSON->YAML, 1=YAML->JSON
+    in-out property <int> indent_size: 2; // 2 or 4
+    in-out property <string> converted_text: "name: DevKit\nversion: 0.1.0";
+    in-out property <string> error_message: "";
+    in-out property <bool> is_loading: false;
+
+    callback convert();
+    callback clear();
+    callback copy(string);
+
     property <bool> is_entered: false;
-    property <bool> json_to_yaml: true;
     init => { self.is_entered = true; }
 
     TopBar {
@@ -30,114 +45,183 @@ export component JsonYamlScreen inherits VerticalLayout {
         }
 
         VerticalLayout {
-            padding: MaterialStyleMetrics.padding_16;
+            padding_left: MaterialStyleMetrics.padding_16;
+            padding_right: MaterialStyleMetrics.padding_16;
+            padding_top: MaterialStyleMetrics.padding_16;
+            padding_bottom: 96px + root.nav_bar_inset;
             spacing: MaterialStyleMetrics.spacing_16;
             alignment: start;
 
-            HorizontalLayout {
-                alignment: center;
-                MaterialText {
-                    text: "Coming soon";
-                    style: MaterialTypography.label_large;
-                    color: MaterialPalette.on_surface_variant;
-                }
+            ToolErrorBanner {
+                message: root.error_message;
             }
 
-            // Direction toggle bar
+            // Direction Selector
+            MaterialText {
+                text: "CONVERSION DIRECTION";
+                style: MaterialTypography.label_large;
+                color: MaterialPalette.primary;
+            }
+
             HorizontalLayout {
                 spacing: MaterialStyleMetrics.spacing_8;
-                alignment: center;
 
                 Rectangle {
-                    background: MaterialPalette.surface_container;
-                    border_radius: MaterialStyleMetrics.border_radius_8;
+                    horizontal-stretch: 1;
                     height: 40px;
+                    border_radius: MaterialStyleMetrics.border_radius_8;
+                    background: root.direction == 0 ? MaterialPalette.primary_container : MaterialPalette.surface_container;
+                    border_width: 1px;
+                    border_color: root.direction == 0 ? MaterialPalette.primary : MaterialPalette.outline_variant.with_alpha(20%);
 
-                    HorizontalLayout {
-                        padding_left: MaterialStyleMetrics.padding_12;
-                        padding_right: MaterialStyleMetrics.padding_12;
-                        spacing: MaterialStyleMetrics.spacing_8;
-                        alignment: center;
-
-                        MaterialText {
-                            text: root.json_to_yaml ? "Mode: JSON → YAML" : "Mode: YAML → JSON";
-                            style: MaterialTypography.label_large;
-                            color: MaterialPalette.primary;
-                        }
-
-                        Icon {
-                            source: AppIcons.swap;
-                            colorize: MaterialPalette.primary;
-                            width: 20px;
-                            height: 20px;
-                        }
-                    }
-
-                    TouchArea {
-                        clicked => {
-                            root.json_to_yaml = !root.json_to_yaml;
-                        }
-                    }
-                }
-            }
-
-            // Input section
-            HorizontalLayout {
-                alignment: space-between;
-                MaterialText {
-                    text: root.json_to_yaml ? "INPUT (JSON)" : "INPUT (YAML)";
-                    style: MaterialTypography.title_small;
-                    color: MaterialPalette.primary;
-                }
-                MaterialText {
-                    text: "Clear";
-                    style: MaterialTypography.label_medium;
-                    color: MaterialPalette.on_surface_variant;
-                }
-            }
-
-            TextField {
-                label: root.json_to_yaml ? "Paste JSON payload here..." : "Paste YAML payload here...";
-                enabled: false;
-            }
-
-            // Output section
-            HorizontalLayout {
-                alignment: space-between;
-                MaterialText {
-                    text: root.json_to_yaml ? "OUTPUT (YAML)" : "OUTPUT (JSON)";
-                    style: MaterialTypography.title_small;
-                    color: MaterialPalette.primary;
-                }
-                MaterialText {
-                    text: "Copy";
-                    style: MaterialTypography.label_medium;
-                    color: MaterialPalette.primary;
-                }
-            }
-
-            OutlinedCard {
-                VerticalLayout {
-                    padding: MaterialStyleMetrics.padding_16;
-                    spacing: MaterialStyleMetrics.spacing_8;
-
-                    Rectangle {
-                        background: MaterialPalette.surface_container;
-                        border_radius: MaterialStyleMetrics.border_radius_4;
-                        min_height: 120px;
-
-                        VerticalLayout {
-                            padding: MaterialStyleMetrics.padding_12;
-                            alignment: start;
-
-                            MaterialText {
-                                text: root.json_to_yaml ? "# Converted YAML will appear here..." : "{\n  \"message\": \"Converted JSON will appear here...\"\n}";
-                                style: MaterialTypography.body_small;
-                                color: MaterialPalette.on_surface_variant;
+                    StateLayerArea {
+                        width: 100%;
+                        height: 100%;
+                        border_radius: parent.border_radius;
+                        color: MaterialPalette.primary;
+                        clicked => { root.direction = 0; }
+                        HorizontalLayout {
+                            alignment: center;
+                            VerticalLayout {
+                                alignment: center;
+                                MaterialText {
+                                    text: "JSON → YAML";
+                                    style: MaterialTypography.label_large;
+                                    color: root.direction == 0 ? MaterialPalette.on_primary_container : MaterialPalette.on_surface;
+                                }
                             }
                         }
                     }
                 }
+
+                Rectangle {
+                    horizontal-stretch: 1;
+                    height: 40px;
+                    border_radius: MaterialStyleMetrics.border_radius_8;
+                    background: root.direction == 1 ? MaterialPalette.primary_container : MaterialPalette.surface_container;
+                    border_width: 1px;
+                    border_color: root.direction == 1 ? MaterialPalette.primary : MaterialPalette.outline_variant.with_alpha(20%);
+
+                    StateLayerArea {
+                        width: 100%;
+                        height: 100%;
+                        border_radius: parent.border_radius;
+                        color: MaterialPalette.primary;
+                        clicked => { root.direction = 1; }
+                        HorizontalLayout {
+                            alignment: center;
+                            VerticalLayout {
+                                alignment: center;
+                                MaterialText {
+                                    text: "YAML → JSON";
+                                    style: MaterialTypography.label_large;
+                                    color: root.direction == 1 ? MaterialPalette.on_primary_container : MaterialPalette.on_surface;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Indentation Option
+            MaterialText {
+                text: "INDENTATION SPACES";
+                style: MaterialTypography.label_large;
+                color: MaterialPalette.primary;
+            }
+
+            HorizontalLayout {
+                spacing: MaterialStyleMetrics.spacing_8;
+
+                Rectangle {
+                    horizontal-stretch: 1;
+                    height: 36px;
+                    border_radius: MaterialStyleMetrics.border_radius_8;
+                    background: root.indent_size == 2 ? MaterialPalette.secondary_container : MaterialPalette.surface_container;
+                    border_width: 1px;
+                    border_color: root.indent_size == 2 ? MaterialPalette.primary : MaterialPalette.outline_variant.with_alpha(20%);
+
+                    StateLayerArea {
+                        width: 100%;
+                        height: 100%;
+                        border_radius: parent.border_radius;
+                        color: MaterialPalette.primary;
+                        clicked => { root.indent_size = 2; }
+                        HorizontalLayout {
+                            alignment: center;
+                            VerticalLayout {
+                                alignment: center;
+                                MaterialText {
+                                    text: "2 Spaces";
+                                    style: MaterialTypography.label_medium;
+                                    color: root.indent_size == 2 ? MaterialPalette.on_secondary_container : MaterialPalette.on_surface;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                Rectangle {
+                    horizontal-stretch: 1;
+                    height: 36px;
+                    border_radius: MaterialStyleMetrics.border_radius_8;
+                    background: root.indent_size == 4 ? MaterialPalette.secondary_container : MaterialPalette.surface_container;
+                    border_width: 1px;
+                    border_color: root.indent_size == 4 ? MaterialPalette.primary : MaterialPalette.outline_variant.with_alpha(20%);
+
+                    StateLayerArea {
+                        width: 100%;
+                        height: 100%;
+                        border_radius: parent.border_radius;
+                        color: MaterialPalette.primary;
+                        clicked => { root.indent_size = 4; }
+                        HorizontalLayout {
+                            alignment: center;
+                            VerticalLayout {
+                                alignment: center;
+                                MaterialText {
+                                    text: "4 Spaces";
+                                    style: MaterialTypography.label_medium;
+                                    color: root.indent_size == 4 ? MaterialPalette.on_secondary_container : MaterialPalette.on_surface;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Source Input
+            MaterialText {
+                text: root.direction == 0 ? "SOURCE JSON" : "SOURCE YAML";
+                style: MaterialTypography.label_large;
+                color: MaterialPalette.primary;
+            }
+
+            TextField {
+                label: root.direction == 0 ? "Paste JSON payload here..." : "Paste YAML payload here...";
+                text <=> root.source_text;
+                enabled: !root.is_loading;
+            }
+
+            ToolActionButton {
+                text: root.direction == 0 ? "Convert to YAML" : "Convert to JSON";
+                enabled: root.source_text != "" && !root.is_loading;
+                has_clear: true;
+                clicked => { root.convert(); }
+                clear => {
+                    root.source_text = "";
+                    root.converted_text = "";
+                    root.error_message = "";
+                    root.clear();
+                }
+            }
+
+            // Output Area
+            ToolOutputArea {
+                title: root.direction == 0 ? "CONVERTED YAML" : "CONVERTED JSON";
+                text: root.converted_text;
+                is_code: true;
+                copy(str) => { root.copy(str); }
             }
         }
     }
