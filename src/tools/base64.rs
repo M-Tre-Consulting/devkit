@@ -62,6 +62,18 @@ fn encode(input: &Base64Input) -> String {
     engine.encode(input.input_text.as_bytes())
 }
 
+/// Decodes the input text string from base64 format with proper padding and variant.
+fn decode(input: &Base64Input) -> Result<String, Base64Error> {
+    let engine = select_engine(input.variant, input.padding);
+    let bytes = engine
+        .decode(input.input_text.as_bytes())
+        .map_err(|e| Base64Error::InvalidBase64(e.to_string()))?;
+    let text = String::from_utf8(bytes)
+        .map_err(|_| Base64Error::InvalidBase64("Output is not valid UTF-8".to_string()))?;
+
+    Ok(text)
+}
+
 /// Dynamically selects the appropriate Base64 engine based on variant and padding.
 fn select_engine(variant: Base64Variant, padding: bool) -> GeneralPurpose {
     match (variant, padding) {
