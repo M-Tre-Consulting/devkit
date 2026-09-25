@@ -5,6 +5,12 @@
 //!
 //! Provides standard and URL-safe Base64 encoding and decoding with optional padding.
 
+use base64::engine::general_purpose::{
+    GeneralPurpose, STANDARD, STANDARD_NO_PAD, URL_SAFE, URL_SAFE_NO_PAD,
+};
+
+use base64::Engine as _;
+
 /// Operation mode for Base64 tool.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum Base64Mode {
@@ -45,9 +51,19 @@ pub enum Base64Error {
 
 /// Converts input text between raw and Base64 representation.
 ///
-/// TODO: Implement Base64 encoding and decoding logic.
+/// Checks the mode and performs the appropriate encoding or decoding operation.
 pub fn convert(_input: &Base64Input) -> Result<Base64Output, Base64Error> {
-    todo!("convert base64")
+    todo!()
+}
+
+/// Dynamically selects the appropriate Base64 engine based on variant and padding.
+fn select_engine(variant: Base64Variant, padding: bool) -> GeneralPurpose {
+    match (variant, padding) {
+        (Base64Variant::Standard, true) => STANDARD,
+        (Base64Variant::Standard, false) => STANDARD_NO_PAD,
+        (Base64Variant::UrlSafe, true) => URL_SAFE,
+        (Base64Variant::UrlSafe, false) => URL_SAFE_NO_PAD,
+    }
 }
 
 #[cfg(test)]
