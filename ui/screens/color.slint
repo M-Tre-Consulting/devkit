@@ -1,16 +1,18 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2026 MTRE Consulting
 
-import { Icons, TextField, OutlinedCard, ScrollView, MaterialPalette, MaterialStyleMetrics, MaterialTypography, MaterialText, Icon, FilterChip } from "@material";
+import { Icons, TextField, OutlinedCard, ScrollView, MaterialPalette, MaterialStyleMetrics, MaterialTypography, MaterialText, Icon, StateLayerArea } from "@material";
 import { TopBar } from "../components/top-bar.slint";
+import { ToolErrorBanner } from "../components/tool-error-banner.slint";
+import { ToolActionButton } from "../components/tool-action-button.slint";
+import { ToolOutputArea } from "../components/tool-output-area.slint";
 import { AppIcons } from "../components/app-icons.slint";
-import { ToolOutputArea, ToolActionButton, ToolErrorBanner } from "../components/tool-components.slint";
 
 export component ColorScreen inherits VerticalLayout {
     callback back();
     callback convert();
     callback select_preset(string);
-    callback copy_value(string);
+    callback copy(string);
     callback clear_input();
 
     in-out property <string> color_input: "#6750A4";
@@ -46,12 +48,15 @@ export component ColorScreen inherits VerticalLayout {
         }
 
         VerticalLayout {
-            padding: MaterialStyleMetrics.padding_16;
+            padding_left: MaterialStyleMetrics.padding_16;
+            padding_right: MaterialStyleMetrics.padding_16;
+            padding_top: MaterialStyleMetrics.padding_16;
+            padding_bottom: 96px;
             spacing: MaterialStyleMetrics.spacing_16;
             alignment: start;
 
             ToolErrorBanner {
-                error_message: root.error_message;
+                message: root.error_message;
             }
 
             // Live Preview Swatch Card
@@ -108,43 +113,131 @@ export component ColorScreen inherits VerticalLayout {
                 HorizontalLayout {
                     spacing: MaterialStyleMetrics.spacing_8;
 
-                    FilterChip {
-                        text: "Purple";
-                        selected: root.hex_output == "#6750A4";
-                        clicked => {
-                            root.color_input = "#6750A4";
-                            root.preview_color = #6750a4;
-                            root.select_preset("#6750A4");
+                    Rectangle {
+                        horizontal-stretch: 1;
+                        height: 36px;
+                        border_radius: MaterialStyleMetrics.border_radius_8;
+                        background: root.hex_output == "#6750A4" ? MaterialPalette.secondary_container : MaterialPalette.surface_container;
+                        border_width: 1px;
+                        border_color: root.hex_output == "#6750A4" ? MaterialPalette.primary : MaterialPalette.outline_variant.with_alpha(20%);
+
+                        StateLayerArea {
+                            width: 100%;
+                            height: 100%;
+                            border_radius: parent.border_radius;
+                            color: MaterialPalette.primary;
+                            clicked => {
+                                root.color_input = "#6750A4";
+                                root.preview_color = #6750a4;
+                                root.select_preset("#6750A4");
+                            }
+                            HorizontalLayout {
+                                alignment: center;
+                                VerticalLayout {
+                                    alignment: center;
+                                    MaterialText {
+                                        text: "Purple";
+                                        style: MaterialTypography.label_small;
+                                        color: MaterialPalette.on_surface;
+                                    }
+                                }
+                            }
                         }
                     }
 
-                    FilterChip {
-                        text: "Blue";
-                        selected: root.hex_output == "#2196F3";
-                        clicked => {
-                            root.color_input = "#2196F3";
-                            root.preview_color = #2196f3;
-                            root.select_preset("#2196F3");
+                    Rectangle {
+                        horizontal-stretch: 1;
+                        height: 36px;
+                        border_radius: MaterialStyleMetrics.border_radius_8;
+                        background: root.hex_output == "#2196F3" ? MaterialPalette.secondary_container : MaterialPalette.surface_container;
+                        border_width: 1px;
+                        border_color: root.hex_output == "#2196F3" ? MaterialPalette.primary : MaterialPalette.outline_variant.with_alpha(20%);
+
+                        StateLayerArea {
+                            width: 100%;
+                            height: 100%;
+                            border_radius: parent.border_radius;
+                            color: MaterialPalette.primary;
+                            clicked => {
+                                root.color_input = "#2196F3";
+                                root.preview_color = #2196f3;
+                                root.select_preset("#2196F3");
+                            }
+                            HorizontalLayout {
+                                alignment: center;
+                                VerticalLayout {
+                                    alignment: center;
+                                    MaterialText {
+                                        text: "Blue";
+                                        style: MaterialTypography.label_small;
+                                        color: MaterialPalette.on_surface;
+                                    }
+                                }
+                            }
                         }
                     }
 
-                    FilterChip {
-                        text: "Teal";
-                        selected: root.hex_output == "#009688";
-                        clicked => {
-                            root.color_input = "#009688";
-                            root.preview_color = #009688;
-                            root.select_preset("#009688");
+                    Rectangle {
+                        horizontal-stretch: 1;
+                        height: 36px;
+                        border_radius: MaterialStyleMetrics.border_radius_8;
+                        background: root.hex_output == "#009688" ? MaterialPalette.secondary_container : MaterialPalette.surface_container;
+                        border_width: 1px;
+                        border_color: root.hex_output == "#009688" ? MaterialPalette.primary : MaterialPalette.outline_variant.with_alpha(20%);
+
+                        StateLayerArea {
+                            width: 100%;
+                            height: 100%;
+                            border_radius: parent.border_radius;
+                            color: MaterialPalette.primary;
+                            clicked => {
+                                root.color_input = "#009688";
+                                root.preview_color = #009688;
+                                root.select_preset("#009688");
+                            }
+                            HorizontalLayout {
+                                alignment: center;
+                                VerticalLayout {
+                                    alignment: center;
+                                    MaterialText {
+                                        text: "Teal";
+                                        style: MaterialTypography.label_small;
+                                        color: MaterialPalette.on_surface;
+                                    }
+                                }
+                            }
                         }
                     }
 
-                    FilterChip {
-                        text: "Amber";
-                        selected: root.hex_output == "#FFC107";
-                        clicked => {
-                            root.color_input = "#FFC107";
-                            root.preview_color = #ffc107;
-                            root.select_preset("#FFC107");
+                    Rectangle {
+                        horizontal-stretch: 1;
+                        height: 36px;
+                        border_radius: MaterialStyleMetrics.border_radius_8;
+                        background: root.hex_output == "#FFC107" ? MaterialPalette.secondary_container : MaterialPalette.surface_container;
+                        border_width: 1px;
+                        border_color: root.hex_output == "#FFC107" ? MaterialPalette.primary : MaterialPalette.outline_variant.with_alpha(20%);
+
+                        StateLayerArea {
+                            width: 100%;
+                            height: 100%;
+                            border_radius: parent.border_radius;
+                            color: MaterialPalette.primary;
+                            clicked => {
+                                root.color_input = "#FFC107";
+                                root.preview_color = #ffc107;
+                                root.select_preset("#FFC107");
+                            }
+                            HorizontalLayout {
+                                alignment: center;
+                                VerticalLayout {
+                                    alignment: center;
+                                    MaterialText {
+                                        text: "Amber";
+                                        style: MaterialTypography.label_small;
+                                        color: MaterialPalette.on_surface;
+                                    }
+                                }
+                            }
                         }
                     }
                 }
@@ -161,36 +254,151 @@ export component ColorScreen inherits VerticalLayout {
                 }
 
                 HorizontalLayout {
-                    spacing: MaterialStyleMetrics.spacing_8;
+                    spacing: MaterialStyleMetrics.spacing_6;
 
-                    FilterChip {
-                        text: "Auto";
-                        selected: root.selected_format == 0;
-                        clicked => { root.selected_format = 0; }
+                    // Auto
+                    Rectangle {
+                        horizontal-stretch: 1;
+                        height: 34px;
+                        border_radius: MaterialStyleMetrics.border_radius_8;
+                        background: root.selected_format == 0 ? MaterialPalette.primary_container : MaterialPalette.surface_container;
+                        border_width: 1px;
+                        border_color: root.selected_format == 0 ? MaterialPalette.primary : MaterialPalette.outline_variant.with_alpha(20%);
+
+                        StateLayerArea {
+                            width: 100%;
+                            height: 100%;
+                            border_radius: parent.border_radius;
+                            color: MaterialPalette.primary;
+                            clicked => { root.selected_format = 0; }
+                            HorizontalLayout {
+                                alignment: center;
+                                VerticalLayout {
+                                    alignment: center;
+                                    MaterialText {
+                                        text: "Auto";
+                                        style: MaterialTypography.label_small;
+                                        color: root.selected_format == 0 ? MaterialPalette.on_primary_container : MaterialPalette.on_surface;
+                                    }
+                                }
+                            }
+                        }
                     }
 
-                    FilterChip {
-                        text: "HEX";
-                        selected: root.selected_format == 1;
-                        clicked => { root.selected_format = 1; }
+                    // HEX
+                    Rectangle {
+                        horizontal-stretch: 1;
+                        height: 34px;
+                        border_radius: MaterialStyleMetrics.border_radius_8;
+                        background: root.selected_format == 1 ? MaterialPalette.primary_container : MaterialPalette.surface_container;
+                        border_width: 1px;
+                        border_color: root.selected_format == 1 ? MaterialPalette.primary : MaterialPalette.outline_variant.with_alpha(20%);
+
+                        StateLayerArea {
+                            width: 100%;
+                            height: 100%;
+                            border_radius: parent.border_radius;
+                            color: MaterialPalette.primary;
+                            clicked => { root.selected_format = 1; }
+                            HorizontalLayout {
+                                alignment: center;
+                                VerticalLayout {
+                                    alignment: center;
+                                    MaterialText {
+                                        text: "HEX";
+                                        style: MaterialTypography.label_small;
+                                        color: root.selected_format == 1 ? MaterialPalette.on_primary_container : MaterialPalette.on_surface;
+                                    }
+                                }
+                            }
+                        }
                     }
 
-                    FilterChip {
-                        text: "RGB";
-                        selected: root.selected_format == 2;
-                        clicked => { root.selected_format = 2; }
+                    // RGB
+                    Rectangle {
+                        horizontal-stretch: 1;
+                        height: 34px;
+                        border_radius: MaterialStyleMetrics.border_radius_8;
+                        background: root.selected_format == 2 ? MaterialPalette.primary_container : MaterialPalette.surface_container;
+                        border_width: 1px;
+                        border_color: root.selected_format == 2 ? MaterialPalette.primary : MaterialPalette.outline_variant.with_alpha(20%);
+
+                        StateLayerArea {
+                            width: 100%;
+                            height: 100%;
+                            border_radius: parent.border_radius;
+                            color: MaterialPalette.primary;
+                            clicked => { root.selected_format = 2; }
+                            HorizontalLayout {
+                                alignment: center;
+                                VerticalLayout {
+                                    alignment: center;
+                                    MaterialText {
+                                        text: "RGB";
+                                        style: MaterialTypography.label_small;
+                                        color: root.selected_format == 2 ? MaterialPalette.on_primary_container : MaterialPalette.on_surface;
+                                    }
+                                }
+                            }
+                        }
                     }
 
-                    FilterChip {
-                        text: "HSL";
-                        selected: root.selected_format == 3;
-                        clicked => { root.selected_format = 3; }
+                    // HSL
+                    Rectangle {
+                        horizontal-stretch: 1;
+                        height: 34px;
+                        border_radius: MaterialStyleMetrics.border_radius_8;
+                        background: root.selected_format == 3 ? MaterialPalette.primary_container : MaterialPalette.surface_container;
+                        border_width: 1px;
+                        border_color: root.selected_format == 3 ? MaterialPalette.primary : MaterialPalette.outline_variant.with_alpha(20%);
+
+                        StateLayerArea {
+                            width: 100%;
+                            height: 100%;
+                            border_radius: parent.border_radius;
+                            color: MaterialPalette.primary;
+                            clicked => { root.selected_format = 3; }
+                            HorizontalLayout {
+                                alignment: center;
+                                VerticalLayout {
+                                    alignment: center;
+                                    MaterialText {
+                                        text: "HSL";
+                                        style: MaterialTypography.label_small;
+                                        color: root.selected_format == 3 ? MaterialPalette.on_primary_container : MaterialPalette.on_surface;
+                                    }
+                                }
+                            }
+                        }
                     }
 
-                    FilterChip {
-                        text: "HSV";
-                        selected: root.selected_format == 4;
-                        clicked => { root.selected_format = 4; }
+                    // HSV
+                    Rectangle {
+                        horizontal-stretch: 1;
+                        height: 34px;
+                        border_radius: MaterialStyleMetrics.border_radius_8;
+                        background: root.selected_format == 4 ? MaterialPalette.primary_container : MaterialPalette.surface_container;
+                        border_width: 1px;
+                        border_color: root.selected_format == 4 ? MaterialPalette.primary : MaterialPalette.outline_variant.with_alpha(20%);
+
+                        StateLayerArea {
+                            width: 100%;
+                            height: 100%;
+                            border_radius: parent.border_radius;
+                            color: MaterialPalette.primary;
+                            clicked => { root.selected_format = 4; }
+                            HorizontalLayout {
+                                alignment: center;
+                                VerticalLayout {
+                                    alignment: center;
+                                    MaterialText {
+                                        text: "HSV";
+                                        style: MaterialTypography.label_small;
+                                        color: root.selected_format == 4 ? MaterialPalette.on_primary_container : MaterialPalette.on_surface;
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -210,7 +418,6 @@ export component ColorScreen inherits VerticalLayout {
 
             ToolActionButton {
                 text: "Convert Color";
-                primary: true;
                 clicked => { root.convert(); }
             }
 
@@ -222,33 +429,33 @@ export component ColorScreen inherits VerticalLayout {
             }
 
             ToolOutputArea {
-                label: "HEX";
-                value: root.hex_output;
-                copy => { root.copy_value(root.hex_output); }
+                title: "HEX";
+                text: root.hex_output;
+                copy(val) => { root.copy(val); }
             }
 
             ToolOutputArea {
-                label: "RGB";
-                value: root.rgb_output;
-                copy => { root.copy_value(root.rgb_output); }
+                title: "RGB";
+                text: root.rgb_output;
+                copy(val) => { root.copy(val); }
             }
 
             ToolOutputArea {
-                label: "HSL";
-                value: root.hsl_output;
-                copy => { root.copy_value(root.hsl_output); }
+                title: "HSL";
+                text: root.hsl_output;
+                copy(val) => { root.copy(val); }
             }
 
             ToolOutputArea {
-                label: "HSV";
-                value: root.hsv_output;
-                copy => { root.copy_value(root.hsv_output); }
+                title: "HSV";
+                text: root.hsv_output;
+                copy(val) => { root.copy(val); }
             }
 
             ToolOutputArea {
-                label: "CMYK";
-                value: root.cmyk_output;
-                copy => { root.copy_value(root.cmyk_output); }
+                title: "CMYK";
+                text: root.cmyk_output;
+                copy(val) => { root.copy(val); }
             }
         }
     }

@@ -1,16 +1,19 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2026 MTRE Consulting
 
-import { Icons, TextField, OutlinedCard, ScrollView, MaterialPalette, MaterialStyleMetrics, MaterialTypography, MaterialText, Icon, FilterChip } from "@material";
+import { Icons, TextField, OutlinedCard, ScrollView, MaterialPalette, MaterialStyleMetrics, MaterialTypography, MaterialText, Icon, StateLayerArea } from "@material";
 import { TopBar } from "../components/top-bar.slint";
+import { ToolErrorBanner } from "../components/tool-error-banner.slint";
+import { ToolActionButton } from "../components/tool-action-button.slint";
+import { ToolOutputArea } from "../components/tool-output-area.slint";
 import { AppIcons } from "../components/app-icons.slint";
-import { ToolOutputArea, ToolActionButton, ToolErrorBanner } from "../components/tool-components.slint";
 
 export component ContrastScreen inherits VerticalLayout {
     callback back();
     callback check_contrast();
     callback swap_colors();
     callback select_preset(string, string);
+    callback copy(string);
 
     in-out property <string> fg_color_text: "#FFFFFF";
     in-out property <string> bg_color_text: "#6750A4";
@@ -46,12 +49,15 @@ export component ContrastScreen inherits VerticalLayout {
         }
 
         VerticalLayout {
-            padding: MaterialStyleMetrics.padding_16;
+            padding_left: MaterialStyleMetrics.padding_16;
+            padding_right: MaterialStyleMetrics.padding_16;
+            padding_top: MaterialStyleMetrics.padding_16;
+            padding_bottom: 96px;
             spacing: MaterialStyleMetrics.spacing_16;
             alignment: start;
 
             ToolErrorBanner {
-                error_message: root.error_message;
+                message: root.error_message;
             }
 
             // Presets
@@ -67,39 +73,105 @@ export component ContrastScreen inherits VerticalLayout {
                 HorizontalLayout {
                     spacing: MaterialStyleMetrics.spacing_8;
 
-                    FilterChip {
-                        text: "White/Purple";
-                        selected: root.fg_color_text == "#FFFFFF" && root.bg_color_text == "#6750A4";
-                        clicked => {
-                            root.fg_color_text = "#FFFFFF";
-                            root.bg_color_text = "#6750A4";
-                            root.fg_color = #ffffff;
-                            root.bg_color = #6750a4;
-                            root.select_preset("#FFFFFF", "#6750A4");
+                    Rectangle {
+                        horizontal-stretch: 1;
+                        height: 36px;
+                        border_radius: MaterialStyleMetrics.border_radius_8;
+                        background: root.fg_color_text == "#FFFFFF" && root.bg_color_text == "#6750A4" ? MaterialPalette.secondary_container : MaterialPalette.surface_container;
+                        border_width: 1px;
+                        border_color: root.fg_color_text == "#FFFFFF" && root.bg_color_text == "#6750A4" ? MaterialPalette.primary : MaterialPalette.outline_variant.with_alpha(20%);
+
+                        StateLayerArea {
+                            width: 100%;
+                            height: 100%;
+                            border_radius: parent.border_radius;
+                            color: MaterialPalette.primary;
+                            clicked => {
+                                root.fg_color_text = "#FFFFFF";
+                                root.bg_color_text = "#6750A4";
+                                root.fg_color = #ffffff;
+                                root.bg_color = #6750a4;
+                                root.select_preset("#FFFFFF", "#6750A4");
+                            }
+                            HorizontalLayout {
+                                alignment: center;
+                                VerticalLayout {
+                                    alignment: center;
+                                    MaterialText {
+                                        text: "White/Purple";
+                                        style: MaterialTypography.label_small;
+                                        color: MaterialPalette.on_surface;
+                                    }
+                                }
+                            }
                         }
                     }
 
-                    FilterChip {
-                        text: "Dark/Light";
-                        selected: root.fg_color_text == "#1C1B1F" && root.bg_color_text == "#F4EFF4";
-                        clicked => {
-                            root.fg_color_text = "#1C1B1F";
-                            root.bg_color_text = "#F4EFF4";
-                            root.fg_color = #1c1b1f;
-                            root.bg_color = #f4eff4;
-                            root.select_preset("#1C1B1F", "#F4EFF4");
+                    Rectangle {
+                        horizontal-stretch: 1;
+                        height: 36px;
+                        border_radius: MaterialStyleMetrics.border_radius_8;
+                        background: root.fg_color_text == "#1C1B1F" && root.bg_color_text == "#F4EFF4" ? MaterialPalette.secondary_container : MaterialPalette.surface_container;
+                        border_width: 1px;
+                        border_color: root.fg_color_text == "#1C1B1F" && root.bg_color_text == "#F4EFF4" ? MaterialPalette.primary : MaterialPalette.outline_variant.with_alpha(20%);
+
+                        StateLayerArea {
+                            width: 100%;
+                            height: 100%;
+                            border_radius: parent.border_radius;
+                            color: MaterialPalette.primary;
+                            clicked => {
+                                root.fg_color_text = "#1C1B1F";
+                                root.bg_color_text = "#F4EFF4";
+                                root.fg_color = #1c1b1f;
+                                root.bg_color = #f4eff4;
+                                root.select_preset("#1C1B1F", "#F4EFF4");
+                            }
+                            HorizontalLayout {
+                                alignment: center;
+                                VerticalLayout {
+                                    alignment: center;
+                                    MaterialText {
+                                        text: "Dark/Light";
+                                        style: MaterialTypography.label_small;
+                                        color: MaterialPalette.on_surface;
+                                    }
+                                }
+                            }
                         }
                     }
 
-                    FilterChip {
-                        text: "Light/Dark";
-                        selected: root.fg_color_text == "#E6E1E5" && root.bg_color_text == "#1C1B1F";
-                        clicked => {
-                            root.fg_color_text = "#E6E1E5";
-                            root.bg_color_text = "#1C1B1F";
-                            root.fg_color = #e6e1e5;
-                            root.bg_color = #1c1b1f;
-                            root.select_preset("#E6E1E5", "#1C1B1F");
+                    Rectangle {
+                        horizontal-stretch: 1;
+                        height: 36px;
+                        border_radius: MaterialStyleMetrics.border_radius_8;
+                        background: root.fg_color_text == "#E6E1E5" && root.bg_color_text == "#1C1B1F" ? MaterialPalette.secondary_container : MaterialPalette.surface_container;
+                        border_width: 1px;
+                        border_color: root.fg_color_text == "#E6E1E5" && root.bg_color_text == "#1C1B1F" ? MaterialPalette.primary : MaterialPalette.outline_variant.with_alpha(20%);
+
+                        StateLayerArea {
+                            width: 100%;
+                            height: 100%;
+                            border_radius: parent.border_radius;
+                            color: MaterialPalette.primary;
+                            clicked => {
+                                root.fg_color_text = "#E6E1E5";
+                                root.bg_color_text = "#1C1B1F";
+                                root.fg_color = #e6e1e5;
+                                root.bg_color = #1c1b1f;
+                                root.select_preset("#E6E1E5", "#1C1B1F");
+                            }
+                            HorizontalLayout {
+                                alignment: center;
+                                VerticalLayout {
+                                    alignment: center;
+                                    MaterialText {
+                                        text: "Light/Dark";
+                                        style: MaterialTypography.label_small;
+                                        color: MaterialPalette.on_surface;
+                                    }
+                                }
+                            }
                         }
                     }
                 }
@@ -133,7 +205,6 @@ export component ContrastScreen inherits VerticalLayout {
 
                     ToolActionButton {
                         text: "⇄";
-                        primary: false;
                         clicked => {
                             root.swap_colors();
                         }
@@ -200,7 +271,6 @@ export component ContrastScreen inherits VerticalLayout {
 
             ToolActionButton {
                 text: "Check Contrast Ratio";
-                primary: true;
                 clicked => { root.check_contrast(); }
             }
 

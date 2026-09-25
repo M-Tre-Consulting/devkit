@@ -20,15 +20,8 @@ pub fn run() -> Result<(), slint::PlatformError> {
 
 pub fn update_favorites(ui: &crate::AppWindow) {
     let favs = crate::storage::load_favorites();
-    let model = ModelRc::new(VecModel::from(vec![
-        false,
-        favs.contains(&1),
-        favs.contains(&2),
-        favs.contains(&3),
-        favs.contains(&4),
-        favs.contains(&5),
-        favs.contains(&6),
-    ]));
+    let items: Vec<bool> = (0..=14).map(|i| i > 0 && favs.contains(&i)).collect();
+    let model = ModelRc::new(VecModel::from(items));
     ui.set_tool_favorites(model);
 }
 
@@ -38,9 +31,87 @@ pub fn update_recents(ui: &crate::AppWindow) {
     ui.set_recent_tools(model);
 }
 
+pub fn setup_tool_handlers(ui: &crate::AppWindow) {
+    // 1. Subnet Calculator
+    ui.on_calculate_subnet(move |ip| {
+        let _ = crate::tools::handlers::handle_subnet(&ip);
+    });
+
+    // 2. Hash Calculator
+    ui.on_calculate_hash(move |text, algo| {
+        let _ = crate::tools::handlers::handle_hash(&text, algo);
+    });
+
+    // 3. Base64
+    ui.on_convert_base64(move |text, is_enc, is_url, pad| {
+        let _ = crate::tools::handlers::handle_base64(&text, is_enc, is_url, pad);
+    });
+
+    // 4. UUID Generator
+    ui.on_generate_uuid(move |ver, count, upper, hyphens| {
+        let _ = crate::tools::handlers::handle_uuid(ver, count as usize, upper, hyphens);
+    });
+
+    // 5. Timestamp Converter
+    ui.on_convert_timestamp(move |ts, tz| {
+        let _ = crate::tools::handlers::handle_timestamp(&ts, &tz);
+    });
+
+    // 6. Regex Tester
+    ui.on_evaluate_regex(move |pat, text, ci, ml, dot| {
+        let _ = crate::tools::handlers::handle_regex(&pat, &text, ci, ml, dot);
+    });
+
+    // 7. JSON ↔ YAML Converter
+    ui.on_convert_json_yaml(move |src, is_j2y, ind| {
+        let _ = crate::tools::handlers::handle_json_yaml(&src, is_j2y, ind as usize);
+    });
+
+    // 8. CRON Parser
+    ui.on_parse_cron(move |expr| {
+        let _ = crate::tools::handlers::handle_cron(&expr);
+    });
+
+    // 9. GZip Compressor
+    ui.on_process_gzip(move |data, is_comp| {
+        let _ = crate::tools::handlers::handle_gzip(&data, is_comp);
+    });
+
+    // 10. Code Formatter
+    ui.on_format_code(move |src, lang, ind| {
+        let _ = crate::tools::handlers::handle_formatter(&src, lang, ind as u8);
+    });
+
+    // 11. Chmod Calculator
+    ui.on_calculate_chmod(move |or, ow, ox, gr, gw, gx, tr, tw, tx| {
+        let _ = crate::tools::handlers::handle_chmod(or, ow, ox, gr, gw, gx, tr, tw, tx);
+    });
+
+    // 12. Color Converter
+    ui.on_convert_color(move |val, fmt| {
+        let _ = crate::tools::handlers::handle_color(&val, fmt);
+    });
+
+    // 13. Contrast Checker
+    ui.on_check_contrast(move |fg, bg| {
+        let _ = crate::tools::handlers::handle_contrast(&fg, &bg);
+    });
+
+    // 14. JWT Decoder
+    ui.on_decode_jwt(move |token| {
+        let _ = crate::tools::handlers::handle_jwt(&token);
+    });
+
+    // Clipboard copy action
+    ui.on_copy_text(move |_text| {
+        // Ready for system clipboard integration
+    });
+}
+
 pub fn setup_app_state(ui: &crate::AppWindow) {
     update_favorites(ui);
     update_recents(ui);
+    setup_tool_handlers(ui);
 
     let nav_state = Rc::new(RefCell::new(NavigationState::new()));
 

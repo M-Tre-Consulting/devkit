@@ -11,11 +11,11 @@ export component FavoritesScreen inherits VerticalLayout {
     in property <bool> is_wide: root.width >= 600px;
     in property <length> status_bar_inset: 24px;
     in property <length> nav_bar_inset: 16px;
-    in property <[bool]> tool_favorites: [false, false, false, false, false, false, false];
+    in property <[bool]> tool_favorites: [false, false, false, false, false, false, false, false, false, false, false, false, false, false, false];
     callback open_tool(int);
     callback toggle_favorite(int);
 
-    property <bool> has_favorites: root.tool_favorites[1] || root.tool_favorites[2] || root.tool_favorites[3] || root.tool_favorites[4] || root.tool_favorites[5] || root.tool_favorites[6];
+    property <bool> has_favorites: root.tool_favorites[1] || root.tool_favorites[2] || root.tool_favorites[3] || root.tool_favorites[4] || root.tool_favorites[5] || root.tool_favorites[6] || root.tool_favorites[7] || root.tool_favorites[8] || root.tool_favorites[9] || root.tool_favorites[10] || root.tool_favorites[11] || root.tool_favorites[12] || root.tool_favorites[13] || root.tool_favorites[14];
 
     // Status bar clearance
     Rectangle {
@@ -184,6 +184,86 @@ export component FavoritesScreen inherits VerticalLayout {
                     is_favorite: true;
                     clicked => { root.open_tool(6); }
                     toggle_favorite => { root.toggle_favorite(6); }
+                }
+
+                if root.tool_favorites[7] : ToolCard {
+                    title: "JSON ↔ YAML";
+                    description: "Convert between formats";
+                    icon: AppIcons.swap;
+                    accent_color: #0288d1;
+                    is_favorite: true;
+                    clicked => { root.open_tool(7); }
+                    toggle_favorite => { root.toggle_favorite(7); }
+                }
+
+                if root.tool_favorites[8] : ToolCard {
+                    title: "CRON Parser";
+                    description: "Parse schedule syntax";
+                    icon: AppIcons.schedule;
+                    accent_color: #7b1fa2;
+                    is_favorite: true;
+                    clicked => { root.open_tool(8); }
+                    toggle_favorite => { root.toggle_favorite(8); }
+                }
+
+                if root.tool_favorites[9] : ToolCard {
+                    title: "GZip";
+                    description: "Compress & decompress";
+                    icon: AppIcons.archive;
+                    accent_color: #c2185b;
+                    is_favorite: true;
+                    clicked => { root.open_tool(9); }
+                    toggle_favorite => { root.toggle_favorite(9); }
+                }
+
+                if root.tool_favorites[10] : ToolCard {
+                    title: "Code Formatter";
+                    description: "Format code syntax";
+                    icon: AppIcons.formatter;
+                    accent_color: #0097a7;
+                    is_favorite: true;
+                    clicked => { root.open_tool(10); }
+                    toggle_favorite => { root.toggle_favorite(10); }
+                }
+
+                if root.tool_favorites[11] : ToolCard {
+                    title: "Chmod Calculator";
+                    description: "Octal & symbolic bits";
+                    icon: AppIcons.security;
+                    accent_color: #388e3c;
+                    is_favorite: true;
+                    clicked => { root.open_tool(11); }
+                    toggle_favorite => { root.toggle_favorite(11); }
+                }
+
+                if root.tool_favorites[12] : ToolCard {
+                    title: "Color Converter";
+                    description: "HEX, RGB, HSL values";
+                    icon: AppIcons.palette;
+                    accent_color: #f57c00;
+                    is_favorite: true;
+                    clicked => { root.open_tool(12); }
+                    toggle_favorite => { root.toggle_favorite(12); }
+                }
+
+                if root.tool_favorites[13] : ToolCard {
+                    title: "Contrast Checker";
+                    description: "WCAG contrast ratio";
+                    icon: AppIcons.contrast;
+                    accent_color: #512da8;
+                    is_favorite: true;
+                    clicked => { root.open_tool(13); }
+                    toggle_favorite => { root.toggle_favorite(13); }
+                }
+
+                if root.tool_favorites[14] : ToolCard {
+                    title: "JWT Decoder";
+                    description: "Decode headers & claims";
+                    icon: AppIcons.key;
+                    accent_color: #e64a19;
+                    is_favorite: true;
+                    clicked => { root.open_tool(14); }
+                    toggle_favorite => { root.toggle_favorite(14); }
                 }
             }
         }

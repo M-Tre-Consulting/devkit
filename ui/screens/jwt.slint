@@ -1,16 +1,18 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2026 MTRE Consulting
 
-import { Icons, TextField, OutlinedCard, ScrollView, MaterialPalette, MaterialStyleMetrics, MaterialTypography, MaterialText, Icon, FilterChip } from "@material";
+import { Icons, TextField, OutlinedCard, ScrollView, MaterialPalette, MaterialStyleMetrics, MaterialTypography, MaterialText, Icon, StateLayerArea } from "@material";
 import { TopBar } from "../components/top-bar.slint";
+import { ToolErrorBanner } from "../components/tool-error-banner.slint";
+import { ToolActionButton } from "../components/tool-action-button.slint";
+import { ToolOutputArea } from "../components/tool-output-area.slint";
 import { AppIcons } from "../components/app-icons.slint";
-import { ToolOutputArea, ToolActionButton, ToolErrorBanner } from "../components/tool-components.slint";
 
 export component JwtScreen inherits VerticalLayout {
     callback back();
     callback decode();
     callback paste_example();
-    callback copy_value(string);
+    callback copy(string);
 
     in-out property <string> token_input: "";
     in-out property <string> header_json: "{\n  \"alg\": \"HS256\",\n  \"typ\": \"JWT\"\n}";
@@ -42,12 +44,15 @@ export component JwtScreen inherits VerticalLayout {
         }
 
         VerticalLayout {
-            padding: MaterialStyleMetrics.padding_16;
+            padding_left: MaterialStyleMetrics.padding_16;
+            padding_right: MaterialStyleMetrics.padding_16;
+            padding_top: MaterialStyleMetrics.padding_16;
+            padding_bottom: 96px;
             spacing: MaterialStyleMetrics.spacing_16;
             alignment: start;
 
             ToolErrorBanner {
-                error_message: root.error_message;
+                message: root.error_message;
             }
 
             // Presets / Actions
@@ -60,12 +65,35 @@ export component JwtScreen inherits VerticalLayout {
                     color: MaterialPalette.primary;
                 }
 
-                FilterChip {
-                    text: "Paste Example";
-                    selected: false;
-                    clicked => {
-                        root.token_input = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c";
-                        root.paste_example();
+                Rectangle {
+                    height: 32px;
+                    border_radius: MaterialStyleMetrics.border_radius_8;
+                    background: MaterialPalette.surface_container_high;
+                    border_width: 1px;
+                    border_color: MaterialPalette.outline_variant.with_alpha(20%);
+
+                    StateLayerArea {
+                        width: 100%;
+                        height: 100%;
+                        border_radius: parent.border_radius;
+                        color: MaterialPalette.primary;
+                        clicked => {
+                            root.token_input = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c";
+                            root.paste_example();
+                        }
+                        HorizontalLayout {
+                            padding_left: 12px;
+                            padding_right: 12px;
+                            alignment: center;
+                            VerticalLayout {
+                                alignment: center;
+                                MaterialText {
+                                    text: "Paste Example";
+                                    style: MaterialTypography.label_small;
+                                    color: MaterialPalette.primary;
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -78,7 +106,6 @@ export component JwtScreen inherits VerticalLayout {
 
             ToolActionButton {
                 text: "Decode JWT";
-                primary: true;
                 clicked => { root.decode(); }
             }
 
@@ -156,9 +183,9 @@ export component JwtScreen inherits VerticalLayout {
             }
 
             ToolOutputArea {
-                label: "Decoded JSON Header";
-                value: root.header_json;
-                copy => { root.copy_value(root.header_json); }
+                title: "Decoded JSON Header";
+                text: root.header_json;
+                copy(val) => { root.copy(val); }
             }
 
             // Payload Section
@@ -169,9 +196,9 @@ export component JwtScreen inherits VerticalLayout {
             }
 
             ToolOutputArea {
-                label: "Decoded JSON Payload";
-                value: root.payload_json;
-                copy => { root.copy_value(root.payload_json); }
+                title: "Decoded JSON Payload";
+                text: root.payload_json;
+                copy(val) => { root.copy(val); }
             }
 
             // Signature Section
@@ -182,9 +209,9 @@ export component JwtScreen inherits VerticalLayout {
             }
 
             ToolOutputArea {
-                label: "Raw Signature";
-                value: root.signature_output;
-                copy => { root.copy_value(root.signature_output); }
+                title: "Raw Signature";
+                text: root.signature_output;
+                copy(val) => { root.copy(val); }
             }
         }
     }

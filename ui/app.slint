@@ -13,6 +13,14 @@ import { Base64Screen } from "./screens/base64.slint";
 import { UuidScreen } from "./screens/uuid.slint";
 import { TimestampScreen } from "./screens/timestamp.slint";
 import { RegexScreen } from "./screens/regex.slint";
+import { JsonYamlScreen } from "./screens/json-yaml.slint";
+import { CronScreen } from "./screens/cron.slint";
+import { GzipScreen } from "./screens/gzip.slint";
+import { FormatterScreen } from "./screens/formatter.slint";
+import { ChmodScreen } from "./screens/chmod.slint";
+import { ColorScreen } from "./screens/color.slint";
+import { ContrastScreen } from "./screens/contrast.slint";
+import { JwtScreen } from "./screens/jwt.slint";
 import { PillNavBar } from "./components/pill-nav-bar.slint";
 import { AppIcons } from "./components/app-icons.slint";
 export { MaterialWindowAdapter } from "@material";
@@ -28,10 +36,12 @@ export component AppWindow inherits Window {
     in-out property <length> status_bar_inset: 24px;
     in-out property <length> nav_bar_inset: 16px;
     property <length> pill_bottom_margin: 28px;
-    in-out property <[bool]> tool_favorites: [false, false, false, false, false, false, false];
+    in-out property <[bool]> tool_favorites: [false, false, false, false, false, false, false, false, false, false, false, false, false, false, false];
     in-out property <[int]> recent_tools: [];
     in-out property <bool> modal_open: false;
     in-out property <bool> about_open: false;
+
+    // Navigation and state callbacks
     callback switch_mode(int);
     callback open_tool(int);
     callback toggle_favorite(int);
@@ -40,6 +50,23 @@ export component AppWindow inherits Window {
     callback open_about();
     callback back();
     callback handle_back() -> bool;
+    callback copy_text(string);
+
+    // Tool execution callbacks
+    callback calculate_subnet(string);
+    callback calculate_hash(string, int);
+    callback convert_base64(string, bool, bool, bool);
+    callback generate_uuid(int, int, bool, bool);
+    callback convert_timestamp(string, string);
+    callback evaluate_regex(string, string, bool, bool, bool);
+    callback convert_json_yaml(string, bool, int);
+    callback parse_cron(string);
+    callback process_gzip(string, bool);
+    callback format_code(string, int, int);
+    callback calculate_chmod(bool, bool, bool, bool, bool, bool, bool, bool, bool);
+    callback convert_color(string, int);
+    callback check_contrast(string, string);
+    callback decode_jwt(string);
 
     property <int> last_tool: 1;
     changed active_tool => {
@@ -83,232 +110,298 @@ export component AppWindow inherits Window {
         }
 
         // Base layer: Mode Screens (0: Home, 1: Recent, 2: Favorites, 3: Settings)
-    mode_container := Rectangle {
-        x: (parent.width - self.width) / 2;
-        y: (parent.height - self.height) / 2;
-        width: parent.width * (root.is_tool ? 0.96 : 1.0);
-        height: parent.height * (root.is_tool ? 0.96 : 1.0);
-        opacity: root.is_tool ? 0.0 : 1.0;
-        visible: self.opacity > 0.01;
+        mode_container := Rectangle {
+            x: (parent.width - self.width) / 2;
+            y: (parent.height - self.height) / 2;
+            width: parent.width * (root.is_tool ? 0.96 : 1.0);
+            height: parent.height * (root.is_tool ? 0.96 : 1.0);
+            opacity: root.is_tool ? 0.0 : 1.0;
+            visible: self.opacity > 0.01;
 
-        animate width, height, opacity {
-            duration: root.is_tool ? 240ms : 220ms;
-            easing: cubic-bezier(0.05, 0.7, 0.1, 1.0);
+            animate width, height, opacity {
+                duration: root.is_tool ? 240ms : 220ms;
+                easing: cubic-bezier(0.05, 0.7, 0.1, 1.0);
+            }
+
+            // Screen 0: Home
+            screen_0 := Rectangle {
+                property <bool> is_active: root.current_mode == 0;
+                x: self.is_active ? 0px : (0 > root.current_mode ? 24px : -24px);
+                opacity: self.is_active ? 1.0 : 0.0;
+                visible: self.opacity > 0.01;
+                width: 100%;
+                height: 100%;
+
+                animate x {
+                    duration: self.is_active ? 260ms : 180ms;
+                    easing: self.is_active ? cubic-bezier(0.05, 0.7, 0.1, 1.0) : cubic-bezier(0.3, 0, 1, 1);
+                }
+                animate opacity {
+                    duration: self.is_active ? 260ms : 180ms;
+                    easing: self.is_active ? cubic-bezier(0.05, 0.7, 0.1, 1.0) : cubic-bezier(0.3, 0, 1, 1);
+                }
+
+                HomeScreen {
+                    status_bar_inset: root.status_bar_inset;
+                    nav_bar_inset: root.nav_bar_inset;
+                    tool_favorites: root.tool_favorites;
+                    open_tool(id) => {
+                        root.open_tool(id);
+                    }
+                    toggle_favorite(id) => {
+                        root.toggle_favorite(id);
+                    }
+                }
+            }
+
+            // Screen 1: Recent
+            screen_1 := Rectangle {
+                property <bool> is_active: root.current_mode == 1;
+                x: self.is_active ? 0px : (1 > root.current_mode ? 24px : -24px);
+                opacity: self.is_active ? 1.0 : 0.0;
+                visible: self.opacity > 0.01;
+                width: 100%;
+                height: 100%;
+
+                animate x {
+                    duration: self.is_active ? 260ms : 180ms;
+                    easing: self.is_active ? cubic-bezier(0.05, 0.7, 0.1, 1.0) : cubic-bezier(0.3, 0, 1, 1);
+                }
+                animate opacity {
+                    duration: self.is_active ? 260ms : 180ms;
+                    easing: self.is_active ? cubic-bezier(0.05, 0.7, 0.1, 1.0) : cubic-bezier(0.3, 0, 1, 1);
+                }
+
+                RecentScreen {
+                    status_bar_inset: root.status_bar_inset;
+                    nav_bar_inset: root.nav_bar_inset;
+                    recent_tools: root.recent_tools;
+                    tool_favorites: root.tool_favorites;
+                    open_tool(id) => {
+                        root.open_tool(id);
+                    }
+                    toggle_favorite(id) => {
+                        root.toggle_favorite(id);
+                    }
+                }
+            }
+
+            // Screen 2: Favorites
+            screen_2 := Rectangle {
+                property <bool> is_active: root.current_mode == 2;
+                x: self.is_active ? 0px : (2 > root.current_mode ? 24px : -24px);
+                opacity: self.is_active ? 1.0 : 0.0;
+                visible: self.opacity > 0.01;
+                width: 100%;
+                height: 100%;
+
+                animate x {
+                    duration: self.is_active ? 260ms : 180ms;
+                    easing: self.is_active ? cubic-bezier(0.05, 0.7, 0.1, 1.0) : cubic-bezier(0.3, 0, 1, 1);
+                }
+                animate opacity {
+                    duration: self.is_active ? 260ms : 180ms;
+                    easing: self.is_active ? cubic-bezier(0.05, 0.7, 0.1, 1.0) : cubic-bezier(0.3, 0, 1, 1);
+                }
+
+                FavoritesScreen {
+                    status_bar_inset: root.status_bar_inset;
+                    nav_bar_inset: root.nav_bar_inset;
+                    tool_favorites: root.tool_favorites;
+                    open_tool(id) => {
+                        root.open_tool(id);
+                    }
+                    toggle_favorite(id) => {
+                        root.toggle_favorite(id);
+                    }
+                }
+            }
+
+            // Screen 3: Settings
+            screen_3 := Rectangle {
+                property <bool> is_active: root.current_mode == 3;
+                x: self.is_active ? 0px : (3 > root.current_mode ? 24px : -24px);
+                opacity: self.is_active ? 1.0 : 0.0;
+                visible: self.opacity > 0.01;
+                width: 100%;
+                height: 100%;
+
+                animate x {
+                    duration: self.is_active ? 260ms : 180ms;
+                    easing: self.is_active ? cubic-bezier(0.05, 0.7, 0.1, 1.0) : cubic-bezier(0.3, 0, 1, 1);
+                }
+                animate opacity {
+                    duration: self.is_active ? 260ms : 180ms;
+                    easing: self.is_active ? cubic-bezier(0.05, 0.7, 0.1, 1.0) : cubic-bezier(0.3, 0, 1, 1);
+                }
+
+                SettingsScreen {
+                    status_bar_inset: root.status_bar_inset;
+                    nav_bar_inset: root.nav_bar_inset;
+                    clear_recents => {
+                        root.clear_recents();
+                    }
+                    clear_favorites => {
+                        root.clear_favorites();
+                    }
+                    open_about => {
+                        root.open_about();
+                    }
+                }
+            }
         }
 
-        // Screen 0: Home
-        screen_0 := Rectangle {
-            property <bool> is_active: root.current_mode == 0;
-            x: self.is_active ? 0px : (0 > root.current_mode ? 24px : -24px);
-            opacity: self.is_active ? 1.0 : 0.0;
-            visible: self.opacity > 0.01;
+        // Overlay layer: Tool Screen with slide and fade transition
+        tool_container := Rectangle {
+            x: root.is_tool ? 0px : (root.width * 0.15);
+            y: root.status_bar_inset;
             width: 100%;
-            height: 100%;
+            height: parent.height - root.status_bar_inset;
+            opacity: root.is_tool ? 1.0 : 0.0;
+            visible: self.opacity > 0.01;
 
             animate x {
-                duration: self.is_active ? 260ms : 180ms;
-                easing: self.is_active ? cubic-bezier(0.05, 0.7, 0.1, 1.0) : cubic-bezier(0.3, 0, 1, 1);
+                duration: root.is_tool ? 280ms : 200ms;
+                easing: root.is_tool ? cubic-bezier(0.05, 0.7, 0.1, 1.0) : cubic-bezier(0.3, 0.0, 0.8, 0.15);
             }
             animate opacity {
-                duration: self.is_active ? 260ms : 180ms;
-                easing: self.is_active ? cubic-bezier(0.05, 0.7, 0.1, 1.0) : cubic-bezier(0.3, 0, 1, 1);
+                duration: root.is_tool ? 260ms : 200ms;
+                easing: root.is_tool ? cubic-bezier(0.05, 0.7, 0.1, 1.0) : cubic-bezier(0.3, 0.0, 0.8, 0.15);
             }
 
-            HomeScreen {
+            if root.displayed_tool == 1 : SubnetScreen {
+                back => { root.back(); }
+                calculate => { root.calculate_subnet(self.ip_input); }
+                copy(val) => { root.copy_text(val); }
+            }
+
+            if root.displayed_tool == 2 : HashScreen {
+                back => { root.back(); }
+                calculate => { root.calculate_hash(self.input_text, self.selected_algorithm); }
+                copy(val) => { root.copy_text(val); }
+            }
+
+            if root.displayed_tool == 3 : Base64Screen {
+                back => { root.back(); }
+                convert => { root.convert_base64(self.input_text, self.mode == 0, self.variant == 1, self.use_padding); }
+                copy(val) => { root.copy_text(val); }
+            }
+
+            if root.displayed_tool == 4 : UuidScreen {
+                back => { root.back(); }
+                generate => { root.generate_uuid(self.version, self.count, self.uppercase, self.hyphens); }
+                copy(val) => { root.copy_text(val); }
+            }
+
+            if root.displayed_tool == 5 : TimestampScreen {
+                back => { root.back(); }
+                convert => { root.convert_timestamp(self.input_value, self.timezone == 0 ? "UTC" : "Local"); }
+                copy(val) => { root.copy_text(val); }
+            }
+
+            if root.displayed_tool == 6 : RegexScreen {
+                back => { root.back(); }
+                evaluate => { root.evaluate_regex(self.pattern, self.test_string, self.case_insensitive, self.multiline, self.dot_matches_newline); }
+                copy(val) => { root.copy_text(val); }
+            }
+
+            if root.displayed_tool == 7 : JsonYamlScreen {
+                back => { root.back(); }
+                convert => { root.convert_json_yaml(self.source_text, self.direction == 0, self.indent_size); }
+                copy(val) => { root.copy_text(val); }
+            }
+
+            if root.displayed_tool == 8 : CronScreen {
+                back => { root.back(); }
+                parse => { root.parse_cron(self.expression); }
+                copy(val) => { root.copy_text(val); }
+            }
+
+            if root.displayed_tool == 9 : GzipScreen {
+                back => { root.back(); }
+                process => { root.process_gzip(self.input_data, self.mode == 0); }
+                copy(val) => { root.copy_text(val); }
+            }
+
+            if root.displayed_tool == 10 : FormatterScreen {
+                back => { root.back(); }
+                format => { root.format_code(self.source_code, self.selected_lang, self.indent_size); }
+                copy(val) => { root.copy_text(val); }
+            }
+
+            if root.displayed_tool == 11 : ChmodScreen {
+                back => { root.back(); }
+                calculate => {
+                    root.calculate_chmod(
+                        self.owner_r, self.owner_w, self.owner_x,
+                        self.group_r, self.group_w, self.group_x,
+                        self.other_r, self.other_w, self.other_x,
+                    );
+                }
+                copy(val) => { root.copy_text(val); }
+            }
+
+            if root.displayed_tool == 12 : ColorScreen {
+                back => { root.back(); }
+                convert => { root.convert_color(self.color_input, self.selected_format); }
+                copy(val) => { root.copy_text(val); }
+            }
+
+            if root.displayed_tool == 13 : ContrastScreen {
+                back => { root.back(); }
+                check_contrast => { root.check_contrast(self.fg_color_text, self.bg_color_text); }
+                copy(val) => { root.copy_text(val); }
+            }
+
+            if root.displayed_tool == 14 : JwtScreen {
+                back => { root.back(); }
+                decode => { root.decode_jwt(self.token_input); }
+                copy(val) => { root.copy_text(val); }
+            }
+        }
+
+        // Overlay layer: About Screen with slide and fade transition
+        about_container := Rectangle {
+            background: MaterialPalette.surface;
+            x: root.about_open ? 0px : (root.width * 0.15);
+            y: 0px;
+            width: 100%;
+            height: parent.height;
+            opacity: root.about_open ? 1.0 : 0.0;
+            visible: self.opacity > 0.01;
+
+            animate x {
+                duration: root.about_open ? 280ms : 200ms;
+                easing: root.about_open ? cubic-bezier(0.05, 0.7, 0.1, 1.0) : cubic-bezier(0.3, 0.0, 0.8, 0.15);
+            }
+            animate opacity {
+                duration: root.about_open ? 260ms : 200ms;
+                easing: root.about_open ? cubic-bezier(0.05, 0.7, 0.1, 1.0) : cubic-bezier(0.3, 0.0, 0.8, 0.15);
+            }
+
+            AboutScreen {
                 status_bar_inset: root.status_bar_inset;
                 nav_bar_inset: root.nav_bar_inset;
-                tool_favorites: root.tool_favorites;
-                open_tool(id) => {
-                    root.open_tool(id);
-                }
-                toggle_favorite(id) => {
-                    root.toggle_favorite(id);
+                back => {
+                    root.back();
                 }
             }
         }
 
-        // Screen 1: Recent
-        screen_1 := Rectangle {
-            property <bool> is_active: root.current_mode == 1;
-            x: self.is_active ? 0px : (1 > root.current_mode ? 24px : -24px);
-            opacity: self.is_active ? 1.0 : 0.0;
-            visible: self.opacity > 0.01;
-            width: 100%;
-            height: 100%;
-
-            animate x {
-                duration: self.is_active ? 260ms : 180ms;
-                easing: self.is_active ? cubic-bezier(0.05, 0.7, 0.1, 1.0) : cubic-bezier(0.3, 0, 1, 1);
-            }
-            animate opacity {
-                duration: self.is_active ? 260ms : 180ms;
-                easing: self.is_active ? cubic-bezier(0.05, 0.7, 0.1, 1.0) : cubic-bezier(0.3, 0, 1, 1);
-            }
-
-            RecentScreen {
-                status_bar_inset: root.status_bar_inset;
-                nav_bar_inset: root.nav_bar_inset;
-                recent_tools: root.recent_tools;
-                tool_favorites: root.tool_favorites;
-                open_tool(id) => {
-                    root.open_tool(id);
-                }
-                toggle_favorite(id) => {
-                    root.toggle_favorite(id);
-                }
-            }
-        }
-
-        // Screen 2: Favorites
-        screen_2 := Rectangle {
-            property <bool> is_active: root.current_mode == 2;
-            x: self.is_active ? 0px : (2 > root.current_mode ? 24px : -24px);
-            opacity: self.is_active ? 1.0 : 0.0;
-            visible: self.opacity > 0.01;
-            width: 100%;
-            height: 100%;
-
-            animate x {
-                duration: self.is_active ? 260ms : 180ms;
-                easing: self.is_active ? cubic-bezier(0.05, 0.7, 0.1, 1.0) : cubic-bezier(0.3, 0, 1, 1);
-            }
-            animate opacity {
-                duration: self.is_active ? 260ms : 180ms;
-                easing: self.is_active ? cubic-bezier(0.05, 0.7, 0.1, 1.0) : cubic-bezier(0.3, 0, 1, 1);
-            }
-
-            FavoritesScreen {
-                status_bar_inset: root.status_bar_inset;
-                nav_bar_inset: root.nav_bar_inset;
-                tool_favorites: root.tool_favorites;
-                open_tool(id) => {
-                    root.open_tool(id);
-                }
-                toggle_favorite(id) => {
-                    root.toggle_favorite(id);
-                }
-            }
-        }
-
-        // Screen 3: Settings
-        screen_3 := Rectangle {
-            property <bool> is_active: root.current_mode == 3;
-            x: self.is_active ? 0px : (3 > root.current_mode ? 24px : -24px);
-            opacity: self.is_active ? 1.0 : 0.0;
-            visible: self.opacity > 0.01;
-            width: 100%;
-            height: 100%;
-
-            animate x {
-                duration: self.is_active ? 260ms : 180ms;
-                easing: self.is_active ? cubic-bezier(0.05, 0.7, 0.1, 1.0) : cubic-bezier(0.3, 0, 1, 1);
-            }
-            animate opacity {
-                duration: self.is_active ? 260ms : 180ms;
-                easing: self.is_active ? cubic-bezier(0.05, 0.7, 0.1, 1.0) : cubic-bezier(0.3, 0, 1, 1);
-            }
-
-            SettingsScreen {
-                status_bar_inset: root.status_bar_inset;
-                nav_bar_inset: root.nav_bar_inset;
-                clear_recents => {
-                    root.clear_recents();
-                }
-                clear_favorites => {
-                    root.clear_favorites();
-                }
-                open_about => {
-                    root.open_about();
-                }
+        // Floating pill navigation bar anchored above system nav bar / gesture inset
+        pill_nav := PillNavBar {
+            x: (root.width - self.width) / 2;
+            y: root.height - self.height - root.nav_bar_inset - root.pill_bottom_margin;
+            active_index: root.current_mode;
+            items: [
+                { icon: AppIcons.home, label: "Home" },
+                { icon: AppIcons.history, label: "Recent" },
+                { icon: AppIcons.star, label: "Favorites" },
+                { icon: AppIcons.settings, label: "Settings" },
+            ];
+            select(index) => {
+                root.switch_mode(index);
             }
         }
     }
-
-    // Overlay layer: Tool Screen with slide and fade transition
-    tool_container := Rectangle {
-        x: root.is_tool ? 0px : (root.width * 0.15);
-        y: root.status_bar_inset;
-        width: 100%;
-        height: parent.height - root.status_bar_inset;
-        opacity: root.is_tool ? 1.0 : 0.0;
-        visible: self.opacity > 0.01;
-
-        animate x {
-            duration: root.is_tool ? 280ms : 200ms;
-            easing: root.is_tool ? cubic-bezier(0.05, 0.7, 0.1, 1.0) : cubic-bezier(0.3, 0.0, 0.8, 0.15);
-        }
-        animate opacity {
-            duration: root.is_tool ? 260ms : 200ms;
-            easing: root.is_tool ? cubic-bezier(0.05, 0.7, 0.1, 1.0) : cubic-bezier(0.3, 0.0, 0.8, 0.15);
-        }
-
-        if root.displayed_tool == 1 : SubnetScreen {
-            back => { root.back(); }
-        }
-
-        if root.displayed_tool == 2 : HashScreen {
-            back => { root.back(); }
-        }
-
-        if root.displayed_tool == 3 : Base64Screen {
-            back => { root.back(); }
-        }
-
-        if root.displayed_tool == 4 : UuidScreen {
-            back => { root.back(); }
-        }
-
-        if root.displayed_tool == 5 : TimestampScreen {
-            back => { root.back(); }
-        }
-
-        if root.displayed_tool == 6 : RegexScreen {
-            back => { root.back(); }
-        }
-    }
-
-    // Overlay layer: About Screen with slide and fade transition
-    about_container := Rectangle {
-        background: MaterialPalette.surface;
-        x: root.about_open ? 0px : (root.width * 0.15);
-        y: 0px;
-        width: 100%;
-        height: parent.height;
-        opacity: root.about_open ? 1.0 : 0.0;
-        visible: self.opacity > 0.01;
-
-        animate x {
-            duration: root.about_open ? 280ms : 200ms;
-            easing: root.about_open ? cubic-bezier(0.05, 0.7, 0.1, 1.0) : cubic-bezier(0.3, 0.0, 0.8, 0.15);
-        }
-        animate opacity {
-            duration: root.about_open ? 260ms : 200ms;
-            easing: root.about_open ? cubic-bezier(0.05, 0.7, 0.1, 1.0) : cubic-bezier(0.3, 0.0, 0.8, 0.15);
-        }
-
-        AboutScreen {
-            status_bar_inset: root.status_bar_inset;
-            nav_bar_inset: root.nav_bar_inset;
-            back => {
-                root.back();
-            }
-        }
-    }
-
-    // Floating pill navigation bar anchored above system nav bar / gesture inset
-    pill_nav := PillNavBar {
-        x: (root.width - self.width) / 2;
-        y: root.height - self.height - root.nav_bar_inset - root.pill_bottom_margin;
-        active_index: root.current_mode;
-        items: [
-            { icon: AppIcons.home, label: "Home" },
-            { icon: AppIcons.history, label: "Recent" },
-            { icon: AppIcons.star, label: "Favorites" },
-            { icon: AppIcons.settings, label: "Settings" },
-        ];
-        select(index) => {
-            root.switch_mode(index);
-        }
-    }
-}
 }
