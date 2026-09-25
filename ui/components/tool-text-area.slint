@@ -1,0 +1,101 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2026 MTRE Consulting
+
+import { MaterialPalette, MaterialStyleMetrics, MaterialTypography, MaterialText, Icon, StateLayerArea, ScrollView } from "@material";
+import { AppIcons } from "./app-icons.slint";
+
+export component ToolTextArea inherits VerticalLayout {
+    in property <string> label: "";
+    in property <string> placeholder_text: "";
+    in-out property <string> text: "";
+    in property <bool> read_only: false;
+    in property <bool> enabled: true;
+    in property <bool> is_code: false;
+    in property <length> min_box_height: 160px;
+    in property <length> max_box_height: 240px;
+    in property <bool> has_copy: false;
+    callback copy(string);
+    callback edited(string);
+
+    spacing: MaterialStyleMetrics.spacing_6;
+
+    if root.label != "" : HorizontalLayout {
+        alignment: space-between;
+
+        MaterialText {
+            text: root.label;
+            style: MaterialTypography.label_medium;
+            color: MaterialPalette.primary;
+        }
+
+        if root.has_copy && root.text != "" : Rectangle {
+            width: 32px;
+            height: 32px;
+            border_radius: 16px;
+
+            StateLayerArea {
+                width: 100%;
+                height: 100%;
+                border_radius: parent.border_radius;
+                color: MaterialPalette.primary;
+                clicked => { root.copy(root.text); }
+
+                HorizontalLayout {
+                    alignment: center;
+                    VerticalLayout {
+                        alignment: center;
+                        Icon {
+                            source: AppIcons.copy;
+                            colorize: MaterialPalette.primary;
+                            width: 18px;
+                            height: 18px;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    box := Rectangle {
+        background: root.read_only ? MaterialPalette.surface_container : MaterialPalette.surface_container_highest;
+        border_radius: MaterialStyleMetrics.border_radius_12;
+        border_width: 1px;
+        border_color: input.has_focus ? MaterialPalette.primary : MaterialPalette.outline_variant.with_alpha(20%);
+        min_height: root.min_box_height;
+        max_height: root.max_box_height;
+        clip: true;
+
+        scroll := ScrollView {
+            width: 100%;
+            height: 100%;
+            horizontal_scrollbar_policy: ScrollBarPolicy.always_off;
+            vertical_scrollbar_policy: ScrollBarPolicy.as_needed;
+
+            VerticalLayout {
+                padding: MaterialStyleMetrics.padding_12;
+
+                input := TextInput {
+                    text <=> root.text;
+                    read_only: root.read_only;
+                    enabled: root.enabled;
+                    single_line: false;
+                    wrap: word-wrap;
+                    font_size: root.is_code ? 13px : 15px;
+                    font_family: root.is_code ? "monospace" : "";
+                    color: root.enabled ? MaterialPalette.on_surface : MaterialPalette.on_surface_variant;
+                    selection_background_color: MaterialPalette.primary.with_alpha(0.5);
+                    selection_foreground_color: self.color;
+                    edited => { root.edited(self.text); }
+                }
+            }
+        }
+
+        if root.placeholder_text != "" && root.text == "" && !input.has_focus : MaterialText {
+            x: MaterialStyleMetrics.padding_12;
+            y: MaterialStyleMetrics.padding_12;
+            text: root.placeholder_text;
+            style: MaterialTypography.body_medium;
+            color: MaterialPalette.on_surface_variant.with_alpha(50%);
+        }
+    }
+}

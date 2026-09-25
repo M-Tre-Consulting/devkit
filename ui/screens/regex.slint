@@ -6,6 +6,7 @@ import { TopBar } from "../components/top-bar.slint";
 import { ToolErrorBanner } from "../components/tool-error-banner.slint";
 import { ToolActionButton } from "../components/tool-action-button.slint";
 import { ToolOutputArea } from "../components/tool-output-area.slint";
+import { ToolTextArea } from "../components/tool-text-area.slint";
 import { AppIcons } from "../components/app-icons.slint";
 
 export component RegexScreen inherits VerticalLayout {
@@ -140,16 +141,13 @@ export component RegexScreen inherits VerticalLayout {
             }
 
             // Test string input
-            MaterialText {
-                text: "TEST STRING";
-                style: MaterialTypography.label_large;
-                color: MaterialPalette.primary;
-            }
-
-            TextField {
-                label: "Text to evaluate against regex...";
+            ToolTextArea {
+                label: "TEST STRING";
+                placeholder_text: "Text to evaluate against regex...";
                 text <=> root.test_string;
                 enabled: !root.is_loading;
+                min_box_height: 160px;
+                max_box_height: 240px;
             }
 
             ToolActionButton {

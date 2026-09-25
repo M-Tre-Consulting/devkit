@@ -6,6 +6,7 @@ import { TopBar } from "../components/top-bar.slint";
 import { ToolErrorBanner } from "../components/tool-error-banner.slint";
 import { ToolActionButton } from "../components/tool-action-button.slint";
 import { ToolOutputArea } from "../components/tool-output-area.slint";
+import { ToolTextArea } from "../components/tool-text-area.slint";
 import { AppIcons } from "../components/app-icons.slint";
 
 export component GzipScreen inherits VerticalLayout {
@@ -126,16 +127,14 @@ export component GzipScreen inherits VerticalLayout {
             }
 
             // Input section
-            MaterialText {
-                text: root.mode == 0 ? "RAW TEXT INPUT" : "GZIP DATA INPUT (BASE64)";
-                style: MaterialTypography.label_large;
-                color: MaterialPalette.primary;
-            }
-
-            TextField {
-                label: root.mode == 0 ? "Text to compress..." : "Base64 gzip stream to unpack...";
+            ToolTextArea {
+                label: root.mode == 0 ? "RAW TEXT INPUT" : "GZIP DATA INPUT (BASE64)";
+                placeholder_text: root.mode == 0 ? "Text to compress..." : "Base64 gzip stream to unpack...";
                 text <=> root.input_data;
                 enabled: !root.is_loading;
+                is_code: root.mode != 0;
+                min_box_height: 160px;
+                max_box_height: 240px;
             }
 
             ToolActionButton {
@@ -155,10 +154,14 @@ export component GzipScreen inherits VerticalLayout {
             }
 
             // Result output
-            ToolOutputArea {
-                title: root.mode == 0 ? "COMPRESSED OUTPUT (BASE64)" : "DECOMPRESSED TEXT";
+            ToolTextArea {
+                label: root.mode == 0 ? "COMPRESSED OUTPUT (BASE64)" : "DECOMPRESSED TEXT";
                 text: root.result_data;
+                read_only: true;
                 is_code: true;
+                has_copy: true;
+                min_box_height: 140px;
+                max_box_height: 240px;
                 copy(str) => { root.copy(str); }
             }
 

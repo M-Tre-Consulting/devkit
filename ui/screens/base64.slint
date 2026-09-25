@@ -6,6 +6,7 @@ import { TopBar } from "../components/top-bar.slint";
 import { ToolErrorBanner } from "../components/tool-error-banner.slint";
 import { ToolActionButton } from "../components/tool-action-button.slint";
 import { ToolOutputArea } from "../components/tool-output-area.slint";
+import { ToolTextArea } from "../components/tool-text-area.slint";
 import { AppIcons } from "../components/app-icons.slint";
 
 export component Base64Screen inherits VerticalLayout {
@@ -218,16 +219,14 @@ export component Base64Screen inherits VerticalLayout {
             }
 
             // Input Text
-            MaterialText {
-                text: root.mode == 0 ? "INPUT TEXT" : "ENCODED BASE64 INPUT";
-                style: MaterialTypography.label_large;
-                color: MaterialPalette.primary;
-            }
-
-            TextField {
-                label: root.mode == 0 ? "Text to encode..." : "Base64 to decode...";
+            ToolTextArea {
+                label: root.mode == 0 ? "INPUT TEXT" : "ENCODED BASE64 INPUT";
+                placeholder_text: root.mode == 0 ? "Text to encode..." : "Base64 to decode...";
                 text <=> root.input_text;
                 enabled: !root.is_loading;
+                is_code: root.mode != 0;
+                min_box_height: 160px;
+                max_box_height: 240px;
             }
 
             ToolActionButton {
@@ -244,10 +243,14 @@ export component Base64Screen inherits VerticalLayout {
             }
 
             // Output Area
-            ToolOutputArea {
-                title: root.mode == 0 ? "BASE64 RESULT" : "DECODED TEXT RESULT";
+            ToolTextArea {
+                label: root.mode == 0 ? "BASE64 RESULT" : "DECODED TEXT RESULT";
                 text: root.output_text;
+                read_only: true;
                 is_code: true;
+                has_copy: true;
+                min_box_height: 140px;
+                max_box_height: 240px;
                 copy(str) => { root.copy(str); }
             }
         }

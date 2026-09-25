@@ -6,6 +6,7 @@ import { TopBar } from "../components/top-bar.slint";
 import { ToolErrorBanner } from "../components/tool-error-banner.slint";
 import { ToolActionButton } from "../components/tool-action-button.slint";
 import { ToolOutputArea } from "../components/tool-output-area.slint";
+import { ToolTextArea } from "../components/tool-text-area.slint";
 import { AppIcons } from "../components/app-icons.slint";
 
 export component JsonYamlScreen inherits VerticalLayout {
@@ -191,16 +192,14 @@ export component JsonYamlScreen inherits VerticalLayout {
             }
 
             // Source Input
-            MaterialText {
-                text: root.direction == 0 ? "SOURCE JSON" : "SOURCE YAML";
-                style: MaterialTypography.label_large;
-                color: MaterialPalette.primary;
-            }
-
-            TextField {
-                label: root.direction == 0 ? "Paste JSON payload here..." : "Paste YAML payload here...";
+            ToolTextArea {
+                label: root.direction == 0 ? "SOURCE JSON" : "SOURCE YAML";
+                placeholder_text: root.direction == 0 ? "Paste JSON payload here..." : "Paste YAML payload here...";
                 text <=> root.source_text;
                 enabled: !root.is_loading;
+                is_code: true;
+                min_box_height: 160px;
+                max_box_height: 240px;
             }
 
             ToolActionButton {
@@ -217,10 +216,14 @@ export component JsonYamlScreen inherits VerticalLayout {
             }
 
             // Output Area
-            ToolOutputArea {
-                title: root.direction == 0 ? "CONVERTED YAML" : "CONVERTED JSON";
+            ToolTextArea {
+                label: root.direction == 0 ? "CONVERTED YAML" : "CONVERTED JSON";
                 text: root.converted_text;
+                read_only: true;
                 is_code: true;
+                has_copy: true;
+                min_box_height: 160px;
+                max_box_height: 240px;
                 copy(str) => { root.copy(str); }
             }
         }
