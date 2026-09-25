@@ -1,12 +1,39 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2026 MTRE Consulting
 
-import { Icons, OutlinedCard, ScrollView, MaterialPalette, MaterialStyleMetrics, MaterialTypography, MaterialText, Icon, CheckBox } from "@material";
+import { Icons, OutlinedCard, ScrollView, MaterialPalette, MaterialStyleMetrics, MaterialTypography, MaterialText, Icon, CheckBox, TextField, FilterChip } from "@material";
 import { TopBar } from "../components/top-bar.slint";
 import { AppIcons } from "../components/app-icons.slint";
+import { ToolOutputArea, ToolActionButton, ToolErrorBanner } from "../components/tool-components.slint";
 
 export component ChmodScreen inherits VerticalLayout {
     callback back();
+    callback calculate();
+    callback apply_preset(string);
+    callback apply_octal(string);
+    callback copy_value(string);
+
+    // Permission states
+    in-out property <bool> owner_r: true;
+    in-out property <bool> owner_w: true;
+    in-out property <bool> owner_x: true;
+
+    in-out property <bool> group_r: true;
+    in-out property <bool> group_w: false;
+    in-out property <bool> group_x: true;
+
+    in-out property <bool> other_r: true;
+    in-out property <bool> other_w: false;
+    in-out property <bool> other_x: true;
+
+    // Direct octal input
+    in-out property <string> octal_input: "755";
+
+    // Calculated outputs
+    in-out property <string> octal_output: "0755";
+    in-out property <string> symbolic_output: "-rwxr-xr-x";
+    in-out property <string> command_output: "chmod 755 <file>";
+    in-out property <string> error_message: "";
 
     property <bool> is_entered: false;
     init => { self.is_entered = true; }
@@ -33,19 +60,53 @@ export component ChmodScreen inherits VerticalLayout {
             spacing: MaterialStyleMetrics.spacing_16;
             alignment: start;
 
-            HorizontalLayout {
-                alignment: center;
+            ToolErrorBanner {
+                error_message: root.error_message;
+            }
+
+            // Quick Presets
+            VerticalLayout {
+                spacing: MaterialStyleMetrics.spacing_8;
+
                 MaterialText {
-                    text: "Coming soon";
-                    style: MaterialTypography.label_large;
-                    color: MaterialPalette.on_surface_variant;
+                    text: "COMMON PRESETS";
+                    style: MaterialTypography.label_medium;
+                    color: MaterialPalette.primary;
+                }
+
+                HorizontalLayout {
+                    spacing: MaterialStyleMetrics.spacing_8;
+
+                    FilterChip {
+                        text: "755 (Exec)";
+                        selected: root.octal_output == "0755" || root.octal_output == "755";
+                        clicked => { root.apply_preset("755"); }
+                    }
+
+                    FilterChip {
+                        text: "644 (File)";
+                        selected: root.octal_output == "0644" || root.octal_output == "644";
+                        clicked => { root.apply_preset("644"); }
+                    }
+
+                    FilterChip {
+                        text: "777 (Full)";
+                        selected: root.octal_output == "0777" || root.octal_output == "777";
+                        clicked => { root.apply_preset("777"); }
+                    }
+
+                    FilterChip {
+                        text: "600 (Private)";
+                        selected: root.octal_output == "0600" || root.octal_output == "600";
+                        clicked => { root.apply_preset("600"); }
+                    }
                 }
             }
 
-            // Permission Matrix Grid
+            // Permission Matrix Grid Card
             MaterialText {
                 text: "PERMISSION MATRIX";
-                style: MaterialTypography.title_small;
+                style: MaterialTypography.label_medium;
                 color: MaterialPalette.primary;
             }
 
@@ -99,17 +160,26 @@ export component ChmodScreen inherits VerticalLayout {
                         HorizontalLayout {
                             horizontal-stretch: 1;
                             alignment: center;
-                            CheckBox { checked: true; enabled: false; }
+                            CheckBox {
+                                checked <=> root.owner_r;
+                                toggled => { root.calculate(); }
+                            }
                         }
                         HorizontalLayout {
                             horizontal-stretch: 1;
                             alignment: center;
-                            CheckBox { checked: true; enabled: false; }
+                            CheckBox {
+                                checked <=> root.owner_w;
+                                toggled => { root.calculate(); }
+                            }
                         }
                         HorizontalLayout {
                             horizontal-stretch: 1;
                             alignment: center;
-                            CheckBox { checked: true; enabled: false; }
+                            CheckBox {
+                                checked <=> root.owner_x;
+                                toggled => { root.calculate(); }
+                            }
                         }
                     }
 
@@ -126,17 +196,26 @@ export component ChmodScreen inherits VerticalLayout {
                         HorizontalLayout {
                             horizontal-stretch: 1;
                             alignment: center;
-                            CheckBox { checked: true; enabled: false; }
+                            CheckBox {
+                                checked <=> root.group_r;
+                                toggled => { root.calculate(); }
+                            }
                         }
                         HorizontalLayout {
                             horizontal-stretch: 1;
                             alignment: center;
-                            CheckBox { checked: false; enabled: false; }
+                            CheckBox {
+                                checked <=> root.group_w;
+                                toggled => { root.calculate(); }
+                            }
                         }
                         HorizontalLayout {
                             horizontal-stretch: 1;
                             alignment: center;
-                            CheckBox { checked: true; enabled: false; }
+                            CheckBox {
+                                checked <=> root.group_x;
+                                toggled => { root.calculate(); }
+                            }
                         }
                     }
 
@@ -153,94 +232,85 @@ export component ChmodScreen inherits VerticalLayout {
                         HorizontalLayout {
                             horizontal-stretch: 1;
                             alignment: center;
-                            CheckBox { checked: true; enabled: false; }
+                            CheckBox {
+                                checked <=> root.other_r;
+                                toggled => { root.calculate(); }
+                            }
                         }
                         HorizontalLayout {
                             horizontal-stretch: 1;
                             alignment: center;
-                            CheckBox { checked: false; enabled: false; }
+                            CheckBox {
+                                checked <=> root.other_w;
+                                toggled => { root.calculate(); }
+                            }
                         }
                         HorizontalLayout {
                             horizontal-stretch: 1;
                             alignment: center;
-                            CheckBox { checked: true; enabled: false; }
+                            CheckBox {
+                                checked <=> root.other_x;
+                                toggled => { root.calculate(); }
+                            }
                         }
                     }
                 }
             }
 
-            // Output section
+            // Direct Octal Input Card
+            MaterialText {
+                text: "DIRECT OCTAL INPUT";
+                style: MaterialTypography.label_medium;
+                color: MaterialPalette.primary;
+            }
+
             HorizontalLayout {
-                alignment: space-between;
-                MaterialText {
-                    text: "CALCULATED OUTPUT";
-                    style: MaterialTypography.title_small;
-                    color: MaterialPalette.primary;
+                spacing: MaterialStyleMetrics.spacing_12;
+                alignment: center;
+
+                TextField {
+                    horizontal-stretch: 1;
+                    placeholder_text: "e.g. 755";
+                    text <=> root.octal_input;
+                    accepted => { root.apply_octal(root.octal_input); }
                 }
-                MaterialText {
-                    text: "Copy";
-                    style: MaterialTypography.label_medium;
-                    color: MaterialPalette.primary;
+
+                ToolActionButton {
+                    text: "Apply";
+                    primary: false;
+                    clicked => { root.apply_octal(root.octal_input); }
                 }
             }
 
-            OutlinedCard {
-                VerticalLayout {
-                    padding: MaterialStyleMetrics.padding_16;
-                    spacing: MaterialStyleMetrics.spacing_12;
+            ToolActionButton {
+                text: "Calculate Permissions";
+                primary: true;
+                clicked => { root.calculate(); }
+            }
 
-                    Rectangle {
-                        background: MaterialPalette.surface_container;
-                        border_radius: MaterialStyleMetrics.border_radius_4;
+            // Calculated Output Section
+            MaterialText {
+                text: "CALCULATED OUTPUT";
+                style: MaterialTypography.label_medium;
+                color: MaterialPalette.primary;
+            }
 
-                        VerticalLayout {
-                            padding: MaterialStyleMetrics.padding_12;
-                            spacing: MaterialStyleMetrics.spacing_6;
+            ToolOutputArea {
+                label: "Octal Notation";
+                value: root.octal_output;
+                copy => { root.copy_value(root.octal_output); }
+            }
 
-                            HorizontalLayout {
-                                alignment: space-between;
-                                MaterialText {
-                                    text: "Octal Notation:";
-                                    style: MaterialTypography.body_medium;
-                                    color: MaterialPalette.on_surface_variant;
-                                }
-                                MaterialText {
-                                    text: "0755";
-                                    style: MaterialTypography.title_medium;
-                                    color: MaterialPalette.primary;
-                                }
-                            }
+            ToolOutputArea {
+                label: "Symbolic Notation";
+                value: root.symbolic_output;
+                copy => { root.copy_value(root.symbolic_output); }
+            }
 
-                            HorizontalLayout {
-                                alignment: space-between;
-                                MaterialText {
-                                    text: "Symbolic Notation:";
-                                    style: MaterialTypography.body_medium;
-                                    color: MaterialPalette.on_surface_variant;
-                                }
-                                MaterialText {
-                                    text: "-rwxr-xr-x";
-                                    style: MaterialTypography.title_medium;
-                                    color: MaterialPalette.on_surface;
-                                }
-                            }
-
-                            HorizontalLayout {
-                                alignment: space-between;
-                                MaterialText {
-                                    text: "Command:";
-                                    style: MaterialTypography.body_medium;
-                                    color: MaterialPalette.on_surface_variant;
-                                }
-                                MaterialText {
-                                    text: "chmod 755 <file>";
-                                    style: MaterialTypography.body_medium;
-                                    color: MaterialPalette.on_surface;
-                                }
-                            }
-                        }
-                    }
-                }
+            ToolOutputArea {
+                label: "Command";
+                value: root.command_output;
+                copy => { root.copy_value(root.command_output); }
             }
         }
     }
