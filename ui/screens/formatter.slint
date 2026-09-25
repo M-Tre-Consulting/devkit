@@ -1,15 +1,30 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2026 MTRE Consulting
 
-import { Icons, TextField, OutlinedCard, ScrollView, MaterialPalette, MaterialStyleMetrics, MaterialTypography, MaterialText, Icon } from "@material";
+import { Icons, TextField, ScrollView, MaterialPalette, MaterialStyleMetrics, MaterialTypography, MaterialText, StateLayerArea, Icon } from "@material";
 import { TopBar } from "../components/top-bar.slint";
+import { ToolErrorBanner } from "../components/tool-error-banner.slint";
+import { ToolActionButton } from "../components/tool-action-button.slint";
+import { ToolOutputArea } from "../components/tool-output-area.slint";
 import { AppIcons } from "../components/app-icons.slint";
 
 export component FormatterScreen inherits VerticalLayout {
+    in property <length> status_bar_inset: 24px;
+    in property <length> nav_bar_inset: 16px;
     callback back();
 
+    in-out property <string> source_code: "{\"name\":\"DevKit\",\"version\":\"0.1.0\",\"status\":\"ready\"}";
+    in-out property <int> selected_lang: 0; // 0: JSON, 1: YAML, 2: XML, 3: SQL, 4: TOML
+    in-out property <int> indent_size: 2;
+    in-out property <string> formatted_code: "{\n  \"name\": \"DevKit\",\n  \"version\": \"0.1.0\",\n  \"status\": \"ready\"\n}";
+    in-out property <string> error_message: "";
+    in-out property <bool> is_loading: false;
+
+    callback format();
+    callback clear();
+    callback copy(string);
+
     property <bool> is_entered: false;
-    property <int> selected_lang: 0; // 0: JSON, 1: YAML, 2: XML, 3: SQL
     init => { self.is_entered = true; }
 
     TopBar {
@@ -30,23 +45,177 @@ export component FormatterScreen inherits VerticalLayout {
         }
 
         VerticalLayout {
-            padding: MaterialStyleMetrics.padding_16;
+            padding_left: MaterialStyleMetrics.padding_16;
+            padding_right: MaterialStyleMetrics.padding_16;
+            padding_top: MaterialStyleMetrics.padding_16;
+            padding_bottom: 96px + root.nav_bar_inset;
             spacing: MaterialStyleMetrics.spacing_16;
             alignment: start;
 
+            ToolErrorBanner {
+                message: root.error_message;
+            }
+
+            // Language Selector Chips
+            MaterialText {
+                text: "LANGUAGE";
+                style: MaterialTypography.label_large;
+                color: MaterialPalette.primary;
+            }
+
             HorizontalLayout {
-                alignment: center;
-                MaterialText {
-                    text: "Coming soon";
-                    style: MaterialTypography.label_large;
-                    color: MaterialPalette.on_surface_variant;
+                spacing: MaterialStyleMetrics.spacing_6;
+
+                // JSON
+                Rectangle {
+                    horizontal-stretch: 1;
+                    height: 36px;
+                    border_radius: MaterialStyleMetrics.border_radius_8;
+                    background: root.selected_lang == 0 ? MaterialPalette.primary_container : MaterialPalette.surface_container;
+                    border_width: 1px;
+                    border_color: root.selected_lang == 0 ? MaterialPalette.primary : MaterialPalette.outline_variant.with_alpha(20%);
+
+                    StateLayerArea {
+                        width: 100%;
+                        height: 100%;
+                        border_radius: parent.border_radius;
+                        color: MaterialPalette.primary;
+                        clicked => { root.selected_lang = 0; }
+                        HorizontalLayout {
+                            alignment: center;
+                            VerticalLayout {
+                                alignment: center;
+                                MaterialText {
+                                    text: "JSON";
+                                    style: MaterialTypography.label_small;
+                                    color: root.selected_lang == 0 ? MaterialPalette.on_primary_container : MaterialPalette.on_surface;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // YAML
+                Rectangle {
+                    horizontal-stretch: 1;
+                    height: 36px;
+                    border_radius: MaterialStyleMetrics.border_radius_8;
+                    background: root.selected_lang == 1 ? MaterialPalette.primary_container : MaterialPalette.surface_container;
+                    border_width: 1px;
+                    border_color: root.selected_lang == 1 ? MaterialPalette.primary : MaterialPalette.outline_variant.with_alpha(20%);
+
+                    StateLayerArea {
+                        width: 100%;
+                        height: 100%;
+                        border_radius: parent.border_radius;
+                        color: MaterialPalette.primary;
+                        clicked => { root.selected_lang = 1; }
+                        HorizontalLayout {
+                            alignment: center;
+                            VerticalLayout {
+                                alignment: center;
+                                MaterialText {
+                                    text: "YAML";
+                                    style: MaterialTypography.label_small;
+                                    color: root.selected_lang == 1 ? MaterialPalette.on_primary_container : MaterialPalette.on_surface;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // XML
+                Rectangle {
+                    horizontal-stretch: 1;
+                    height: 36px;
+                    border_radius: MaterialStyleMetrics.border_radius_8;
+                    background: root.selected_lang == 2 ? MaterialPalette.primary_container : MaterialPalette.surface_container;
+                    border_width: 1px;
+                    border_color: root.selected_lang == 2 ? MaterialPalette.primary : MaterialPalette.outline_variant.with_alpha(20%);
+
+                    StateLayerArea {
+                        width: 100%;
+                        height: 100%;
+                        border_radius: parent.border_radius;
+                        color: MaterialPalette.primary;
+                        clicked => { root.selected_lang = 2; }
+                        HorizontalLayout {
+                            alignment: center;
+                            VerticalLayout {
+                                alignment: center;
+                                MaterialText {
+                                    text: "XML";
+                                    style: MaterialTypography.label_small;
+                                    color: root.selected_lang == 2 ? MaterialPalette.on_primary_container : MaterialPalette.on_surface;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // SQL
+                Rectangle {
+                    horizontal-stretch: 1;
+                    height: 36px;
+                    border_radius: MaterialStyleMetrics.border_radius_8;
+                    background: root.selected_lang == 3 ? MaterialPalette.primary_container : MaterialPalette.surface_container;
+                    border_width: 1px;
+                    border_color: root.selected_lang == 3 ? MaterialPalette.primary : MaterialPalette.outline_variant.with_alpha(20%);
+
+                    StateLayerArea {
+                        width: 100%;
+                        height: 100%;
+                        border_radius: parent.border_radius;
+                        color: MaterialPalette.primary;
+                        clicked => { root.selected_lang = 3; }
+                        HorizontalLayout {
+                            alignment: center;
+                            VerticalLayout {
+                                alignment: center;
+                                MaterialText {
+                                    text: "SQL";
+                                    style: MaterialTypography.label_small;
+                                    color: root.selected_lang == 3 ? MaterialPalette.on_primary_container : MaterialPalette.on_surface;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // TOML
+                Rectangle {
+                    horizontal-stretch: 1;
+                    height: 36px;
+                    border_radius: MaterialStyleMetrics.border_radius_8;
+                    background: root.selected_lang == 4 ? MaterialPalette.primary_container : MaterialPalette.surface_container;
+                    border_width: 1px;
+                    border_color: root.selected_lang == 4 ? MaterialPalette.primary : MaterialPalette.outline_variant.with_alpha(20%);
+
+                    StateLayerArea {
+                        width: 100%;
+                        height: 100%;
+                        border_radius: parent.border_radius;
+                        color: MaterialPalette.primary;
+                        clicked => { root.selected_lang = 4; }
+                        HorizontalLayout {
+                            alignment: center;
+                            VerticalLayout {
+                                alignment: center;
+                                MaterialText {
+                                    text: "TOML";
+                                    style: MaterialTypography.label_small;
+                                    color: root.selected_lang == 4 ? MaterialPalette.on_primary_container : MaterialPalette.on_surface;
+                                }
+                            }
+                        }
+                    }
                 }
             }
 
-            // Language Selector
+            // Indentation
             MaterialText {
-                text: "LANGUAGE";
-                style: MaterialTypography.title_small;
+                text: "INDENTATION SPACES";
+                style: MaterialTypography.label_large;
                 color: MaterialPalette.primary;
             }
 
@@ -57,140 +226,91 @@ export component FormatterScreen inherits VerticalLayout {
                     horizontal-stretch: 1;
                     height: 36px;
                     border_radius: MaterialStyleMetrics.border_radius_8;
-                    background: root.selected_lang == 0 ? MaterialPalette.primary_container : MaterialPalette.surface_container;
+                    background: root.indent_size == 2 ? MaterialPalette.secondary_container : MaterialPalette.surface_container;
+                    border_width: 1px;
+                    border_color: root.indent_size == 2 ? MaterialPalette.primary : MaterialPalette.outline_variant.with_alpha(20%);
 
-                    HorizontalLayout {
-                        alignment: center;
-                        MaterialText {
-                            text: "JSON";
-                            style: MaterialTypography.label_medium;
-                            color: root.selected_lang == 0 ? MaterialPalette.on_primary_container : MaterialPalette.on_surface;
-                        }
-                    }
-
-                    TouchArea {
-                        clicked => { root.selected_lang = 0; }
-                    }
-                }
-
-                Rectangle {
-                    horizontal-stretch: 1;
-                    height: 36px;
-                    border_radius: MaterialStyleMetrics.border_radius_8;
-                    background: root.selected_lang == 1 ? MaterialPalette.primary_container : MaterialPalette.surface_container;
-
-                    HorizontalLayout {
-                        alignment: center;
-                        MaterialText {
-                            text: "YAML";
-                            style: MaterialTypography.label_medium;
-                            color: root.selected_lang == 1 ? MaterialPalette.on_primary_container : MaterialPalette.on_surface;
-                        }
-                    }
-
-                    TouchArea {
-                        clicked => { root.selected_lang = 1; }
-                    }
-                }
-
-                Rectangle {
-                    horizontal-stretch: 1;
-                    height: 36px;
-                    border_radius: MaterialStyleMetrics.border_radius_8;
-                    background: root.selected_lang == 2 ? MaterialPalette.primary_container : MaterialPalette.surface_container;
-
-                    HorizontalLayout {
-                        alignment: center;
-                        MaterialText {
-                            text: "XML";
-                            style: MaterialTypography.label_medium;
-                            color: root.selected_lang == 2 ? MaterialPalette.on_primary_container : MaterialPalette.on_surface;
-                        }
-                    }
-
-                    TouchArea {
-                        clicked => { root.selected_lang = 2; }
-                    }
-                }
-
-                Rectangle {
-                    horizontal-stretch: 1;
-                    height: 36px;
-                    border_radius: MaterialStyleMetrics.border_radius_8;
-                    background: root.selected_lang == 3 ? MaterialPalette.primary_container : MaterialPalette.surface_container;
-
-                    HorizontalLayout {
-                        alignment: center;
-                        MaterialText {
-                            text: "SQL";
-                            style: MaterialTypography.label_medium;
-                            color: root.selected_lang == 3 ? MaterialPalette.on_primary_container : MaterialPalette.on_surface;
-                        }
-                    }
-
-                    TouchArea {
-                        clicked => { root.selected_lang = 3; }
-                    }
-                }
-            }
-
-            // Input section
-            HorizontalLayout {
-                alignment: space-between;
-                MaterialText {
-                    text: "UNFORMATTED CODE";
-                    style: MaterialTypography.title_small;
-                    color: MaterialPalette.primary;
-                }
-                MaterialText {
-                    text: "Clear";
-                    style: MaterialTypography.label_medium;
-                    color: MaterialPalette.on_surface_variant;
-                }
-            }
-
-            TextField {
-                label: "Paste messy or minified code here...";
-                enabled: false;
-            }
-
-            // Output section
-            HorizontalLayout {
-                alignment: space-between;
-                MaterialText {
-                    text: "FORMATTED CODE";
-                    style: MaterialTypography.title_small;
-                    color: MaterialPalette.primary;
-                }
-                MaterialText {
-                    text: "Copy";
-                    style: MaterialTypography.label_medium;
-                    color: MaterialPalette.primary;
-                }
-            }
-
-            OutlinedCard {
-                VerticalLayout {
-                    padding: MaterialStyleMetrics.padding_16;
-                    spacing: MaterialStyleMetrics.spacing_8;
-
-                    Rectangle {
-                        background: MaterialPalette.surface_container;
-                        border_radius: MaterialStyleMetrics.border_radius_4;
-                        min_height: 120px;
-
-                        VerticalLayout {
-                            padding: MaterialStyleMetrics.padding_12;
-                            alignment: start;
-
-                            MaterialText {
-                                text: "// Beautifully formatted code will appear here...";
-                                style: MaterialTypography.body_small;
-                                color: MaterialPalette.on_surface_variant;
+                    StateLayerArea {
+                        width: 100%;
+                        height: 100%;
+                        border_radius: parent.border_radius;
+                        color: MaterialPalette.primary;
+                        clicked => { root.indent_size = 2; }
+                        HorizontalLayout {
+                            alignment: center;
+                            VerticalLayout {
+                                alignment: center;
+                                MaterialText {
+                                    text: "2 Spaces";
+                                    style: MaterialTypography.label_medium;
+                                    color: root.indent_size == 2 ? MaterialPalette.on_secondary_container : MaterialPalette.on_surface;
+                                }
                             }
                         }
                     }
                 }
+
+                Rectangle {
+                    horizontal-stretch: 1;
+                    height: 36px;
+                    border_radius: MaterialStyleMetrics.border_radius_8;
+                    background: root.indent_size == 4 ? MaterialPalette.secondary_container : MaterialPalette.surface_container;
+                    border_width: 1px;
+                    border_color: root.indent_size == 4 ? MaterialPalette.primary : MaterialPalette.outline_variant.with_alpha(20%);
+
+                    StateLayerArea {
+                        width: 100%;
+                        height: 100%;
+                        border_radius: parent.border_radius;
+                        color: MaterialPalette.primary;
+                        clicked => { root.indent_size = 4; }
+                        HorizontalLayout {
+                            alignment: center;
+                            VerticalLayout {
+                                alignment: center;
+                                MaterialText {
+                                    text: "4 Spaces";
+                                    style: MaterialTypography.label_medium;
+                                    color: root.indent_size == 4 ? MaterialPalette.on_secondary_container : MaterialPalette.on_surface;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Unformatted Input
+            MaterialText {
+                text: "SOURCE CODE INPUT";
+                style: MaterialTypography.label_large;
+                color: MaterialPalette.primary;
+            }
+
+            TextField {
+                label: "Paste unformatted or minified code here...";
+                text <=> root.source_code;
+                enabled: !root.is_loading;
+            }
+
+            ToolActionButton {
+                text: "Format Code";
+                enabled: root.source_code != "" && !root.is_loading;
+                has_clear: true;
+                clicked => { root.format(); }
+                clear => {
+                    root.source_code = "";
+                    root.formatted_code = "";
+                    root.error_message = "";
+                    root.clear();
+                }
+            }
+
+            // Formatted Output
+            ToolOutputArea {
+                title: "FORMATTED CODE OUTPUT";
+                text: root.formatted_code;
+                is_code: true;
+                copy(str) => { root.copy(str); }
             }
         }
     }
