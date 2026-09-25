@@ -14,10 +14,10 @@ export component PillNavBar inherits Rectangle {
     callback select(int);
 
     // Geometry parameters (Material 3 Expressive compact floating pill with active label)
-    property <length> icon_width: 50px;
-    property <length> extra_width: 68px;
-    property <length> item_height: 58px;
-    property <length> inner_padding: 6px;
+    property <length> icon_width: 44px;
+    property <length> extra_width: 56px;
+    property <length> item_height: 44px;
+    property <length> inner_padding: 4px;
 
     // Self-contained pill dimensions: wraps items in their resting layout
     width: root.items.length * root.icon_width + (root.active_index >= 0 ? root.extra_width : 0px) + root.inner_padding * 2;
@@ -62,8 +62,8 @@ export component PillNavBar inherits Rectangle {
 
     // =========================================================================
     // Interactive Navigation Items Row
-    // Inactive: Icon only (50px)
-    // Active: Icon + Label side-by-side (50px + 52px = 102px)
+    // Inactive: Icon only (44px)
+    // Active: Icon + Label side-by-side (44px + 56px = 100px)
     // =========================================================================
     items_row := HorizontalLayout {
         x: root.inner_padding;
@@ -101,15 +101,15 @@ export component PillNavBar inherits Rectangle {
                 HorizontalLayout {
                     alignment: center;
                     spacing: 6px;
-                    padding_left: 8px;
-                    padding_right: 8px;
+                    padding_left: 6px;
+                    padding_right: 6px;
 
                     VerticalLayout {
                         alignment: center;
 
                         Icon {
                             source: item.icon;
-                            width: touch_area.pressed ? 22px : 24px;
+                            width: touch_area.pressed ? 20px : 22px;
                             height: self.width;
                             colorize: item_cell.content_color;
 
@@ -122,7 +122,7 @@ export component PillNavBar inherits Rectangle {
 
                     label_container := Rectangle {
                         clip: true;
-                        width: item_cell.is_active ? (root.extra_width - 6px) : 0px;
+                        width: item_cell.is_active ? (root.extra_width - 4px) : 0px;
                         opacity: item_cell.is_active ? 1.0 : 0.0;
 
                         // Synchronized width and opacity animations matching indicator exactly
