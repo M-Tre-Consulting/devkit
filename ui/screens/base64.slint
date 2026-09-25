@@ -1,11 +1,29 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2026 MTRE Consulting
 
-import { Icons, TextField, OutlinedCard, ScrollView, MaterialPalette, MaterialStyleMetrics, MaterialTypography, MaterialText } from "@material";
+import { Icons, TextField, Switch, ScrollView, MaterialPalette, MaterialStyleMetrics, MaterialTypography, MaterialText, StateLayerArea, Icon } from "@material";
 import { TopBar } from "../components/top-bar.slint";
+import { ToolErrorBanner } from "../components/tool-error-banner.slint";
+import { ToolActionButton } from "../components/tool-action-button.slint";
+import { ToolOutputArea } from "../components/tool-output-area.slint";
+import { AppIcons } from "../components/app-icons.slint";
 
 export component Base64Screen inherits VerticalLayout {
+    in property <length> status_bar_inset: 24px;
+    in property <length> nav_bar_inset: 16px;
     callback back();
+
+    in-out property <string> input_text: "";
+    in-out property <int> mode: 0; // 0=Encode, 1=Decode
+    in-out property <int> variant: 0; // 0=Standard, 1=URL-Safe
+    in-out property <bool> use_padding: true;
+    in-out property <string> output_text: "";
+    in-out property <string> error_message: "";
+    in-out property <bool> is_loading: false;
+
+    callback convert();
+    callback clear();
+    callback copy(string);
 
     property <bool> is_entered: false;
     init => { self.is_entered = true; }
@@ -28,57 +46,209 @@ export component Base64Screen inherits VerticalLayout {
         }
 
         VerticalLayout {
-            padding: MaterialStyleMetrics.padding_16;
+            padding_left: MaterialStyleMetrics.padding_16;
+            padding_right: MaterialStyleMetrics.padding_16;
+            padding_top: MaterialStyleMetrics.padding_16;
+            padding_bottom: 96px + root.nav_bar_inset;
             spacing: MaterialStyleMetrics.spacing_16;
             alignment: start;
 
+            ToolErrorBanner {
+                message: root.error_message;
+            }
+
+            // Mode Selector: Encode vs Decode
+            MaterialText {
+                text: "MODE";
+                style: MaterialTypography.label_large;
+                color: MaterialPalette.primary;
+            }
+
             HorizontalLayout {
-                alignment: center;
-                MaterialText {
-                    text: "Coming soon";
-                    style: MaterialTypography.label_large;
-                    color: MaterialPalette.on_surface_variant;
+                spacing: MaterialStyleMetrics.spacing_8;
+
+                Rectangle {
+                    horizontal-stretch: 1;
+                    height: 40px;
+                    border_radius: MaterialStyleMetrics.border_radius_8;
+                    background: root.mode == 0 ? MaterialPalette.primary_container : MaterialPalette.surface_container;
+                    border_width: 1px;
+                    border_color: root.mode == 0 ? MaterialPalette.primary : MaterialPalette.outline_variant.with_alpha(20%);
+
+                    StateLayerArea {
+                        width: 100%;
+                        height: 100%;
+                        border_radius: parent.border_radius;
+                        color: MaterialPalette.primary;
+                        clicked => { root.mode = 0; }
+                        HorizontalLayout {
+                            alignment: center;
+                            VerticalLayout {
+                                alignment: center;
+                                MaterialText {
+                                    text: "Encode";
+                                    style: MaterialTypography.label_large;
+                                    color: root.mode == 0 ? MaterialPalette.on_primary_container : MaterialPalette.on_surface;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                Rectangle {
+                    horizontal-stretch: 1;
+                    height: 40px;
+                    border_radius: MaterialStyleMetrics.border_radius_8;
+                    background: root.mode == 1 ? MaterialPalette.primary_container : MaterialPalette.surface_container;
+                    border_width: 1px;
+                    border_color: root.mode == 1 ? MaterialPalette.primary : MaterialPalette.outline_variant.with_alpha(20%);
+
+                    StateLayerArea {
+                        width: 100%;
+                        height: 100%;
+                        border_radius: parent.border_radius;
+                        color: MaterialPalette.primary;
+                        clicked => { root.mode = 1; }
+                        HorizontalLayout {
+                            alignment: center;
+                            VerticalLayout {
+                                alignment: center;
+                                MaterialText {
+                                    text: "Decode";
+                                    style: MaterialTypography.label_large;
+                                    color: root.mode == 1 ? MaterialPalette.on_primary_container : MaterialPalette.on_surface;
+                                }
+                            }
+                        }
+                    }
                 }
             }
 
+            // Variant Selector: Standard vs URL-Safe
             MaterialText {
-                text: "INPUT TEXT / BYTES";
-                style: MaterialTypography.title_small;
+                text: "VARIANT & OPTIONS";
+                style: MaterialTypography.label_large;
+                color: MaterialPalette.primary;
+            }
+
+            HorizontalLayout {
+                spacing: MaterialStyleMetrics.spacing_8;
+
+                Rectangle {
+                    horizontal-stretch: 1;
+                    height: 36px;
+                    border_radius: MaterialStyleMetrics.border_radius_8;
+                    background: root.variant == 0 ? MaterialPalette.secondary_container : MaterialPalette.surface_container;
+                    border_width: 1px;
+                    border_color: root.variant == 0 ? MaterialPalette.primary : MaterialPalette.outline_variant.with_alpha(20%);
+
+                    StateLayerArea {
+                        width: 100%;
+                        height: 100%;
+                        border_radius: parent.border_radius;
+                        color: MaterialPalette.primary;
+                        clicked => { root.variant = 0; }
+                        HorizontalLayout {
+                            alignment: center;
+                            VerticalLayout {
+                                alignment: center;
+                                MaterialText {
+                                    text: "Standard";
+                                    style: MaterialTypography.label_medium;
+                                    color: root.variant == 0 ? MaterialPalette.on_secondary_container : MaterialPalette.on_surface;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                Rectangle {
+                    horizontal-stretch: 1;
+                    height: 36px;
+                    border_radius: MaterialStyleMetrics.border_radius_8;
+                    background: root.variant == 1 ? MaterialPalette.secondary_container : MaterialPalette.surface_container;
+                    border_width: 1px;
+                    border_color: root.variant == 1 ? MaterialPalette.primary : MaterialPalette.outline_variant.with_alpha(20%);
+
+                    StateLayerArea {
+                        width: 100%;
+                        height: 100%;
+                        border_radius: parent.border_radius;
+                        color: MaterialPalette.primary;
+                        clicked => { root.variant = 1; }
+                        HorizontalLayout {
+                            alignment: center;
+                            VerticalLayout {
+                                alignment: center;
+                                MaterialText {
+                                    text: "URL-Safe";
+                                    style: MaterialTypography.label_medium;
+                                    color: root.variant == 1 ? MaterialPalette.on_secondary_container : MaterialPalette.on_surface;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Padding toggle row
+            Rectangle {
+                border_radius: MaterialStyleMetrics.border_radius_12;
+                background: MaterialPalette.surface_container;
+                border_width: 1px;
+                border_color: MaterialPalette.outline_variant.with_alpha(15%);
+
+                HorizontalLayout {
+                    padding: MaterialStyleMetrics.padding_12;
+                    alignment: space-between;
+
+                    VerticalLayout {
+                        alignment: center;
+                        MaterialText {
+                            text: "Include Padding (=)";
+                            style: MaterialTypography.body_medium;
+                            color: MaterialPalette.on_surface;
+                        }
+                    }
+
+                    Switch {
+                        checked <=> root.use_padding;
+                    }
+                }
+            }
+
+            // Input Text
+            MaterialText {
+                text: root.mode == 0 ? "INPUT TEXT" : "ENCODED BASE64 INPUT";
+                style: MaterialTypography.label_large;
                 color: MaterialPalette.primary;
             }
 
             TextField {
-                label: "Plain text or base64 to process...";
-                enabled: false;
+                label: root.mode == 0 ? "Text to encode..." : "Base64 to decode...";
+                text <=> root.input_text;
+                enabled: !root.is_loading;
             }
 
-            MaterialText {
-                text: "CONVERTED OUTPUT";
-                style: MaterialTypography.title_small;
-                color: MaterialPalette.primary;
-            }
-
-            OutlinedCard {
-                VerticalLayout {
-                    padding: MaterialStyleMetrics.padding_16;
-                    spacing: MaterialStyleMetrics.spacing_8;
-
-                    MaterialText {
-                        text: "Encoded (Standard): —";
-                        style: MaterialTypography.body_medium;
-                        color: MaterialPalette.on_surface_variant;
-                    }
-                    MaterialText {
-                        text: "Encoded (URL-Safe): —";
-                        style: MaterialTypography.body_medium;
-                        color: MaterialPalette.on_surface_variant;
-                    }
-                    MaterialText {
-                        text: "Decoded: —";
-                        style: MaterialTypography.body_medium;
-                        color: MaterialPalette.on_surface_variant;
-                    }
+            ToolActionButton {
+                text: root.mode == 0 ? "Encode to Base64" : "Decode from Base64";
+                enabled: root.input_text != "" && !root.is_loading;
+                has_clear: true;
+                clicked => { root.convert(); }
+                clear => {
+                    root.input_text = "";
+                    root.output_text = "";
+                    root.error_message = "";
+                    root.clear();
                 }
+            }
+
+            // Output Area
+            ToolOutputArea {
+                title: root.mode == 0 ? "BASE64 RESULT" : "DECODED TEXT RESULT";
+                text: root.output_text;
+                is_code: true;
+                copy(str) => { root.copy(str); }
             }
         }
     }
