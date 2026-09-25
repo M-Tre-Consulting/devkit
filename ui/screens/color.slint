@@ -1,12 +1,29 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2026 MTRE Consulting
 
-import { Icons, TextField, OutlinedCard, ScrollView, MaterialPalette, MaterialStyleMetrics, MaterialTypography, MaterialText, Icon } from "@material";
+import { Icons, TextField, OutlinedCard, ScrollView, MaterialPalette, MaterialStyleMetrics, MaterialTypography, MaterialText, Icon, FilterChip } from "@material";
 import { TopBar } from "../components/top-bar.slint";
 import { AppIcons } from "../components/app-icons.slint";
+import { ToolOutputArea, ToolActionButton, ToolErrorBanner } from "../components/tool-components.slint";
 
 export component ColorScreen inherits VerticalLayout {
     callback back();
+    callback convert();
+    callback select_preset(string);
+    callback copy_value(string);
+    callback clear_input();
+
+    in-out property <string> color_input: "#6750A4";
+    in-out property <int> selected_format: 0; // 0=Auto, 1=Hex, 2=Rgb, 3=Hsl, 4=Hsv
+    in-out property <color> preview_color: #6750a4;
+
+    // Converted outputs
+    in-out property <string> hex_output: "#6750A4";
+    in-out property <string> rgb_output: "rgb(103, 80, 164)";
+    in-out property <string> hsl_output: "hsl(256, 34%, 48%)";
+    in-out property <string> hsv_output: "hsv(256, 51%, 64%)";
+    in-out property <string> cmyk_output: "cmyk(37%, 51%, 0%, 36%)";
+    in-out property <string> error_message: "";
 
     property <bool> is_entered: false;
     init => { self.is_entered = true; }
@@ -33,62 +50,14 @@ export component ColorScreen inherits VerticalLayout {
             spacing: MaterialStyleMetrics.spacing_16;
             alignment: start;
 
-            HorizontalLayout {
-                alignment: center;
-                MaterialText {
-                    text: "Coming soon";
-                    style: MaterialTypography.label_large;
-                    color: MaterialPalette.on_surface_variant;
-                }
+            ToolErrorBanner {
+                error_message: root.error_message;
             }
 
-            // Preview Swatch Card
-            OutlinedCard {
-                VerticalLayout {
-                    padding: MaterialStyleMetrics.padding_16;
-                    spacing: MaterialStyleMetrics.spacing_12;
-
-                    Rectangle {
-                        height: 72px;
-                        border_radius: MaterialStyleMetrics.border_radius_8;
-                        background: #6750a4;
-
-                        HorizontalLayout {
-                            alignment: center;
-                            MaterialText {
-                                text: "#6750A4";
-                                style: MaterialTypography.title_medium;
-                                color: #ffffff;
-                            }
-                        }
-                    }
-                }
-            }
-
-            // Input section
-            HorizontalLayout {
-                alignment: space-between;
-                MaterialText {
-                    text: "COLOR INPUT";
-                    style: MaterialTypography.title_small;
-                    color: MaterialPalette.primary;
-                }
-                MaterialText {
-                    text: "Clear";
-                    style: MaterialTypography.label_medium;
-                    color: MaterialPalette.on_surface_variant;
-                }
-            }
-
-            TextField {
-                label: "e.g. #6750A4 or rgb(103, 80, 164)";
-                enabled: false;
-            }
-
-            // Converted formats output
+            // Live Preview Swatch Card
             MaterialText {
-                text: "CONVERTED FORMATS";
-                style: MaterialTypography.title_small;
+                text: "PREVIEW";
+                style: MaterialTypography.label_medium;
                 color: MaterialPalette.primary;
             }
 
@@ -98,57 +67,188 @@ export component ColorScreen inherits VerticalLayout {
                     spacing: MaterialStyleMetrics.spacing_12;
 
                     Rectangle {
-                        background: MaterialPalette.surface_container;
-                        border_radius: MaterialStyleMetrics.border_radius_4;
+                        height: 80px;
+                        border_radius: MaterialStyleMetrics.border_radius_8;
+                        background: root.preview_color;
+                        border_width: 1px;
+                        border_color: MaterialPalette.outline_variant;
 
-                        VerticalLayout {
-                            padding: MaterialStyleMetrics.padding_12;
-                            spacing: MaterialStyleMetrics.spacing_8;
-
-                            HorizontalLayout {
-                                alignment: space-between;
-                                MaterialText {
-                                    text: "HEX:";
-                                    style: MaterialTypography.body_medium;
-                                    color: MaterialPalette.on_surface_variant;
-                                }
-                                MaterialText {
-                                    text: "#6750A4";
-                                    style: MaterialTypography.body_medium;
-                                    color: MaterialPalette.on_surface;
-                                }
-                            }
-
-                            HorizontalLayout {
-                                alignment: space-between;
-                                MaterialText {
-                                    text: "RGB:";
-                                    style: MaterialTypography.body_medium;
-                                    color: MaterialPalette.on_surface_variant;
-                                }
-                                MaterialText {
-                                    text: "rgb(103, 80, 164)";
-                                    style: MaterialTypography.body_medium;
-                                    color: MaterialPalette.on_surface;
-                                }
-                            }
-
-                            HorizontalLayout {
-                                alignment: space-between;
-                                MaterialText {
-                                    text: "HSL:";
-                                    style: MaterialTypography.body_medium;
-                                    color: MaterialPalette.on_surface_variant;
-                                }
-                                MaterialText {
-                                    text: "hsl(256, 34%, 48%)";
-                                    style: MaterialTypography.body_medium;
-                                    color: MaterialPalette.on_surface;
+                        HorizontalLayout {
+                            alignment: center;
+                            Rectangle {
+                                background: #00000088;
+                                border_radius: MaterialStyleMetrics.border_radius_4;
+                                HorizontalLayout {
+                                    padding_left: 12px;
+                                    padding_right: 12px;
+                                    padding_top: 4px;
+                                    padding_bottom: 4px;
+                                    MaterialText {
+                                        text: root.hex_output;
+                                        style: MaterialTypography.title_medium;
+                                        color: #ffffff;
+                                    }
                                 }
                             }
                         }
                     }
                 }
+            }
+
+            // Presets
+            VerticalLayout {
+                spacing: MaterialStyleMetrics.spacing_8;
+
+                MaterialText {
+                    text: "PALETTE PRESETS";
+                    style: MaterialTypography.label_medium;
+                    color: MaterialPalette.primary;
+                }
+
+                HorizontalLayout {
+                    spacing: MaterialStyleMetrics.spacing_8;
+
+                    FilterChip {
+                        text: "Purple";
+                        selected: root.hex_output == "#6750A4";
+                        clicked => {
+                            root.color_input = "#6750A4";
+                            root.preview_color = #6750a4;
+                            root.select_preset("#6750A4");
+                        }
+                    }
+
+                    FilterChip {
+                        text: "Blue";
+                        selected: root.hex_output == "#2196F3";
+                        clicked => {
+                            root.color_input = "#2196F3";
+                            root.preview_color = #2196f3;
+                            root.select_preset("#2196F3");
+                        }
+                    }
+
+                    FilterChip {
+                        text: "Teal";
+                        selected: root.hex_output == "#009688";
+                        clicked => {
+                            root.color_input = "#009688";
+                            root.preview_color = #009688;
+                            root.select_preset("#009688");
+                        }
+                    }
+
+                    FilterChip {
+                        text: "Amber";
+                        selected: root.hex_output == "#FFC107";
+                        clicked => {
+                            root.color_input = "#FFC107";
+                            root.preview_color = #ffc107;
+                            root.select_preset("#FFC107");
+                        }
+                    }
+                }
+            }
+
+            // Format Selection
+            VerticalLayout {
+                spacing: MaterialStyleMetrics.spacing_8;
+
+                MaterialText {
+                    text: "INPUT FORMAT";
+                    style: MaterialTypography.label_medium;
+                    color: MaterialPalette.primary;
+                }
+
+                HorizontalLayout {
+                    spacing: MaterialStyleMetrics.spacing_8;
+
+                    FilterChip {
+                        text: "Auto";
+                        selected: root.selected_format == 0;
+                        clicked => { root.selected_format = 0; }
+                    }
+
+                    FilterChip {
+                        text: "HEX";
+                        selected: root.selected_format == 1;
+                        clicked => { root.selected_format = 1; }
+                    }
+
+                    FilterChip {
+                        text: "RGB";
+                        selected: root.selected_format == 2;
+                        clicked => { root.selected_format = 2; }
+                    }
+
+                    FilterChip {
+                        text: "HSL";
+                        selected: root.selected_format == 3;
+                        clicked => { root.selected_format = 3; }
+                    }
+
+                    FilterChip {
+                        text: "HSV";
+                        selected: root.selected_format == 4;
+                        clicked => { root.selected_format = 4; }
+                    }
+                }
+            }
+
+            // Input TextField
+            MaterialText {
+                text: "COLOR VALUE";
+                style: MaterialTypography.label_medium;
+                color: MaterialPalette.primary;
+            }
+
+            TextField {
+                placeholder_text: "e.g. #6750A4, rgb(103, 80, 164), hsl(256, 34%, 48%)";
+                text <=> root.color_input;
+                accepted => { root.convert(); }
+            }
+
+            ToolActionButton {
+                text: "Convert Color";
+                primary: true;
+                clicked => { root.convert(); }
+            }
+
+            // Converted Formats Outputs
+            MaterialText {
+                text: "CONVERTED FORMATS";
+                style: MaterialTypography.label_medium;
+                color: MaterialPalette.primary;
+            }
+
+            ToolOutputArea {
+                label: "HEX";
+                value: root.hex_output;
+                copy => { root.copy_value(root.hex_output); }
+            }
+
+            ToolOutputArea {
+                label: "RGB";
+                value: root.rgb_output;
+                copy => { root.copy_value(root.rgb_output); }
+            }
+
+            ToolOutputArea {
+                label: "HSL";
+                value: root.hsl_output;
+                copy => { root.copy_value(root.hsl_output); }
+            }
+
+            ToolOutputArea {
+                label: "HSV";
+                value: root.hsv_output;
+                copy => { root.copy_value(root.hsv_output); }
+            }
+
+            ToolOutputArea {
+                label: "CMYK";
+                value: root.cmyk_output;
+                copy => { root.copy_value(root.cmyk_output); }
             }
         }
     }
