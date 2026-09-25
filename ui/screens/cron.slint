@@ -1,0 +1,123 @@
+import { Icons, TextField, OutlinedCard, ScrollView, MaterialPalette, MaterialStyleMetrics, MaterialTypography, MaterialText, Icon } from "@material";
+import { TopBar } from "../components/top-bar.slint";
+import { AppIcons } from "../components/app-icons.slint";
+
+export component CronScreen inherits VerticalLayout {
+    callback back();
+
+    property <bool> is_entered: false;
+    init => { self.is_entered = true; }
+
+    TopBar {
+        title: "CRON Expression Parser";
+        has_back: true;
+        show_background: true;
+        back => { root.back(); }
+    }
+
+    ScrollView {
+        vertical-stretch: 1;
+        opacity: root.is_entered ? 1.0 : 0.0;
+
+        animate opacity {
+            duration: 200ms;
+            delay: 150ms;
+            easing: cubic-bezier(0.05, 0.7, 0.1, 1.0);
+        }
+
+        VerticalLayout {
+            padding: MaterialStyleMetrics.padding_16;
+            spacing: MaterialStyleMetrics.spacing_16;
+            alignment: start;
+
+            HorizontalLayout {
+                alignment: center;
+                MaterialText {
+                    text: "Coming soon";
+                    style: MaterialTypography.label_large;
+                    color: MaterialPalette.on_surface_variant;
+                }
+            }
+
+            // Input section
+            HorizontalLayout {
+                alignment: space-between;
+                MaterialText {
+                    text: "CRON EXPRESSION";
+                    style: MaterialTypography.title_small;
+                    color: MaterialPalette.primary;
+                }
+                MaterialText {
+                    text: "Examples";
+                    style: MaterialTypography.label_medium;
+                    color: MaterialPalette.on_surface_variant;
+                }
+            }
+
+            TextField {
+                label: "e.g. */15 * * * * or 0 0 * * 1";
+                enabled: false;
+            }
+
+            // Output section
+            MaterialText {
+                text: "SCHEDULE BREAKDOWN";
+                style: MaterialTypography.title_small;
+                color: MaterialPalette.primary;
+            }
+
+            OutlinedCard {
+                VerticalLayout {
+                    padding: MaterialStyleMetrics.padding_16;
+                    spacing: MaterialStyleMetrics.spacing_12;
+
+                    Rectangle {
+                        background: MaterialPalette.surface_container;
+                        border_radius: MaterialStyleMetrics.border_radius_4;
+
+                        VerticalLayout {
+                            padding: MaterialStyleMetrics.padding_12;
+                            spacing: MaterialStyleMetrics.spacing_8;
+
+                            MaterialText {
+                                text: "Human readable:";
+                                style: MaterialTypography.label_medium;
+                                color: MaterialPalette.primary;
+                            }
+                            MaterialText {
+                                text: "Every 15 minutes, every hour, every day";
+                                style: MaterialTypography.body_medium;
+                                color: MaterialPalette.on_surface;
+                            }
+                        }
+                    }
+
+                    VerticalLayout {
+                        spacing: MaterialStyleMetrics.spacing_4;
+
+                        MaterialText {
+                            text: "Next scheduled runs:";
+                            style: MaterialTypography.label_medium;
+                            color: MaterialPalette.on_surface_variant;
+                        }
+                        MaterialText {
+                            text: "• 2026-09-25 08:45:00 UTC";
+                            style: MaterialTypography.body_small;
+                            color: MaterialPalette.on_surface_variant;
+                        }
+                        MaterialText {
+                            text: "• 2026-09-25 09:00:00 UTC";
+                            style: MaterialTypography.body_small;
+                            color: MaterialPalette.on_surface_variant;
+                        }
+                        MaterialText {
+                            text: "• 2026-09-25 09:15:00 UTC";
+                            style: MaterialTypography.body_small;
+                            color: MaterialPalette.on_surface_variant;
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
