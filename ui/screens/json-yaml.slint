@@ -1,0 +1,141 @@
+import { Icons, TextField, OutlinedCard, ScrollView, MaterialPalette, MaterialStyleMetrics, MaterialTypography, MaterialText, OutlineButton, Icon } from "@material";
+import { TopBar } from "../components/top-bar.slint";
+import { AppIcons } from "../components/app-icons.slint";
+
+export component JsonYamlScreen inherits VerticalLayout {
+    callback back();
+
+    property <bool> is_entered: false;
+    property <bool> json_to_yaml: true;
+    init => { self.is_entered = true; }
+
+    TopBar {
+        title: "JSON ↔ YAML Converter";
+        has_back: true;
+        show_background: true;
+        back => { root.back(); }
+    }
+
+    ScrollView {
+        vertical-stretch: 1;
+        opacity: root.is_entered ? 1.0 : 0.0;
+
+        animate opacity {
+            duration: 200ms;
+            delay: 150ms;
+            easing: cubic-bezier(0.05, 0.7, 0.1, 1.0);
+        }
+
+        VerticalLayout {
+            padding: MaterialStyleMetrics.padding_16;
+            spacing: MaterialStyleMetrics.spacing_16;
+            alignment: start;
+
+            HorizontalLayout {
+                alignment: center;
+                MaterialText {
+                    text: "Coming soon";
+                    style: MaterialTypography.label_large;
+                    color: MaterialPalette.on_surface_variant;
+                }
+            }
+
+            // Direction toggle bar
+            HorizontalLayout {
+                spacing: MaterialStyleMetrics.spacing_8;
+                alignment: center;
+
+                Rectangle {
+                    background: MaterialPalette.surface_container;
+                    border_radius: MaterialStyleMetrics.border_radius_8;
+                    height: 40px;
+
+                    HorizontalLayout {
+                        padding_left: MaterialStyleMetrics.padding_12;
+                        padding_right: MaterialStyleMetrics.padding_12;
+                        spacing: MaterialStyleMetrics.spacing_8;
+                        alignment: center;
+
+                        MaterialText {
+                            text: root.json_to_yaml ? "Mode: JSON → YAML" : "Mode: YAML → JSON";
+                            style: MaterialTypography.label_large;
+                            color: MaterialPalette.primary;
+                        }
+
+                        Icon {
+                            source: AppIcons.swap;
+                            colorize: MaterialPalette.primary;
+                            width: 20px;
+                            height: 20px;
+                        }
+                    }
+
+                    TouchArea {
+                        clicked => {
+                            root.json_to_yaml = !root.json_to_yaml;
+                        }
+                    }
+                }
+            }
+
+            // Input section
+            HorizontalLayout {
+                alignment: space-between;
+                MaterialText {
+                    text: root.json_to_yaml ? "INPUT (JSON)" : "INPUT (YAML)";
+                    style: MaterialTypography.title_small;
+                    color: MaterialPalette.primary;
+                }
+                MaterialText {
+                    text: "Clear";
+                    style: MaterialTypography.label_medium;
+                    color: MaterialPalette.on_surface_variant;
+                }
+            }
+
+            TextField {
+                label: root.json_to_yaml ? "Paste JSON payload here..." : "Paste YAML payload here...";
+                enabled: false;
+            }
+
+            // Output section
+            HorizontalLayout {
+                alignment: space-between;
+                MaterialText {
+                    text: root.json_to_yaml ? "OUTPUT (YAML)" : "OUTPUT (JSON)";
+                    style: MaterialTypography.title_small;
+                    color: MaterialPalette.primary;
+                }
+                MaterialText {
+                    text: "Copy";
+                    style: MaterialTypography.label_medium;
+                    color: MaterialPalette.primary;
+                }
+            }
+
+            OutlinedCard {
+                VerticalLayout {
+                    padding: MaterialStyleMetrics.padding_16;
+                    spacing: MaterialStyleMetrics.spacing_8;
+
+                    Rectangle {
+                        background: MaterialPalette.surface_container;
+                        border_radius: MaterialStyleMetrics.border_radius_4;
+                        min_height: 120px;
+
+                        VerticalLayout {
+                            padding: MaterialStyleMetrics.padding_12;
+                            alignment: start;
+
+                            MaterialText {
+                                text: root.json_to_yaml ? "# Converted YAML will appear here..." : "{\n  \"message\": \"Converted JSON will appear here...\"\n}";
+                                style: MaterialTypography.body_small;
+                                color: MaterialPalette.on_surface_variant;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
