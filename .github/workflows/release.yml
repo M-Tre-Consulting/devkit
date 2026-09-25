@@ -111,7 +111,7 @@ jobs:
           yes | sdkmanager --licenses > /dev/null 2>&1 || true
 
           # Install / verify required platform and build-tools
-          sdkmanager --install "platforms;android-35" "build-tools;35.0.0"
+          sdkmanager --install "platforms;android-35" "platforms;android-30" "build-tools;35.0.0"
 
           # Detect or install Android NDK
           if [ -d "$ANDROID_ROOT/ndk" ] && [ -n "$(ls -A "$ANDROID_ROOT/ndk" 2>/dev/null)" ]; then
@@ -186,6 +186,9 @@ jobs:
       # Step 10: Build release APK
       # ------------------------------------------------------------------------
       - name: Build release APK
+        env:
+          CARGO_APK_RELEASE_KEYSTORE: /home/runner/.android/release.keystore
+          CARGO_APK_RELEASE_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
         run: |
           cargo apk build --target aarch64-linux-android --lib --release
 

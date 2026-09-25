@@ -27,11 +27,11 @@ package = "it.mtreconsulting.devkit"
 apk_name = "devkit"
 label = "DevKit"
 resources = "res"
-min_sdk = 26
-target_sdk = 35
+target_archs = ["arm64-v8a", "armeabi-v7a", "x86_64"]
+
+[package.metadata.android.sdk]
 min_sdk_version = 26
 target_sdk_version = 35
-target_archs = ["arm64-v8a", "armeabi-v7a", "x86_64"]
 
 [package.metadata.android.application]
 label = "DevKit"
