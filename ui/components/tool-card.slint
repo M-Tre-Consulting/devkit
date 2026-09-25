@@ -16,7 +16,7 @@ export component ToolCard inherits Rectangle {
     callback clicked();
     callback toggle_favorite();
 
-    min_height: 124px;
+    min_height: 148px;
 
     // Staggered entrance animation
     property <float> enter_opacity: root.is_entered ? 1.0 : 0.0;
@@ -65,8 +65,8 @@ export component ToolCard inherits Rectangle {
 
             VerticalLayout {
                 padding: MaterialStyleMetrics.padding_16;
-                spacing: MaterialStyleMetrics.spacing_8;
-                alignment: space-between;
+                spacing: 12px;
+                alignment: start;
 
                 HorizontalLayout {
                     alignment: start;
@@ -87,20 +87,26 @@ export component ToolCard inherits Rectangle {
 
                 VerticalLayout {
                     spacing: MaterialStyleMetrics.spacing_4;
+                    alignment: start;
 
                     MaterialText {
+                        width: 100%;
                         text: root.title;
                         style: MaterialTypography.title_medium;
                         color: MaterialPalette.on_surface;
+                        wrap: word-wrap;
                         overflow: elide;
+                        max_height: 48px;
                     }
 
                     if root.description != "" : MaterialText {
+                        width: 100%;
                         text: root.description;
                         style: MaterialTypography.body_medium;
                         color: MaterialPalette.on_surface_variant;
-                        overflow: elide;
                         wrap: word-wrap;
+                        overflow: elide;
+                        max_height: 40px;
                     }
                 }
             }
@@ -108,8 +114,8 @@ export component ToolCard inherits Rectangle {
 
         // Star favorite button in top-right corner
         star_btn := Rectangle {
-            x: parent.width - self.width - 8px;
-            y: 8px;
+            x: parent.width - self.width - 12px;
+            y: 12px;
             width: 36px;
             height: 36px;
             border_radius: 18px;
