@@ -12,3 +12,7 @@ Cargo.lock
 local.properties
 .gradle/
 build/
+
+# Signing keys & secrets
+*.keystore
+*.jks
