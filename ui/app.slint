@@ -22,6 +22,8 @@ export component AppWindow inherits Window {
     in-out property <int> current_mode: 0;
     in-out property <int> active_tool: 0;
     in-out property <length> status_bar_inset: 24px;
+    in-out property <length> nav_bar_inset: 16px;
+    property <length> pill_bottom_margin: 28px;
     in-out property <[bool]> tool_favorites: [false, false, false, false, false, false, false];
     in-out property <[int]> recent_tools: [];
     in-out property <bool> modal_open: false;
@@ -108,6 +110,7 @@ export component AppWindow inherits Window {
 
             HomeScreen {
                 status_bar_inset: root.status_bar_inset;
+                nav_bar_inset: root.nav_bar_inset;
                 tool_favorites: root.tool_favorites;
                 open_tool(id) => {
                     root.open_tool(id);
@@ -138,6 +141,7 @@ export component AppWindow inherits Window {
 
             RecentScreen {
                 status_bar_inset: root.status_bar_inset;
+                nav_bar_inset: root.nav_bar_inset;
                 recent_tools: root.recent_tools;
                 tool_favorites: root.tool_favorites;
                 open_tool(id) => {
@@ -169,6 +173,7 @@ export component AppWindow inherits Window {
 
             FavoritesScreen {
                 status_bar_inset: root.status_bar_inset;
+                nav_bar_inset: root.nav_bar_inset;
                 tool_favorites: root.tool_favorites;
                 open_tool(id) => {
                     root.open_tool(id);
@@ -199,6 +204,7 @@ export component AppWindow inherits Window {
 
             SettingsScreen {
                 status_bar_inset: root.status_bar_inset;
+                nav_bar_inset: root.nav_bar_inset;
                 clear_recents => {
                     root.clear_recents();
                 }
@@ -252,10 +258,10 @@ export component AppWindow inherits Window {
         }
     }
 
-    // Floating pill navigation bar anchored above the bottom edge
+    // Floating pill navigation bar anchored above system nav bar / gesture inset
     pill_nav := PillNavBar {
         x: (root.width - self.width) / 2;
-        y: root.height - self.height - 20px;
+        y: root.height - self.height - root.nav_bar_inset - root.pill_bottom_margin;
         active_index: root.current_mode;
         items: [
             { icon: AppIcons.home, label: "Home" },

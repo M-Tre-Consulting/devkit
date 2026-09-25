@@ -7,6 +7,7 @@ import { TopBar } from "../components/top-bar.slint";
 export component FavoritesScreen inherits VerticalLayout {
     in property <bool> is_wide: root.width >= 600px;
     in property <length> status_bar_inset: 24px;
+    in property <length> nav_bar_inset: 16px;
     in property <[bool]> tool_favorites: [false, false, false, false, false, false, false];
     callback open_tool(int);
     callback toggle_favorite(int);
@@ -111,7 +112,7 @@ export component FavoritesScreen inherits VerticalLayout {
             padding_left: MaterialStyleMetrics.padding_16;
             padding_right: MaterialStyleMetrics.padding_16;
             padding_top: MaterialStyleMetrics.padding_8;
-            padding_bottom: 112px;
+            padding_bottom: 70px + 28px + root.nav_bar_inset + 16px;
             spacing: MaterialStyleMetrics.spacing_16;
             alignment: start;
 

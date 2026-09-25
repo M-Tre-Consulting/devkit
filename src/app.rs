@@ -7,8 +7,10 @@ use crate::navigation::{AppMode, NavigationState};
 
 pub fn run() -> Result<(), slint::PlatformError> {
     let ui = crate::AppWindow::new()?;
-    let inset = crate::platform::android::get_status_bar_inset();
-    ui.set_status_bar_inset(inset);
+    let status_inset = crate::platform::android::get_status_bar_inset();
+    let nav_inset = crate::platform::android::get_navigation_bar_inset();
+    ui.set_status_bar_inset(status_inset);
+    ui.set_nav_bar_inset(nav_inset);
     setup_app_state(&ui);
     ui.run()
 }
@@ -140,11 +142,14 @@ pub fn android_main(android_app: slint::android::AndroidApp) {
     if let Some(path) = android_app.internal_data_path() {
         crate::storage::init_storage_dir(path.to_path_buf());
     }
-    let inset = crate::platform::android::query_status_bar_inset(&android_app);
-    crate::platform::android::set_status_bar_inset(inset);
+    let status_inset = crate::platform::android::query_status_bar_inset(&android_app);
+    let nav_inset = crate::platform::android::query_navigation_bar_inset(&android_app);
+    crate::platform::android::set_status_bar_inset(status_inset);
+    crate::platform::android::set_navigation_bar_inset(nav_inset);
     slint::android::init(android_app).unwrap();
     let ui = crate::AppWindow::new().unwrap();
-    ui.set_status_bar_inset(inset);
+    ui.set_status_bar_inset(status_inset);
+    ui.set_nav_bar_inset(nav_inset);
     crate::MaterialWindowAdapter::get(&ui).set_disable_hover(true);
     setup_app_state(&ui);
     ui.run().unwrap();

@@ -13,13 +13,13 @@ export component PillNavBar inherits Rectangle {
     // Geometry parameters (Material 3 Expressive compact floating pill with active label)
     property <length> icon_width: 50px;
     property <length> extra_width: 68px;
-    property <length> item_height: 48px;
-    property <length> inner_padding: 4px;
+    property <length> item_height: 58px;
+    property <length> inner_padding: 6px;
 
     // Self-contained pill dimensions: wraps items in their resting layout
     width: root.items.length * root.icon_width + (root.active_index >= 0 ? root.extra_width : 0px) + root.inner_padding * 2;
     height: root.item_height + root.inner_padding * 2;
-    border_radius: 28px;
+    border_radius: self.height / 2;
     background: MaterialPalette.surface_container_high.with_alpha(92%);
 
     // Material 3 elevation drop shadow for floating pill effect
@@ -45,7 +45,7 @@ export component PillNavBar inherits Rectangle {
         y: root.inner_padding;
         width: root.icon_width + (root.active_index >= 0 ? root.extra_width : 0px);
         height: root.item_height;
-        border_radius: 24px;
+        border_radius: self.height / 2;
         background: MaterialPalette.secondary_container;
         visible: root.active_index >= 0;
 
@@ -88,7 +88,7 @@ export component PillNavBar inherits Rectangle {
             touch_area := StateLayerArea {
                 width: 100%;
                 height: 100%;
-                border_radius: 24px;
+                border_radius: self.height / 2;
                 color: item_cell.content_color;
 
                 clicked => {
@@ -106,7 +106,7 @@ export component PillNavBar inherits Rectangle {
 
                         Icon {
                             source: item.icon;
-                            width: touch_area.pressed ? 20px : 22px;
+                            width: touch_area.pressed ? 22px : 24px;
                             height: self.width;
                             colorize: item_cell.content_color;
 
