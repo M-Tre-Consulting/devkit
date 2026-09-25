@@ -9,6 +9,9 @@ import { TopBar } from "../components/top-bar.slint";
 
 export component HomeScreen inherits VerticalLayout {
     in property <bool> is_wide: root.width >= 600px;
+    property <int> columns: root.width >= 840px ? 4 : (root.width >= 560px ? 3 : 2);
+    property <length> screen_margin: root.width >= 600px ? 24px : 16px;
+    property <length> grid_gap: root.width >= 600px ? 16px : 12px;
     in property <length> status_bar_inset: 24px;
     in property <length> nav_bar_inset: 16px;
     in property <length> pill_height: 56px;
@@ -36,24 +39,30 @@ export component HomeScreen inherits VerticalLayout {
     ScrollView {
         vertical-stretch: 1;
 
-        VerticalLayout {
-            padding_left: MaterialStyleMetrics.padding_16;
-            padding_right: MaterialStyleMetrics.padding_16;
-            padding_top: MaterialStyleMetrics.padding_8;
-            padding_bottom: root.bottom_clearance;
-            spacing: MaterialStyleMetrics.spacing_16;
-            alignment: start;
+        HorizontalLayout {
+            alignment: center;
+            width: 100%;
 
-            SectionHeader {
-                title: "DEVELOPER TOOLS";
-            }
+            VerticalLayout {
+                max_width: 1040px;
+                width: 100%;
+                padding_left: root.screen_margin;
+                padding_right: root.screen_margin;
+                padding_top: MaterialStyleMetrics.padding_8;
+                padding_bottom: root.bottom_clearance;
+                spacing: MaterialStyleMetrics.spacing_16;
+                alignment: start;
 
-            // Phone width layout: 2 columns
-            if !root.is_wide : VerticalLayout {
-                spacing: MaterialStyleMetrics.spacing_12;
+                SectionHeader {
+                    title: "DEVELOPER TOOLS";
+                }
+
+                // Phone width layout: 2 columns (< 560px)
+                if root.columns == 2 : VerticalLayout {
+                    spacing: root.grid_gap;
 
                 HorizontalLayout {
-                    spacing: MaterialStyleMetrics.spacing_12;
+                    spacing: root.grid_gap;
                     ToolCard {
                         horizontal-stretch: 1;
                         title: "Subnet Calculator";
@@ -81,7 +90,7 @@ export component HomeScreen inherits VerticalLayout {
                 }
 
                 HorizontalLayout {
-                    spacing: MaterialStyleMetrics.spacing_12;
+                    spacing: root.grid_gap;
                     ToolCard {
                         horizontal-stretch: 1;
                         title: "Base64";
@@ -109,7 +118,7 @@ export component HomeScreen inherits VerticalLayout {
                 }
 
                 HorizontalLayout {
-                    spacing: MaterialStyleMetrics.spacing_12;
+                    spacing: root.grid_gap;
                     ToolCard {
                         horizontal-stretch: 1;
                         title: "Timestamp";
@@ -137,7 +146,7 @@ export component HomeScreen inherits VerticalLayout {
                 }
 
                 HorizontalLayout {
-                    spacing: MaterialStyleMetrics.spacing_12;
+                    spacing: root.grid_gap;
                     ToolCard {
                         horizontal-stretch: 1;
                         title: "JSON ↔ YAML";
@@ -165,7 +174,7 @@ export component HomeScreen inherits VerticalLayout {
                 }
 
                 HorizontalLayout {
-                    spacing: MaterialStyleMetrics.spacing_12;
+                    spacing: root.grid_gap;
                     ToolCard {
                         horizontal-stretch: 1;
                         title: "GZip";
@@ -193,7 +202,7 @@ export component HomeScreen inherits VerticalLayout {
                 }
 
                 HorizontalLayout {
-                    spacing: MaterialStyleMetrics.spacing_12;
+                    spacing: root.grid_gap;
                     ToolCard {
                         horizontal-stretch: 1;
                         title: "Chmod Calculator";
@@ -221,7 +230,7 @@ export component HomeScreen inherits VerticalLayout {
                 }
 
                 HorizontalLayout {
-                    spacing: MaterialStyleMetrics.spacing_12;
+                    spacing: root.grid_gap;
                     ToolCard {
                         horizontal-stretch: 1;
                         title: "Contrast Checker";
@@ -249,12 +258,12 @@ export component HomeScreen inherits VerticalLayout {
                 }
             }
 
-            // Tablet / wide width layout: 3 columns
-            if root.is_wide : VerticalLayout {
-                spacing: MaterialStyleMetrics.spacing_12;
+            // Tablet / medium width layout: 3 columns (560px <= width < 840px)
+            if root.columns == 3 : VerticalLayout {
+                spacing: root.grid_gap;
 
                 HorizontalLayout {
-                    spacing: MaterialStyleMetrics.spacing_12;
+                    spacing: root.grid_gap;
                     ToolCard {
                         horizontal-stretch: 1;
                         title: "Subnet Calculator";
@@ -294,7 +303,7 @@ export component HomeScreen inherits VerticalLayout {
                 }
 
                 HorizontalLayout {
-                    spacing: MaterialStyleMetrics.spacing_12;
+                    spacing: root.grid_gap;
                     ToolCard {
                         horizontal-stretch: 1;
                         title: "UUID Generator";
@@ -334,7 +343,7 @@ export component HomeScreen inherits VerticalLayout {
                 }
 
                 HorizontalLayout {
-                    spacing: MaterialStyleMetrics.spacing_12;
+                    spacing: root.grid_gap;
                     ToolCard {
                         horizontal-stretch: 1;
                         title: "JSON ↔ YAML";
@@ -374,7 +383,7 @@ export component HomeScreen inherits VerticalLayout {
                 }
 
                 HorizontalLayout {
-                    spacing: MaterialStyleMetrics.spacing_12;
+                    spacing: root.grid_gap;
                     ToolCard {
                         horizontal-stretch: 1;
                         title: "Code Formatter";
@@ -414,7 +423,7 @@ export component HomeScreen inherits VerticalLayout {
                 }
 
                 HorizontalLayout {
-                    spacing: MaterialStyleMetrics.spacing_12;
+                    spacing: root.grid_gap;
                     ToolCard {
                         horizontal-stretch: 1;
                         title: "Contrast Checker";
@@ -444,6 +453,202 @@ export component HomeScreen inherits VerticalLayout {
                     }
                 }
             }
+
+            // Large tablet / wide desktop: 4 columns (width >= 840px)
+            if root.columns == 4 : VerticalLayout {
+                spacing: root.grid_gap;
+
+                HorizontalLayout {
+                    spacing: root.grid_gap;
+                    ToolCard {
+                        horizontal-stretch: 1;
+                        title: "Subnet Calculator";
+                        description: "IPv4 CIDR, netmask & range";
+                        icon: AppIcons.lan;
+                        accent_color: #00897b;
+                        entrance_index: 0;
+                        is_entered: root.is_entered;
+                        is_favorite: root.tool_favorites[1];
+                        clicked => { root.open_tool(1); }
+                        toggle_favorite => { root.toggle_favorite(1); }
+                    }
+                    ToolCard {
+                        horizontal-stretch: 1;
+                        title: "Hash Calculator";
+                        description: "MD5, SHA-256 checksums";
+                        icon: AppIcons.lock;
+                        accent_color: #8e24aa;
+                        entrance_index: 1;
+                        is_entered: root.is_entered;
+                        is_favorite: root.tool_favorites[2];
+                        clicked => { root.open_tool(2); }
+                        toggle_favorite => { root.toggle_favorite(2); }
+                    }
+                    ToolCard {
+                        horizontal-stretch: 1;
+                        title: "Base64";
+                        description: "Encode & decode strings";
+                        icon: AppIcons.code;
+                        accent_color: #f4511e;
+                        entrance_index: 2;
+                        is_entered: root.is_entered;
+                        is_favorite: root.tool_favorites[3];
+                        clicked => { root.open_tool(3); }
+                        toggle_favorite => { root.toggle_favorite(3); }
+                    }
+                    ToolCard {
+                        horizontal-stretch: 1;
+                        title: "UUID Generator";
+                        description: "Generate unique identifiers";
+                        icon: AppIcons.fingerprint;
+                        accent_color: #2e7d32;
+                        entrance_index: 3;
+                        is_entered: root.is_entered;
+                        is_favorite: root.tool_favorites[4];
+                        clicked => { root.open_tool(4); }
+                        toggle_favorite => { root.toggle_favorite(4); }
+                    }
+                }
+
+                HorizontalLayout {
+                    spacing: root.grid_gap;
+                    ToolCard {
+                        horizontal-stretch: 1;
+                        title: "Timestamp";
+                        description: "Epoch & date conversions";
+                        icon: AppIcons.timer;
+                        accent_color: #1e88e5;
+                        entrance_index: 4;
+                        is_entered: root.is_entered;
+                        is_favorite: root.tool_favorites[5];
+                        clicked => { root.open_tool(5); }
+                        toggle_favorite => { root.toggle_favorite(5); }
+                    }
+                    ToolCard {
+                        horizontal-stretch: 1;
+                        title: "Regex Tester";
+                        description: "Evaluate pattern matches";
+                        icon: AppIcons.regex;
+                        accent_color: #d97706;
+                        entrance_index: 5;
+                        is_entered: root.is_entered;
+                        is_favorite: root.tool_favorites[6];
+                        clicked => { root.open_tool(6); }
+                        toggle_favorite => { root.toggle_favorite(6); }
+                    }
+                    ToolCard {
+                        horizontal-stretch: 1;
+                        title: "JSON ↔ YAML";
+                        description: "Convert between formats";
+                        icon: AppIcons.swap;
+                        accent_color: #0288d1;
+                        entrance_index: 6;
+                        is_entered: root.is_entered;
+                        is_favorite: root.tool_favorites[7];
+                        clicked => { root.open_tool(7); }
+                        toggle_favorite => { root.toggle_favorite(7); }
+                    }
+                    ToolCard {
+                        horizontal-stretch: 1;
+                        title: "CRON Parser";
+                        description: "Parse schedule syntax";
+                        icon: AppIcons.schedule;
+                        accent_color: #7b1fa2;
+                        entrance_index: 7;
+                        is_entered: root.is_entered;
+                        is_favorite: root.tool_favorites[8];
+                        clicked => { root.open_tool(8); }
+                        toggle_favorite => { root.toggle_favorite(8); }
+                    }
+                }
+
+                HorizontalLayout {
+                    spacing: root.grid_gap;
+                    ToolCard {
+                        horizontal-stretch: 1;
+                        title: "GZip";
+                        description: "Compress & decompress";
+                        icon: AppIcons.archive;
+                        accent_color: #c2185b;
+                        entrance_index: 8;
+                        is_entered: root.is_entered;
+                        is_favorite: root.tool_favorites[9];
+                        clicked => { root.open_tool(9); }
+                        toggle_favorite => { root.toggle_favorite(9); }
+                    }
+                    ToolCard {
+                        horizontal-stretch: 1;
+                        title: "Code Formatter";
+                        description: "Format code syntax";
+                        icon: AppIcons.formatter;
+                        accent_color: #0097a7;
+                        entrance_index: 9;
+                        is_entered: root.is_entered;
+                        is_favorite: root.tool_favorites[10];
+                        clicked => { root.open_tool(10); }
+                        toggle_favorite => { root.toggle_favorite(10); }
+                    }
+                    ToolCard {
+                        horizontal-stretch: 1;
+                        title: "Chmod Calculator";
+                        description: "Octal & symbolic bits";
+                        icon: AppIcons.security;
+                        accent_color: #388e3c;
+                        entrance_index: 10;
+                        is_entered: root.is_entered;
+                        is_favorite: root.tool_favorites[11];
+                        clicked => { root.open_tool(11); }
+                        toggle_favorite => { root.toggle_favorite(11); }
+                    }
+                    ToolCard {
+                        horizontal-stretch: 1;
+                        title: "Color Converter";
+                        description: "HEX, RGB, HSL values";
+                        icon: AppIcons.palette;
+                        accent_color: #f57c00;
+                        entrance_index: 11;
+                        is_entered: root.is_entered;
+                        is_favorite: root.tool_favorites[12];
+                        clicked => { root.open_tool(12); }
+                        toggle_favorite => { root.toggle_favorite(12); }
+                    }
+                }
+
+                HorizontalLayout {
+                    spacing: root.grid_gap;
+                    ToolCard {
+                        horizontal-stretch: 1;
+                        title: "Contrast Checker";
+                        description: "WCAG contrast ratio";
+                        icon: AppIcons.contrast;
+                        accent_color: #512da8;
+                        entrance_index: 12;
+                        is_entered: root.is_entered;
+                        is_favorite: root.tool_favorites[13];
+                        clicked => { root.open_tool(13); }
+                        toggle_favorite => { root.toggle_favorite(13); }
+                    }
+                    ToolCard {
+                        horizontal-stretch: 1;
+                        title: "JWT Decoder";
+                        description: "Decode headers & claims";
+                        icon: AppIcons.key;
+                        accent_color: #e64a19;
+                        entrance_index: 13;
+                        is_entered: root.is_entered;
+                        is_favorite: root.tool_favorites[14];
+                        clicked => { root.open_tool(14); }
+                        toggle_favorite => { root.toggle_favorite(14); }
+                    }
+                    Rectangle {
+                        horizontal-stretch: 1;
+                    }
+                    Rectangle {
+                        horizontal-stretch: 1;
+                    }
+                }
+            }
         }
     }
+}
 }

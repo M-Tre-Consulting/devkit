@@ -10,6 +10,9 @@ import { AboutSlint } from "std-widgets.slint";
 export component AboutScreen inherits VerticalLayout {
     in property <length> status_bar_inset: 24px;
     in property <length> nav_bar_inset: 16px;
+    in property <length> pill_height: 52px;
+    in property <length> pill_bottom_margin: 24px;
+    property <length> bottom_clearance: root.pill_height + root.pill_bottom_margin + root.nav_bar_inset + 24px;
     callback back();
 
     // Status bar clearance
@@ -27,13 +30,19 @@ export component AboutScreen inherits VerticalLayout {
     ScrollView {
         vertical-stretch: 1;
 
-        VerticalLayout {
-            padding_left: MaterialStyleMetrics.padding_16;
-            padding_right: MaterialStyleMetrics.padding_16;
-            padding_top: MaterialStyleMetrics.padding_8;
-            padding_bottom: 70px + 28px + root.nav_bar_inset + 16px;
-            spacing: MaterialStyleMetrics.spacing_16;
-            alignment: start;
+        HorizontalLayout {
+            alignment: center;
+            width: 100%;
+
+            VerticalLayout {
+                max_width: 720px;
+                width: 100%;
+                padding_left: root.width >= 600px ? 24px : 16px;
+                padding_right: root.width >= 600px ? 24px : 16px;
+                padding_top: MaterialStyleMetrics.padding_8;
+                padding_bottom: root.bottom_clearance;
+                spacing: MaterialStyleMetrics.spacing_16;
+                alignment: start;
 
             // App Brand Card
             Rectangle {
@@ -194,4 +203,5 @@ export component AboutScreen inherits VerticalLayout {
             }
         }
     }
+}
 }

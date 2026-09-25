@@ -8,6 +8,7 @@ import { ToolOutputArea } from "../components/tool-output-area.slint";
 import { AppIcons } from "../components/app-icons.slint";
 
 export component ContrastScreen inherits VerticalLayout {
+    in property <length> nav_bar_inset: 16px;
     callback back();
     callback check_contrast();
     callback swap_colors();
@@ -51,7 +52,7 @@ export component ContrastScreen inherits VerticalLayout {
             padding_left: MaterialStyleMetrics.padding_16;
             padding_right: MaterialStyleMetrics.padding_16;
             padding_top: MaterialStyleMetrics.padding_16;
-            padding_bottom: 96px;
+            padding_bottom: 96px + root.nav_bar_inset;
             spacing: MaterialStyleMetrics.spacing_16;
             alignment: start;
 

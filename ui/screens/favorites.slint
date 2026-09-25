@@ -114,13 +114,19 @@ export component FavoritesScreen inherits VerticalLayout {
     if root.has_favorites : ScrollView {
         vertical-stretch: 1;
 
-        VerticalLayout {
-            padding_left: MaterialStyleMetrics.padding_16;
-            padding_right: MaterialStyleMetrics.padding_16;
-            padding_top: MaterialStyleMetrics.padding_8;
-            padding_bottom: root.bottom_clearance;
-            spacing: MaterialStyleMetrics.spacing_16;
-            alignment: start;
+        HorizontalLayout {
+            alignment: center;
+            width: 100%;
+
+            VerticalLayout {
+                max_width: 720px;
+                width: 100%;
+                padding_left: root.width >= 600px ? 24px : 16px;
+                padding_right: root.width >= 600px ? 24px : 16px;
+                padding_top: MaterialStyleMetrics.padding_8;
+                padding_bottom: root.bottom_clearance;
+                spacing: MaterialStyleMetrics.spacing_16;
+                alignment: start;
 
             SectionHeader {
                 title: "PINNED TOOLS";
@@ -271,4 +277,5 @@ export component FavoritesScreen inherits VerticalLayout {
             }
         }
     }
+}
 }

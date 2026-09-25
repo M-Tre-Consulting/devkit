@@ -338,6 +338,7 @@ export component AppWindow inherits Window {
             }
 
             if root.displayed_tool == 11 : ChmodScreen {
+                nav_bar_inset: root.nav_bar_inset;
                 back => { root.back(); }
                 calculate => {
                     root.calculate_chmod(
@@ -350,18 +351,21 @@ export component AppWindow inherits Window {
             }
 
             if root.displayed_tool == 12 : ColorScreen {
+                nav_bar_inset: root.nav_bar_inset;
                 back => { root.back(); }
                 convert => { root.convert_color(self.color_input, self.selected_format); }
                 copy(val) => { root.copy_text(val); }
             }
 
             if root.displayed_tool == 13 : ContrastScreen {
+                nav_bar_inset: root.nav_bar_inset;
                 back => { root.back(); }
                 check_contrast => { root.check_contrast(self.fg_color_text, self.bg_color_text); }
                 copy(val) => { root.copy_text(val); }
             }
 
             if root.displayed_tool == 14 : JwtScreen {
+                nav_bar_inset: root.nav_bar_inset;
                 back => { root.back(); }
                 decode => { root.decode_jwt(self.token_input); }
                 copy(val) => { root.copy_text(val); }
@@ -390,6 +394,8 @@ export component AppWindow inherits Window {
             AboutScreen {
                 status_bar_inset: root.status_bar_inset;
                 nav_bar_inset: root.nav_bar_inset;
+                pill_height: pill_nav.height;
+                pill_bottom_margin: root.pill_bottom_margin;
                 back => {
                     root.back();
                 }
