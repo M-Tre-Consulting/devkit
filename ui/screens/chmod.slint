@@ -1,10 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2026 MTRE Consulting
 
-import { Icons, OutlinedCard, ScrollView, MaterialPalette, MaterialStyleMetrics, MaterialTypography, MaterialText, Icon, TextField, StateLayerArea } from "@material";
+import { Icons, OutlinedCard, ScrollView, MaterialPalette, MaterialStyleMetrics, MaterialTypography, MaterialText, Icon, TextField, StateLayerArea, FilledButton } from "@material";
 import { TopBar } from "../components/top-bar.slint";
 import { ToolErrorBanner } from "../components/tool-error-banner.slint";
-import { ToolActionButton } from "../components/tool-action-button.slint";
 import { ToolOutputArea } from "../components/tool-output-area.slint";
 import { AppIcons } from "../components/app-icons.slint";
 
@@ -528,26 +527,24 @@ export component ChmodScreen inherits VerticalLayout {
                 color: MaterialPalette.primary;
             }
 
-            HorizontalLayout {
-                spacing: MaterialStyleMetrics.spacing_12;
-                alignment: center;
-
-                TextField {
-                    horizontal-stretch: 1;
-                    placeholder_text: "e.g. 755";
-                    text <=> root.octal_input;
-                    accepted => { root.apply_octal(root.octal_input); }
-                }
-
-                ToolActionButton {
-                    text: "Apply";
-                    clicked => { root.apply_octal(root.octal_input); }
+            TextField {
+                placeholder_text: "e.g. 755";
+                text <=> root.octal_input;
+                accepted => {
+                    root.apply_octal(root.octal_input);
+                    root.calculate();
                 }
             }
 
-            ToolActionButton {
-                text: "Calculate Permissions";
-                clicked => { root.calculate(); }
+            FilledButton {
+                text: "Apply";
+                height: 40px;
+                clicked => {
+                    if root.octal_input != "" {
+                        root.apply_octal(root.octal_input);
+                    }
+                    root.calculate();
+                }
             }
 
             // Calculated Output Section
