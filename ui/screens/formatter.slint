@@ -1,0 +1,194 @@
+import { Icons, TextField, OutlinedCard, ScrollView, MaterialPalette, MaterialStyleMetrics, MaterialTypography, MaterialText, Icon } from "@material";
+import { TopBar } from "../components/top-bar.slint";
+import { AppIcons } from "../components/app-icons.slint";
+
+export component FormatterScreen inherits VerticalLayout {
+    callback back();
+
+    property <bool> is_entered: false;
+    property <int> selected_lang: 0; // 0: JSON, 1: YAML, 2: XML, 3: SQL
+    init => { self.is_entered = true; }
+
+    TopBar {
+        title: "Code Formatter";
+        has_back: true;
+        show_background: true;
+        back => { root.back(); }
+    }
+
+    ScrollView {
+        vertical-stretch: 1;
+        opacity: root.is_entered ? 1.0 : 0.0;
+
+        animate opacity {
+            duration: 200ms;
+            delay: 150ms;
+            easing: cubic-bezier(0.05, 0.7, 0.1, 1.0);
+        }
+
+        VerticalLayout {
+            padding: MaterialStyleMetrics.padding_16;
+            spacing: MaterialStyleMetrics.spacing_16;
+            alignment: start;
+
+            HorizontalLayout {
+                alignment: center;
+                MaterialText {
+                    text: "Coming soon";
+                    style: MaterialTypography.label_large;
+                    color: MaterialPalette.on_surface_variant;
+                }
+            }
+
+            // Language Selector
+            MaterialText {
+                text: "LANGUAGE";
+                style: MaterialTypography.title_small;
+                color: MaterialPalette.primary;
+            }
+
+            HorizontalLayout {
+                spacing: MaterialStyleMetrics.spacing_8;
+
+                Rectangle {
+                    horizontal-stretch: 1;
+                    height: 36px;
+                    border_radius: MaterialStyleMetrics.border_radius_8;
+                    background: root.selected_lang == 0 ? MaterialPalette.primary_container : MaterialPalette.surface_container;
+
+                    HorizontalLayout {
+                        alignment: center;
+                        MaterialText {
+                            text: "JSON";
+                            style: MaterialTypography.label_medium;
+                            color: root.selected_lang == 0 ? MaterialPalette.on_primary_container : MaterialPalette.on_surface;
+                        }
+                    }
+
+                    TouchArea {
+                        clicked => { root.selected_lang = 0; }
+                    }
+                }
+
+                Rectangle {
+                    horizontal-stretch: 1;
+                    height: 36px;
+                    border_radius: MaterialStyleMetrics.border_radius_8;
+                    background: root.selected_lang == 1 ? MaterialPalette.primary_container : MaterialPalette.surface_container;
+
+                    HorizontalLayout {
+                        alignment: center;
+                        MaterialText {
+                            text: "YAML";
+                            style: MaterialTypography.label_medium;
+                            color: root.selected_lang == 1 ? MaterialPalette.on_primary_container : MaterialPalette.on_surface;
+                        }
+                    }
+
+                    TouchArea {
+                        clicked => { root.selected_lang = 1; }
+                    }
+                }
+
+                Rectangle {
+                    horizontal-stretch: 1;
+                    height: 36px;
+                    border_radius: MaterialStyleMetrics.border_radius_8;
+                    background: root.selected_lang == 2 ? MaterialPalette.primary_container : MaterialPalette.surface_container;
+
+                    HorizontalLayout {
+                        alignment: center;
+                        MaterialText {
+                            text: "XML";
+                            style: MaterialTypography.label_medium;
+                            color: root.selected_lang == 2 ? MaterialPalette.on_primary_container : MaterialPalette.on_surface;
+                        }
+                    }
+
+                    TouchArea {
+                        clicked => { root.selected_lang = 2; }
+                    }
+                }
+
+                Rectangle {
+                    horizontal-stretch: 1;
+                    height: 36px;
+                    border_radius: MaterialStyleMetrics.border_radius_8;
+                    background: root.selected_lang == 3 ? MaterialPalette.primary_container : MaterialPalette.surface_container;
+
+                    HorizontalLayout {
+                        alignment: center;
+                        MaterialText {
+                            text: "SQL";
+                            style: MaterialTypography.label_medium;
+                            color: root.selected_lang == 3 ? MaterialPalette.on_primary_container : MaterialPalette.on_surface;
+                        }
+                    }
+
+                    TouchArea {
+                        clicked => { root.selected_lang = 3; }
+                    }
+                }
+            }
+
+            // Input section
+            HorizontalLayout {
+                alignment: space-between;
+                MaterialText {
+                    text: "UNFORMATTED CODE";
+                    style: MaterialTypography.title_small;
+                    color: MaterialPalette.primary;
+                }
+                MaterialText {
+                    text: "Clear";
+                    style: MaterialTypography.label_medium;
+                    color: MaterialPalette.on_surface_variant;
+                }
+            }
+
+            TextField {
+                label: "Paste messy or minified code here...";
+                enabled: false;
+            }
+
+            // Output section
+            HorizontalLayout {
+                alignment: space-between;
+                MaterialText {
+                    text: "FORMATTED CODE";
+                    style: MaterialTypography.title_small;
+                    color: MaterialPalette.primary;
+                }
+                MaterialText {
+                    text: "Copy";
+                    style: MaterialTypography.label_medium;
+                    color: MaterialPalette.primary;
+                }
+            }
+
+            OutlinedCard {
+                VerticalLayout {
+                    padding: MaterialStyleMetrics.padding_16;
+                    spacing: MaterialStyleMetrics.spacing_8;
+
+                    Rectangle {
+                        background: MaterialPalette.surface_container;
+                        border_radius: MaterialStyleMetrics.border_radius_4;
+                        min_height: 120px;
+
+                        VerticalLayout {
+                            padding: MaterialStyleMetrics.padding_12;
+                            alignment: start;
+
+                            MaterialText {
+                                text: "// Beautifully formatted code will appear here...";
+                                style: MaterialTypography.body_small;
+                                color: MaterialPalette.on_surface_variant;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
