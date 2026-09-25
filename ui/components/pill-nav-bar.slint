@@ -19,7 +19,7 @@ export component PillNavBar inherits Rectangle {
     // Self-contained pill dimensions: wraps items in their resting layout
     width: root.items.length * root.icon_width + (root.active_index >= 0 ? root.extra_width : 0px) + root.inner_padding * 2;
     height: root.item_height + root.inner_padding * 2;
-    border_radius: self.height / 2;
+    border_radius: 28px;
     background: MaterialPalette.surface_container_high.with_alpha(92%);
 
     // Material 3 elevation drop shadow for floating pill effect
@@ -34,7 +34,7 @@ export component PillNavBar inherits Rectangle {
     // Smoothly animate pill width if items or active state change
     animate width {
         duration: 280ms;
-        easing: cubic-bezier(0.05, 0.7, 0.1, 1.0);
+        easing: cubic-bezier(0.2, 0, 0, 1);
     }
 
     // =========================================================================
@@ -45,15 +45,15 @@ export component PillNavBar inherits Rectangle {
         y: root.inner_padding;
         width: root.icon_width + (root.active_index >= 0 ? root.extra_width : 0px);
         height: root.item_height;
-        border_radius: self.height / 2;
+        border_radius: 24px;
         background: MaterialPalette.secondary_container;
         visible: root.active_index >= 0;
 
         // Animate x and width together in a single animate block
-        // Easing: cubic-bezier(0.05, 0.7, 0.1, 1.0) - fast-out, gentle-in, 0 overshoot
+        // Easing: cubic-bezier(0.2, 0, 0, 1) - Material 3 Emphasized Decelerate
         animate x, width {
             duration: 280ms;
-            easing: cubic-bezier(0.05, 0.7, 0.1, 1.0);
+            easing: cubic-bezier(0.2, 0, 0, 1);
         }
     }
 
@@ -74,24 +74,21 @@ export component PillNavBar inherits Rectangle {
 
             width: root.icon_width + (self.is_active ? root.extra_width : 0px);
 
-            // Animate cell width to smoothly expand/collapse active item
+            // Animate cell width to smoothly expand/collapse active item in lockstep with indicator
             animate width {
-                duration: self.is_active ? 240ms : 180ms;
-                delay: self.is_active ? 40ms : 0ms;
-                easing: cubic-bezier(0.05, 0.7, 0.1, 1.0);
+                duration: 280ms;
+                easing: cubic-bezier(0.2, 0, 0, 1);
             }
 
-            // Delayed color transition: starts 40ms after indicator slide begins
             animate content_color {
-                duration: 180ms;
-                delay: 40ms;
-                easing: cubic-bezier(0.05, 0.7, 0.1, 1.0);
+                duration: 280ms;
+                easing: cubic-bezier(0.2, 0, 0, 1);
             }
 
             touch_area := StateLayerArea {
                 width: 100%;
                 height: 100%;
-                border_radius: self.height / 2;
+                border_radius: 24px;
                 color: item_cell.content_color;
 
                 clicked => {
@@ -125,16 +122,10 @@ export component PillNavBar inherits Rectangle {
                         width: item_cell.is_active ? (root.extra_width - 6px) : 0px;
                         opacity: item_cell.is_active ? 1.0 : 0.0;
 
-                        // Outgoing collapses over 180ms; incoming expands over 240ms with 40ms delay
-                        animate width {
-                            duration: item_cell.is_active ? 240ms : 180ms;
-                            delay: item_cell.is_active ? 40ms : 0ms;
-                            easing: cubic-bezier(0.05, 0.7, 0.1, 1.0);
-                        }
-                        animate opacity {
-                            duration: item_cell.is_active ? 220ms : 160ms;
-                            delay: item_cell.is_active ? 40ms : 0ms;
-                            easing: cubic-bezier(0.05, 0.7, 0.1, 1.0);
+                        // Synchronized width and opacity animations matching indicator exactly
+                        animate width, opacity {
+                            duration: 280ms;
+                            easing: cubic-bezier(0.2, 0, 0, 1);
                         }
 
                         VerticalLayout {
