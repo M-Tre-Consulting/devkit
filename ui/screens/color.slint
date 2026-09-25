@@ -1,0 +1,152 @@
+import { Icons, TextField, OutlinedCard, ScrollView, MaterialPalette, MaterialStyleMetrics, MaterialTypography, MaterialText, Icon } from "@material";
+import { TopBar } from "../components/top-bar.slint";
+import { AppIcons } from "../components/app-icons.slint";
+
+export component ColorScreen inherits VerticalLayout {
+    callback back();
+
+    property <bool> is_entered: false;
+    init => { self.is_entered = true; }
+
+    TopBar {
+        title: "Color Converter";
+        has_back: true;
+        show_background: true;
+        back => { root.back(); }
+    }
+
+    ScrollView {
+        vertical-stretch: 1;
+        opacity: root.is_entered ? 1.0 : 0.0;
+
+        animate opacity {
+            duration: 200ms;
+            delay: 150ms;
+            easing: cubic-bezier(0.05, 0.7, 0.1, 1.0);
+        }
+
+        VerticalLayout {
+            padding: MaterialStyleMetrics.padding_16;
+            spacing: MaterialStyleMetrics.spacing_16;
+            alignment: start;
+
+            HorizontalLayout {
+                alignment: center;
+                MaterialText {
+                    text: "Coming soon";
+                    style: MaterialTypography.label_large;
+                    color: MaterialPalette.on_surface_variant;
+                }
+            }
+
+            // Preview Swatch Card
+            OutlinedCard {
+                VerticalLayout {
+                    padding: MaterialStyleMetrics.padding_16;
+                    spacing: MaterialStyleMetrics.spacing_12;
+
+                    Rectangle {
+                        height: 72px;
+                        border_radius: MaterialStyleMetrics.border_radius_8;
+                        background: #6750a4;
+
+                        HorizontalLayout {
+                            alignment: center;
+                            MaterialText {
+                                text: "#6750A4";
+                                style: MaterialTypography.title_medium;
+                                color: #ffffff;
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Input section
+            HorizontalLayout {
+                alignment: space-between;
+                MaterialText {
+                    text: "COLOR INPUT";
+                    style: MaterialTypography.title_small;
+                    color: MaterialPalette.primary;
+                }
+                MaterialText {
+                    text: "Clear";
+                    style: MaterialTypography.label_medium;
+                    color: MaterialPalette.on_surface_variant;
+                }
+            }
+
+            TextField {
+                label: "e.g. #6750A4 or rgb(103, 80, 164)";
+                enabled: false;
+            }
+
+            // Converted formats output
+            MaterialText {
+                text: "CONVERTED FORMATS";
+                style: MaterialTypography.title_small;
+                color: MaterialPalette.primary;
+            }
+
+            OutlinedCard {
+                VerticalLayout {
+                    padding: MaterialStyleMetrics.padding_16;
+                    spacing: MaterialStyleMetrics.spacing_12;
+
+                    Rectangle {
+                        background: MaterialPalette.surface_container;
+                        border_radius: MaterialStyleMetrics.border_radius_4;
+
+                        VerticalLayout {
+                            padding: MaterialStyleMetrics.padding_12;
+                            spacing: MaterialStyleMetrics.spacing_8;
+
+                            HorizontalLayout {
+                                alignment: space-between;
+                                MaterialText {
+                                    text: "HEX:";
+                                    style: MaterialTypography.body_medium;
+                                    color: MaterialPalette.on_surface_variant;
+                                }
+                                MaterialText {
+                                    text: "#6750A4";
+                                    style: MaterialTypography.body_medium;
+                                    color: MaterialPalette.on_surface;
+                                }
+                            }
+
+                            HorizontalLayout {
+                                alignment: space-between;
+                                MaterialText {
+                                    text: "RGB:";
+                                    style: MaterialTypography.body_medium;
+                                    color: MaterialPalette.on_surface_variant;
+                                }
+                                MaterialText {
+                                    text: "rgb(103, 80, 164)";
+                                    style: MaterialTypography.body_medium;
+                                    color: MaterialPalette.on_surface;
+                                }
+                            }
+
+                            HorizontalLayout {
+                                alignment: space-between;
+                                MaterialText {
+                                    text: "HSL:";
+                                    style: MaterialTypography.body_medium;
+                                    color: MaterialPalette.on_surface_variant;
+                                }
+                                MaterialText {
+                                    text: "hsl(256, 34%, 48%)";
+                                    style: MaterialTypography.body_medium;
+                                    color: MaterialPalette.on_surface;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
