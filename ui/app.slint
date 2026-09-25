@@ -1,3 +1,4 @@
+import { AboutScreen } from "screens/about.slint";
 import { Icons, MaterialPalette, MaterialTypography, MaterialText, MaterialStyleMetrics } from "@material";
 import { HomeScreen } from "./screens/home.slint";
 import { RecentScreen } from "./screens/recent.slint";
@@ -27,11 +28,13 @@ export component AppWindow inherits Window {
     in-out property <[bool]> tool_favorites: [false, false, false, false, false, false, false];
     in-out property <[int]> recent_tools: [];
     in-out property <bool> modal_open: false;
+    in-out property <bool> about_open: false;
     callback switch_mode(int);
     callback open_tool(int);
     callback toggle_favorite(int);
     callback clear_recents();
     callback clear_favorites();
+    callback open_about();
     callback back();
     callback handle_back() -> bool;
 
@@ -211,6 +214,9 @@ export component AppWindow inherits Window {
                 clear_favorites => {
                     root.clear_favorites();
                 }
+                open_about => {
+                    root.open_about();
+                }
             }
         }
     }
@@ -255,6 +261,34 @@ export component AppWindow inherits Window {
 
         if root.displayed_tool == 6 : RegexScreen {
             back => { root.back(); }
+        }
+    }
+
+    // Overlay layer: About Screen with slide and fade transition
+    about_container := Rectangle {
+        background: MaterialPalette.surface;
+        x: root.about_open ? 0px : (root.width * 0.15);
+        y: 0px;
+        width: 100%;
+        height: parent.height;
+        opacity: root.about_open ? 1.0 : 0.0;
+        visible: self.opacity > 0.01;
+
+        animate x {
+            duration: root.about_open ? 280ms : 200ms;
+            easing: root.about_open ? cubic-bezier(0.05, 0.7, 0.1, 1.0) : cubic-bezier(0.3, 0.0, 0.8, 0.15);
+        }
+        animate opacity {
+            duration: root.about_open ? 260ms : 200ms;
+            easing: root.about_open ? cubic-bezier(0.05, 0.7, 0.1, 1.0) : cubic-bezier(0.3, 0.0, 0.8, 0.15);
+        }
+
+        AboutScreen {
+            status_bar_inset: root.status_bar_inset;
+            nav_bar_inset: root.nav_bar_inset;
+            back => {
+                root.back();
+            }
         }
     }
 

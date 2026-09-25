@@ -8,6 +8,7 @@ export component SettingsScreen inherits VerticalLayout {
     in property <length> nav_bar_inset: 16px;
     callback clear_recents();
     callback clear_favorites();
+    callback open_about();
 
     // Local toggle state properties (stubbed for future engine wiring)
     property <bool> dark_theme_enabled: true;
@@ -309,32 +310,48 @@ export component SettingsScreen inherits VerticalLayout {
                 border_color: MaterialPalette.outline_variant.with_alpha(15%);
 
                 VerticalLayout {
-                    HorizontalLayout {
-                        padding: MaterialStyleMetrics.padding_16;
-                        alignment: space-between;
+                    Rectangle {
+                        border_radius: MaterialStyleMetrics.border_radius_16;
 
-                        VerticalLayout {
-                            alignment: center;
-                            spacing: MaterialStyleMetrics.spacing_4;
+                        StateLayerArea {
+                            width: 100%;
+                            height: 100%;
+                            border_radius: parent.border_radius;
+                            color: MaterialPalette.primary;
 
-                            MaterialText {
-                                text: "DevKit";
-                                style: MaterialTypography.title_medium;
-                                color: MaterialPalette.on_surface;
+                            clicked => {
+                                root.open_about();
                             }
-                            MaterialText {
-                                text: "Version 0.1.0 • Built with Rust & Slint";
-                                style: MaterialTypography.body_small;
-                                color: MaterialPalette.on_surface_variant;
-                            }
-                        }
 
-                        VerticalLayout {
-                            alignment: center;
-                            MaterialText {
-                                text: "v0.1.0";
-                                style: MaterialTypography.label_medium;
-                                color: MaterialPalette.on_surface_variant;
+                            HorizontalLayout {
+                                padding: MaterialStyleMetrics.padding_16;
+                                alignment: space-between;
+
+                                VerticalLayout {
+                                    alignment: center;
+                                    spacing: MaterialStyleMetrics.spacing_4;
+
+                                    MaterialText {
+                                        text: "About DevKit";
+                                        style: MaterialTypography.title_medium;
+                                        color: MaterialPalette.on_surface;
+                                    }
+                                    MaterialText {
+                                        text: "Version 0.1.0 • Slint attribution & license";
+                                        style: MaterialTypography.body_small;
+                                        color: MaterialPalette.on_surface_variant;
+                                    }
+                                }
+
+                                VerticalLayout {
+                                    alignment: center;
+                                    Icon {
+                                        source: Icons.chevron_forward;
+                                        colorize: MaterialPalette.on_surface_variant;
+                                        width: 20px;
+                                        height: 20px;
+                                    }
+                                }
                             }
                         }
                     }

@@ -49,6 +49,8 @@ pub fn setup_app_state(ui: &crate::AppWindow) {
         if let Some(ui) = ui_handle.upgrade() {
             ui.set_current_mode(mode.id());
             ui.set_active_tool(0);
+            ui.set_about_open(false);
+            ui.set_modal_open(false);
         }
     });
 
@@ -60,6 +62,8 @@ pub fn setup_app_state(ui: &crate::AppWindow) {
         if let Some(ui) = ui_handle.upgrade() {
             update_recents(&ui);
             ui.set_active_tool(tool_id);
+            ui.set_about_open(false);
+            ui.set_modal_open(false);
         }
     });
 
@@ -89,12 +93,23 @@ pub fn setup_app_state(ui: &crate::AppWindow) {
 
     let state_clone = nav_state.clone();
     let ui_handle = ui.as_weak();
+    ui.on_open_about(move || {
+        state_clone.borrow_mut().open_modal();
+        if let Some(ui) = ui_handle.upgrade() {
+            ui.set_about_open(true);
+            ui.set_modal_open(true);
+        }
+    });
+
+    let state_clone = nav_state.clone();
+    let ui_handle = ui.as_weak();
     ui.on_back(move || {
         let outcome = state_clone.borrow_mut().handle_back();
         if let Some(ui) = ui_handle.upgrade() {
             match outcome {
                 crate::navigation::BackNavigationOutcome::DismissModal => {
                     ui.set_modal_open(false);
+                    ui.set_about_open(false);
                 }
                 crate::navigation::BackNavigationOutcome::CloseTool { return_to } => {
                     ui.set_active_tool(0);
@@ -117,6 +132,7 @@ pub fn setup_app_state(ui: &crate::AppWindow) {
             match outcome {
                 crate::navigation::BackNavigationOutcome::DismissModal => {
                     ui.set_modal_open(false);
+                    ui.set_about_open(false);
                     true
                 }
                 crate::navigation::BackNavigationOutcome::CloseTool { return_to } => {

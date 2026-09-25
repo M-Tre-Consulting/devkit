@@ -1,0 +1,194 @@
+import { Icons, ScrollView, HorizontalDivider, MaterialPalette, MaterialStyleMetrics, MaterialTypography, MaterialText, StateLayerArea, Icon } from "@material";
+import { TopBar } from "../components/top-bar.slint";
+import { SectionHeader } from "../components/section-header.slint";
+import { AppIcons } from "../components/app-icons.slint";
+import { AboutSlint } from "std-widgets.slint";
+
+export component AboutScreen inherits VerticalLayout {
+    in property <length> status_bar_inset: 24px;
+    in property <length> nav_bar_inset: 16px;
+    callback back();
+
+    // Status bar clearance
+    Rectangle {
+        height: root.status_bar_inset;
+    }
+
+    // Material 3 Small App Bar with back button
+    TopBar {
+        title: "About DevKit";
+        has_back: true;
+        back => { root.back(); }
+    }
+
+    ScrollView {
+        vertical-stretch: 1;
+
+        VerticalLayout {
+            padding_left: MaterialStyleMetrics.padding_16;
+            padding_right: MaterialStyleMetrics.padding_16;
+            padding_top: MaterialStyleMetrics.padding_8;
+            padding_bottom: 70px + 28px + root.nav_bar_inset + 16px;
+            spacing: MaterialStyleMetrics.spacing_16;
+            alignment: start;
+
+            // App Brand Card
+            Rectangle {
+                border_radius: MaterialStyleMetrics.border_radius_16;
+                background: MaterialPalette.surface_container;
+                border_width: 1px;
+                border_color: MaterialPalette.outline_variant.with_alpha(15%);
+
+                VerticalLayout {
+                    padding: MaterialStyleMetrics.padding_24;
+                    spacing: MaterialStyleMetrics.spacing_8;
+                    alignment: center;
+
+                    HorizontalLayout {
+                        alignment: center;
+                        Rectangle {
+                            width: 64px;
+                            height: 64px;
+                            border_radius: 32px;
+                            background: MaterialPalette.primary;
+
+                            VerticalLayout {
+                                alignment: center;
+                                Icon {
+                                    source: AppIcons.wrench;
+                                    colorize: MaterialPalette.on_primary;
+                                    width: 32px;
+                                    height: 32px;
+                                }
+                            }
+                        }
+                    }
+
+                    HorizontalLayout {
+                        alignment: center;
+                        MaterialText {
+                            text: "DevKit";
+                            style: MaterialTypography.headline_small;
+                            color: MaterialPalette.on_surface;
+                            horizontal_alignment: center;
+                        }
+                    }
+
+                    HorizontalLayout {
+                        alignment: center;
+                        MaterialText {
+                            text: "Version 0.1.0";
+                            style: MaterialTypography.label_medium;
+                            color: MaterialPalette.on_surface_variant;
+                            horizontal_alignment: center;
+                        }
+                    }
+
+                    HorizontalLayout {
+                        alignment: center;
+                        MaterialText {
+                            text: "A native Rust & Slint toolbox for Android";
+                            style: MaterialTypography.body_small;
+                            color: MaterialPalette.on_surface_variant;
+                            horizontal_alignment: center;
+                        }
+                    }
+                }
+            }
+
+            // Framework Attribution Card (Required for Slint Royalty-free License)
+            SectionHeader {
+                title: "FRAMEWORK ATTRIBUTION";
+            }
+
+            Rectangle {
+                border_radius: MaterialStyleMetrics.border_radius_16;
+                background: MaterialPalette.surface_container;
+                border_width: 1px;
+                border_color: MaterialPalette.outline_variant.with_alpha(15%);
+
+                VerticalLayout {
+                    padding: MaterialStyleMetrics.padding_16;
+                    spacing: MaterialStyleMetrics.spacing_12;
+
+                    VerticalLayout {
+                        spacing: MaterialStyleMetrics.spacing_4;
+
+                        MaterialText {
+                            text: "Built with Slint";
+                            style: MaterialTypography.title_medium;
+                            color: MaterialPalette.primary;
+                        }
+
+                        MaterialText {
+                            text: "DevKit UI is built using the Slint modern GUI toolkit. Visit https://slint.dev to learn more.";
+                            style: MaterialTypography.body_small;
+                            color: MaterialPalette.on_surface_variant;
+                        }
+                    }
+
+                    HorizontalDivider {}
+
+                    // Official Slint About Widget (satisfies royalty-free license attribution)
+                    HorizontalLayout {
+                        alignment: center;
+                        AboutSlint {
+                            preferred-width: 280px;
+                        }
+                    }
+                }
+            }
+
+            // License Information Card
+            SectionHeader {
+                title: "LICENSES";
+            }
+
+            Rectangle {
+                border_radius: MaterialStyleMetrics.border_radius_16;
+                background: MaterialPalette.surface_container;
+                border_width: 1px;
+                border_color: MaterialPalette.outline_variant.with_alpha(15%);
+
+                VerticalLayout {
+                    padding: MaterialStyleMetrics.padding_16;
+                    spacing: MaterialStyleMetrics.spacing_12;
+
+                    VerticalLayout {
+                        spacing: MaterialStyleMetrics.spacing_4;
+
+                        MaterialText {
+                            text: "Apache License 2.0";
+                            style: MaterialTypography.title_medium;
+                            color: MaterialPalette.on_surface;
+                        }
+
+                        MaterialText {
+                            text: "DevKit source code is licensed under the Apache License, Version 2.0. Copyright © 2026 MTRE Consulting.";
+                            style: MaterialTypography.body_small;
+                            color: MaterialPalette.on_surface_variant;
+                        }
+                    }
+
+                    HorizontalDivider {}
+
+                    VerticalLayout {
+                        spacing: MaterialStyleMetrics.spacing_4;
+
+                        MaterialText {
+                            text: "Slint Royalty-Free License";
+                            style: MaterialTypography.title_medium;
+                            color: MaterialPalette.on_surface;
+                        }
+
+                        MaterialText {
+                            text: "The Slint UI framework is used under the Slint Royalty-free Desktop, Mobile, and Web Applications License. Copyright © SixtyFPS GmbH.";
+                            style: MaterialTypography.body_small;
+                            color: MaterialPalette.on_surface_variant;
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
