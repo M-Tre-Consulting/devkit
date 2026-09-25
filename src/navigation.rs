@@ -100,10 +100,20 @@ impl Screen {
     }
 }
 
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum BackNavigationOutcome {
+    DismissModal,
+    CloseTool { return_to: AppMode },
+    NavigateToHome,
+    ExitApp,
+}
+
 #[derive(Debug, Clone, Default)]
 pub struct NavigationState {
     pub current_mode: AppMode,
     pub active_tool: i32,
+    pub tool_origin_mode: AppMode,
+    pub modal_open: bool,
 }
 
 impl NavigationState {
@@ -111,6 +121,8 @@ impl NavigationState {
         Self {
             current_mode: AppMode::Home,
             active_tool: 0,
+            tool_origin_mode: AppMode::Home,
+            modal_open: false,
         }
     }
 
@@ -120,11 +132,37 @@ impl NavigationState {
     }
 
     pub fn open_tool(&mut self, tool_id: i32) {
+        self.tool_origin_mode = self.current_mode;
         self.active_tool = tool_id;
     }
 
     pub fn close_tool(&mut self) -> AppMode {
         self.active_tool = 0;
-        self.current_mode
+        self.current_mode = self.tool_origin_mode;
+        self.tool_origin_mode
+    }
+
+    pub fn open_modal(&mut self) {
+        self.modal_open = true;
+    }
+
+    pub fn dismiss_modal(&mut self) {
+        self.modal_open = false;
+    }
+
+    pub fn handle_back(&mut self) -> BackNavigationOutcome {
+        if self.modal_open {
+            self.modal_open = false;
+            return BackNavigationOutcome::DismissModal;
+        }
+        if self.active_tool > 0 {
+            let return_to = self.close_tool();
+            return BackNavigationOutcome::CloseTool { return_to };
+        }
+        if self.current_mode != AppMode::Home {
+            self.current_mode = AppMode::Home;
+            return BackNavigationOutcome::NavigateToHome;
+        }
+        BackNavigationOutcome::ExitApp
     }
 }

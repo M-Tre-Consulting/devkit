@@ -24,24 +24,57 @@ export component AppWindow inherits Window {
     in-out property <length> status_bar_inset: 24px;
     in-out property <[bool]> tool_favorites: [false, false, false, false, false, false, false];
     in-out property <[int]> recent_tools: [];
+    in-out property <bool> modal_open: false;
     callback switch_mode(int);
     callback open_tool(int);
     callback toggle_favorite(int);
     callback clear_recents();
     callback clear_favorites();
     callback back();
+    callback handle_back() -> bool;
 
     property <int> last_tool: 1;
     changed active_tool => {
         if root.active_tool > 0 {
             root.last_tool = root.active_tool;
         }
+        back_focus.focus();
+    }
+    changed current_mode => {
+        back_focus.focus();
+    }
+
+    init => {
+        back_focus.focus();
     }
 
     property <bool> is_tool: root.active_tool > 0;
     property <int> displayed_tool: root.is_tool ? root.active_tool : root.last_tool;
 
-    // Base layer: Mode Screens (0: Home, 1: Recent, 2: Favorites, 3: Settings)
+    forward-focus: back_focus;
+    back_focus := FocusScope {
+        width: 100%;
+        height: 100%;
+
+        key-pressed(event) => {
+            if event.text == Key.Back || event.text == Key.Escape {
+                if root.handle_back() {
+                    return accept;
+                }
+            }
+            reject
+        }
+
+        key-released(event) => {
+            if event.text == Key.Back || event.text == Key.Escape {
+                if root.active_tool > 0 || root.current_mode != 0 || root.modal_open {
+                    return accept;
+                }
+            }
+            reject
+        }
+
+        // Base layer: Mode Screens (0: Home, 1: Recent, 2: Favorites, 3: Settings)
     mode_container := Rectangle {
         x: (parent.width - self.width) / 2;
         y: (parent.height - self.height) / 2;
@@ -234,4 +267,5 @@ export component AppWindow inherits Window {
             root.switch_mode(index);
         }
     }
+}
 }

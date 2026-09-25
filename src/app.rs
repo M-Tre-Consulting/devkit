@@ -88,10 +88,49 @@ pub fn setup_app_state(ui: &crate::AppWindow) {
     let state_clone = nav_state.clone();
     let ui_handle = ui.as_weak();
     ui.on_back(move || {
-        let mode = state_clone.borrow_mut().close_tool();
+        let outcome = state_clone.borrow_mut().handle_back();
         if let Some(ui) = ui_handle.upgrade() {
-            ui.set_active_tool(0);
-            ui.set_current_mode(mode.id());
+            match outcome {
+                crate::navigation::BackNavigationOutcome::DismissModal => {
+                    ui.set_modal_open(false);
+                }
+                crate::navigation::BackNavigationOutcome::CloseTool { return_to } => {
+                    ui.set_active_tool(0);
+                    ui.set_current_mode(return_to.id());
+                }
+                crate::navigation::BackNavigationOutcome::NavigateToHome => {
+                    ui.set_active_tool(0);
+                    ui.set_current_mode(crate::navigation::AppMode::Home.id());
+                }
+                crate::navigation::BackNavigationOutcome::ExitApp => {}
+            }
+        }
+    });
+
+    let state_clone = nav_state.clone();
+    let ui_handle = ui.as_weak();
+    ui.on_handle_back(move || -> bool {
+        let outcome = state_clone.borrow_mut().handle_back();
+        if let Some(ui) = ui_handle.upgrade() {
+            match outcome {
+                crate::navigation::BackNavigationOutcome::DismissModal => {
+                    ui.set_modal_open(false);
+                    true
+                }
+                crate::navigation::BackNavigationOutcome::CloseTool { return_to } => {
+                    ui.set_active_tool(0);
+                    ui.set_current_mode(return_to.id());
+                    true
+                }
+                crate::navigation::BackNavigationOutcome::NavigateToHome => {
+                    ui.set_active_tool(0);
+                    ui.set_current_mode(crate::navigation::AppMode::Home.id());
+                    true
+                }
+                crate::navigation::BackNavigationOutcome::ExitApp => false,
+            }
+        } else {
+            false
         }
     });
 }
