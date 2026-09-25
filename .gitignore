@@ -16,3 +16,6 @@ build/
 # Signing keys & secrets
 *.keystore
 *.jks
+
+# Generated license listings
+THIRD_PARTY_LICENSES.html
