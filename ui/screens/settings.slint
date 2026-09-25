@@ -12,6 +12,8 @@ export component SettingsScreen inherits VerticalLayout {
     in property <length> pill_height: 56px;
     in property <length> pill_bottom_margin: 28px;
     property <length> bottom_clearance: root.pill_height + root.pill_bottom_margin + root.nav_bar_inset + 24px;
+    in-out property <bool> high_refresh_rate_enabled: false;
+    callback high_refresh_rate_changed(bool);
     callback clear_recents();
     callback clear_favorites();
     callback open_about();
@@ -124,7 +126,64 @@ export component SettingsScreen inherits VerticalLayout {
                 }
             }
 
-            // Section 2: Preferences
+            // Section 2: Display
+            SectionHeader {
+                title: "DISPLAY";
+            }
+
+            Rectangle {
+                border_radius: MaterialStyleMetrics.border_radius_16;
+                background: MaterialPalette.surface_container;
+                border_width: 1px;
+                border_color: MaterialPalette.outline_variant.with_alpha(15%);
+
+                StateLayerArea {
+                    width: 100%;
+                    border_radius: parent.border_radius;
+                    color: MaterialPalette.on_surface;
+
+                    clicked => {
+                        root.high_refresh_rate_enabled = !root.high_refresh_rate_enabled;
+                        root.high_refresh_rate_changed(root.high_refresh_rate_enabled);
+                    }
+
+                    HorizontalLayout {
+                        padding: MaterialStyleMetrics.padding_16;
+                        alignment: space-between;
+
+                        VerticalLayout {
+                            horizontal-stretch: 1;
+                            alignment: center;
+                            spacing: MaterialStyleMetrics.spacing_4;
+
+                            MaterialText {
+                                text: "High refresh rate";
+                                style: MaterialTypography.title_medium;
+                                color: MaterialPalette.on_surface;
+                            }
+                            MaterialText {
+                                text: "Use the display's maximum refresh rate (may increase battery usage)";
+                                style: MaterialTypography.body_small;
+                                color: MaterialPalette.on_surface_variant;
+                                wrap: word-wrap;
+                            }
+                        }
+
+                        VerticalLayout {
+                            alignment: center;
+                            Switch {
+                                checked: root.high_refresh_rate_enabled;
+                                checked_state_changed(checked) => {
+                                    root.high_refresh_rate_enabled = checked;
+                                    root.high_refresh_rate_changed(checked);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Section 3: Preferences
             SectionHeader {
                 title: "TOOL PREFERENCES";
             }

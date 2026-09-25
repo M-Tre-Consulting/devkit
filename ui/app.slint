@@ -40,6 +40,7 @@ export component AppWindow inherits Window {
     in-out property <[int]> recent_tools: [];
     in-out property <bool> modal_open: false;
     in-out property <bool> about_open: false;
+    in-out property <bool> high_refresh_rate_enabled: false;
 
     // Navigation and state callbacks
     callback switch_mode(int);
@@ -48,6 +49,7 @@ export component AppWindow inherits Window {
     callback clear_recents();
     callback clear_favorites();
     callback open_about();
+    callback high_refresh_rate_changed(bool);
     callback back();
     callback handle_back() -> bool;
     callback copy_text(string);
@@ -246,6 +248,11 @@ export component AppWindow inherits Window {
                     nav_bar_inset: root.nav_bar_inset;
                     pill_height: pill_nav.height;
                     pill_bottom_margin: root.pill_bottom_margin;
+                    high_refresh_rate_enabled: root.high_refresh_rate_enabled;
+                    high_refresh_rate_changed(enabled) => {
+                        root.high_refresh_rate_enabled = enabled;
+                        root.high_refresh_rate_changed(enabled);
+                    }
                     clear_recents => {
                         root.clear_recents();
                     }
