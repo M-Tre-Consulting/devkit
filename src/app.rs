@@ -15,6 +15,10 @@ pub fn run() -> Result<(), slint::PlatformError> {
     ui.set_status_bar_inset(status_inset);
     ui.set_nav_bar_inset(nav_inset);
     setup_app_state(&ui);
+    let high_rr = crate::storage::load_high_refresh_rate();
+    let _ = std::panic::catch_unwind(|| {
+        crate::platform::android::apply_refresh_rate_setting(high_rr);
+    });
     ui.run()
 }
 
@@ -177,6 +181,9 @@ pub fn setup_app_state(ui: &crate::AppWindow) {
         if let Some(ui) = ui_handle.upgrade() {
             ui.set_high_refresh_rate_enabled(enabled);
         }
+        let _ = std::panic::catch_unwind(|| {
+            crate::platform::android::apply_refresh_rate_setting(enabled);
+        });
     });
 
     let state_clone = nav_state.clone();
@@ -256,5 +263,9 @@ pub fn android_main(android_app: slint::android::AndroidApp) {
     ui.set_nav_bar_inset(nav_inset);
     crate::MaterialWindowAdapter::get(&ui).set_disable_hover(true);
     setup_app_state(&ui);
+    let high_rr = crate::storage::load_high_refresh_rate();
+    let _ = std::panic::catch_unwind(|| {
+        crate::platform::android::apply_refresh_rate_setting(high_rr);
+    });
     ui.run().unwrap();
 }

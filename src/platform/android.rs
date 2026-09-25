@@ -290,3 +290,18 @@ pub fn get_system_accent_color() -> Option<(u8, u8, u8)> {
 pub fn get_font_scale() -> f32 {
     1.0
 }
+
+/// Request the display's maximum supported refresh rate (e.g., 90 Hz or 120 Hz).
+///
+/// Intended behavior when the JNI bridge is implemented:
+/// - Query the display's supported modes.
+/// - Pick the mode with the highest refresh rate.
+/// - Call Window.setFrameRate() or set preferredDisplayModeId on API 30+.
+/// - Fall back gracefully on older Android versions.
+/// - Do nothing if enabled is false.
+pub fn apply_refresh_rate_setting(enabled: bool) {
+    if !enabled {
+        return;
+    }
+    todo!("Query the display's supported modes, pick the mode with the highest refresh rate, call Window.setFrameRate() or set preferredDisplayModeId on API 30+, and fall back gracefully on older Android versions")
+}
