@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2026 MTRE Consulting
+
 //! Android JNI bridge stubs and helpers.
 //!
 //! Provides native integration with Android system APIs such as Material You

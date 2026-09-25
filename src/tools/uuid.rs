@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2026 MTRE Consulting
+
 //! UUID Generator module stub.
 //!
 //! Provides version 4 (random) and version 7 (time-ordered) UUID generation.

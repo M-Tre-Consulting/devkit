@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2026 MTRE Consulting
+
 pub mod base64;
 pub mod hash;
 pub mod regex;

@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2026 MTRE Consulting
+
 //! Contrast Checker module stub.
 //!
 //! Provides WCAG 2.1 color contrast calculation between foreground and background colors.

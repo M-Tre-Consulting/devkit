@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2026 MTRE Consulting
+
 //! Chmod Calculator module stub.
 //!
 //! Provides calculation of UNIX permission bits (octal numeric and symbolic notation).

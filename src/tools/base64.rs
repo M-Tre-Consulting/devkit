@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2026 MTRE Consulting
+
 //! Base64 Encoder / Decoder module stub.
 //!
 //! Provides standard and URL-safe Base64 encoding and decoding.

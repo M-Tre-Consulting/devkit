@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2026 MTRE Consulting
+
 //! Code Formatter module stub.
 //!
 //! Provides syntax formatting and indentation for multiple languages (JSON, YAML, XML, SQL).

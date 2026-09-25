@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2026 MTRE Consulting
+
 //! Hash Calculator module stub.
 //!
 //! Provides cryptographic and checksum hashing digests (MD5, SHA-1, SHA-256, SHA-512).

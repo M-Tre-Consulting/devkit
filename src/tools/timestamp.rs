@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2026 MTRE Consulting
+
 //! Timestamp Converter module stub.
 //!
 //! Provides conversions between Unix timestamps (seconds, ms) and human-readable dates (ISO 8601, UTC).

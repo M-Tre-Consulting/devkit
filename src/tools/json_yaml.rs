@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2026 MTRE Consulting
+
 //! JSON ↔ YAML Converter module stub.
 //!
 //! Provides two-way translation between JSON and YAML data formats.

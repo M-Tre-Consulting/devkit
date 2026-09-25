@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2026 MTRE Consulting
+
 //! Navigation state and routing models.
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]

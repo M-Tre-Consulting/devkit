@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2026 MTRE Consulting
+
 //! Local flat-file storage for recently opened and favorited tools.
 //!
 //! Stores data in the app's internal data directory without third-party dependencies,

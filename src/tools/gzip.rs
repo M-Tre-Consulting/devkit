@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2026 MTRE Consulting
+
 //! GZip Compressor / Decompressor module stub.
 //!
 //! Provides gzip compression and decompression on byte sequences.

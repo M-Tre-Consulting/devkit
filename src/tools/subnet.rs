@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2026 MTRE Consulting
+
 //! Subnet Calculator module stub.
 //!
 //! Provides IPv4/IPv6 CIDR network calculation, address range estimation,

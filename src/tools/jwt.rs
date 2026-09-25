@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2026 MTRE Consulting
+
 //! JWT Decoder module stub.
 //!
 //! Provides JSON Web Token header, payload decoding, and signature inspection.

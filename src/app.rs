@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2026 MTRE Consulting
+
 use std::cell::RefCell;
 use std::rc::Rc;
 use slint::{ComponentHandle, ModelRc, VecModel};
