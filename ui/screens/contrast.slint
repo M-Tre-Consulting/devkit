@@ -1,10 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2026 MTRE Consulting
 
-import { Icons, TextField, OutlinedCard, ScrollView, MaterialPalette, MaterialStyleMetrics, MaterialTypography, MaterialText, Icon, StateLayerArea } from "@material";
+import { Icons, TextField, OutlinedCard, ScrollView, MaterialPalette, MaterialStyleMetrics, MaterialTypography, MaterialText, Icon, StateLayerArea, FilledButton, OutlineButton, IconButton } from "@material";
 import { TopBar } from "../components/top-bar.slint";
 import { ToolErrorBanner } from "../components/tool-error-banner.slint";
-import { ToolActionButton } from "../components/tool-action-button.slint";
 import { ToolOutputArea } from "../components/tool-output-area.slint";
 import { AppIcons } from "../components/app-icons.slint";
 
@@ -177,11 +176,11 @@ export component ContrastScreen inherits VerticalLayout {
                 }
             }
 
-            // Dual Color Inputs
+            // Dual Color Inputs (Side-by-Side)
             HorizontalLayout {
-                spacing: MaterialStyleMetrics.spacing_8;
-                alignment: end;
+                spacing: MaterialStyleMetrics.spacing_12;
 
+                // Foreground / Text Color
                 VerticalLayout {
                     horizontal-stretch: 1;
                     spacing: MaterialStyleMetrics.spacing_4;
@@ -192,25 +191,31 @@ export component ContrastScreen inherits VerticalLayout {
                         color: MaterialPalette.primary;
                     }
 
-                    TextField {
-                        placeholder_text: "#FFFFFF";
-                        text <=> root.fg_color_text;
-                        accepted => { root.check_contrast(); }
-                    }
-                }
+                    HorizontalLayout {
+                        spacing: MaterialStyleMetrics.spacing_8;
 
-                VerticalLayout {
-                    alignment: end;
-                    padding_bottom: 2px;
+                        TextField {
+                            horizontal-stretch: 1;
+                            placeholder_text: "#FFFFFF";
+                            text <=> root.fg_color_text;
+                            accepted => { root.check_contrast(); }
+                        }
 
-                    ToolActionButton {
-                        text: "⇄";
-                        clicked => {
-                            root.swap_colors();
+                        VerticalLayout {
+                            alignment: center;
+                            Rectangle {
+                                width: 28px;
+                                height: 28px;
+                                border_radius: 14px;
+                                background: root.fg_color;
+                                border_width: 1px;
+                                border_color: MaterialPalette.outline_variant;
+                            }
                         }
                     }
                 }
 
+                // Background Color
                 VerticalLayout {
                     horizontal-stretch: 1;
                     spacing: MaterialStyleMetrics.spacing_4;
@@ -221,12 +226,37 @@ export component ContrastScreen inherits VerticalLayout {
                         color: MaterialPalette.primary;
                     }
 
-                    TextField {
-                        placeholder_text: "#6750A4";
-                        text <=> root.bg_color_text;
-                        accepted => { root.check_contrast(); }
+                    HorizontalLayout {
+                        spacing: MaterialStyleMetrics.spacing_8;
+
+                        TextField {
+                            horizontal-stretch: 1;
+                            placeholder_text: "#6750A4";
+                            text <=> root.bg_color_text;
+                            accepted => { root.check_contrast(); }
+                        }
+
+                        VerticalLayout {
+                            alignment: center;
+                            Rectangle {
+                                width: 28px;
+                                height: 28px;
+                                border_radius: 14px;
+                                background: root.bg_color;
+                                border_width: 1px;
+                                border_color: MaterialPalette.outline_variant;
+                            }
+                        }
                     }
                 }
+            }
+
+            // Secondary Action: Swap Colors
+            OutlineButton {
+                text: "Swap Colors";
+                icon: AppIcons.swap;
+                height: 40px;
+                clicked => { root.swap_colors(); }
             }
 
             // Live Preview Card
@@ -269,8 +299,10 @@ export component ContrastScreen inherits VerticalLayout {
                 }
             }
 
-            ToolActionButton {
+            // Primary Action: Check Contrast Ratio
+            FilledButton {
                 text: "Check Contrast Ratio";
+                height: 40px;
                 clicked => { root.check_contrast(); }
             }
 
@@ -296,15 +328,27 @@ export component ContrastScreen inherits VerticalLayout {
 
                             HorizontalLayout {
                                 alignment: space-between;
-                                MaterialText {
-                                    text: "Contrast Ratio";
-                                    style: MaterialTypography.title_medium;
-                                    color: MaterialPalette.on_surface;
+                                VerticalLayout {
+                                    alignment: center;
+                                    MaterialText {
+                                        text: "Contrast Ratio";
+                                        style: MaterialTypography.title_medium;
+                                        color: MaterialPalette.on_surface;
+                                    }
                                 }
-                                MaterialText {
-                                    text: root.ratio_text;
-                                    style: MaterialTypography.title_large;
-                                    color: MaterialPalette.primary;
+                                HorizontalLayout {
+                                    spacing: MaterialStyleMetrics.spacing_8;
+                                    alignment: center;
+                                    MaterialText {
+                                        text: root.ratio_text;
+                                        style: MaterialTypography.title_large;
+                                        color: MaterialPalette.primary;
+                                    }
+                                    IconButton {
+                                        icon: AppIcons.copy;
+                                        tooltip: "Copy Ratio";
+                                        clicked => { root.copy(root.ratio_text); }
+                                    }
                                 }
                             }
 
