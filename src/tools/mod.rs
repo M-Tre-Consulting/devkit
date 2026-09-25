@@ -8,3 +8,4 @@ pub mod json_yaml;
 pub mod cron;
 pub mod gzip;
 pub mod formatter;
+pub mod chmod;

@@ -1,0 +1,244 @@
+import { Icons, OutlinedCard, ScrollView, MaterialPalette, MaterialStyleMetrics, MaterialTypography, MaterialText, Icon, CheckBox } from "@material";
+import { TopBar } from "../components/top-bar.slint";
+import { AppIcons } from "../components/app-icons.slint";
+
+export component ChmodScreen inherits VerticalLayout {
+    callback back();
+
+    property <bool> is_entered: false;
+    init => { self.is_entered = true; }
+
+    TopBar {
+        title: "Chmod Calculator";
+        has_back: true;
+        show_background: true;
+        back => { root.back(); }
+    }
+
+    ScrollView {
+        vertical-stretch: 1;
+        opacity: root.is_entered ? 1.0 : 0.0;
+
+        animate opacity {
+            duration: 200ms;
+            delay: 150ms;
+            easing: cubic-bezier(0.05, 0.7, 0.1, 1.0);
+        }
+
+        VerticalLayout {
+            padding: MaterialStyleMetrics.padding_16;
+            spacing: MaterialStyleMetrics.spacing_16;
+            alignment: start;
+
+            HorizontalLayout {
+                alignment: center;
+                MaterialText {
+                    text: "Coming soon";
+                    style: MaterialTypography.label_large;
+                    color: MaterialPalette.on_surface_variant;
+                }
+            }
+
+            // Permission Matrix Grid
+            MaterialText {
+                text: "PERMISSION MATRIX";
+                style: MaterialTypography.title_small;
+                color: MaterialPalette.primary;
+            }
+
+            OutlinedCard {
+                VerticalLayout {
+                    padding: MaterialStyleMetrics.padding_16;
+                    spacing: MaterialStyleMetrics.spacing_12;
+
+                    // Table Header
+                    HorizontalLayout {
+                        spacing: MaterialStyleMetrics.spacing_8;
+                        MaterialText {
+                            text: "SCOPE";
+                            style: MaterialTypography.label_medium;
+                            color: MaterialPalette.on_surface_variant;
+                            width: 80px;
+                        }
+                        MaterialText {
+                            text: "Read (4)";
+                            style: MaterialTypography.label_medium;
+                            color: MaterialPalette.on_surface_variant;
+                            horizontal-stretch: 1;
+                            horizontal_alignment: center;
+                        }
+                        MaterialText {
+                            text: "Write (2)";
+                            style: MaterialTypography.label_medium;
+                            color: MaterialPalette.on_surface_variant;
+                            horizontal-stretch: 1;
+                            horizontal_alignment: center;
+                        }
+                        MaterialText {
+                            text: "Exec (1)";
+                            style: MaterialTypography.label_medium;
+                            color: MaterialPalette.on_surface_variant;
+                            horizontal-stretch: 1;
+                            horizontal_alignment: center;
+                        }
+                    }
+
+                    // Owner row
+                    HorizontalLayout {
+                        spacing: MaterialStyleMetrics.spacing_8;
+                        alignment: center;
+                        MaterialText {
+                            text: "Owner";
+                            style: MaterialTypography.body_medium;
+                            color: MaterialPalette.on_surface;
+                            width: 80px;
+                        }
+                        HorizontalLayout {
+                            horizontal-stretch: 1;
+                            alignment: center;
+                            CheckBox { checked: true; enabled: false; }
+                        }
+                        HorizontalLayout {
+                            horizontal-stretch: 1;
+                            alignment: center;
+                            CheckBox { checked: true; enabled: false; }
+                        }
+                        HorizontalLayout {
+                            horizontal-stretch: 1;
+                            alignment: center;
+                            CheckBox { checked: true; enabled: false; }
+                        }
+                    }
+
+                    // Group row
+                    HorizontalLayout {
+                        spacing: MaterialStyleMetrics.spacing_8;
+                        alignment: center;
+                        MaterialText {
+                            text: "Group";
+                            style: MaterialTypography.body_medium;
+                            color: MaterialPalette.on_surface;
+                            width: 80px;
+                        }
+                        HorizontalLayout {
+                            horizontal-stretch: 1;
+                            alignment: center;
+                            CheckBox { checked: true; enabled: false; }
+                        }
+                        HorizontalLayout {
+                            horizontal-stretch: 1;
+                            alignment: center;
+                            CheckBox { checked: false; enabled: false; }
+                        }
+                        HorizontalLayout {
+                            horizontal-stretch: 1;
+                            alignment: center;
+                            CheckBox { checked: true; enabled: false; }
+                        }
+                    }
+
+                    // Others row
+                    HorizontalLayout {
+                        spacing: MaterialStyleMetrics.spacing_8;
+                        alignment: center;
+                        MaterialText {
+                            text: "Others";
+                            style: MaterialTypography.body_medium;
+                            color: MaterialPalette.on_surface;
+                            width: 80px;
+                        }
+                        HorizontalLayout {
+                            horizontal-stretch: 1;
+                            alignment: center;
+                            CheckBox { checked: true; enabled: false; }
+                        }
+                        HorizontalLayout {
+                            horizontal-stretch: 1;
+                            alignment: center;
+                            CheckBox { checked: false; enabled: false; }
+                        }
+                        HorizontalLayout {
+                            horizontal-stretch: 1;
+                            alignment: center;
+                            CheckBox { checked: true; enabled: false; }
+                        }
+                    }
+                }
+            }
+
+            // Output section
+            HorizontalLayout {
+                alignment: space-between;
+                MaterialText {
+                    text: "CALCULATED OUTPUT";
+                    style: MaterialTypography.title_small;
+                    color: MaterialPalette.primary;
+                }
+                MaterialText {
+                    text: "Copy";
+                    style: MaterialTypography.label_medium;
+                    color: MaterialPalette.primary;
+                }
+            }
+
+            OutlinedCard {
+                VerticalLayout {
+                    padding: MaterialStyleMetrics.padding_16;
+                    spacing: MaterialStyleMetrics.spacing_12;
+
+                    Rectangle {
+                        background: MaterialPalette.surface_container;
+                        border_radius: MaterialStyleMetrics.border_radius_4;
+
+                        VerticalLayout {
+                            padding: MaterialStyleMetrics.padding_12;
+                            spacing: MaterialStyleMetrics.spacing_6;
+
+                            HorizontalLayout {
+                                alignment: space-between;
+                                MaterialText {
+                                    text: "Octal Notation:";
+                                    style: MaterialTypography.body_medium;
+                                    color: MaterialPalette.on_surface_variant;
+                                }
+                                MaterialText {
+                                    text: "0755";
+                                    style: MaterialTypography.title_medium;
+                                    color: MaterialPalette.primary;
+                                }
+                            }
+
+                            HorizontalLayout {
+                                alignment: space-between;
+                                MaterialText {
+                                    text: "Symbolic Notation:";
+                                    style: MaterialTypography.body_medium;
+                                    color: MaterialPalette.on_surface_variant;
+                                }
+                                MaterialText {
+                                    text: "-rwxr-xr-x";
+                                    style: MaterialTypography.title_medium;
+                                    color: MaterialPalette.on_surface;
+                                }
+                            }
+
+                            HorizontalLayout {
+                                alignment: space-between;
+                                MaterialText {
+                                    text: "Command:";
+                                    style: MaterialTypography.body_medium;
+                                    color: MaterialPalette.on_surface_variant;
+                                }
+                                MaterialText {
+                                    text: "chmod 755 <file>";
+                                    style: MaterialTypography.body_medium;
+                                    color: MaterialPalette.on_surface;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
