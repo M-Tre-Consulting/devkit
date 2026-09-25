@@ -2,6 +2,7 @@ import { Icons, ScrollView, MaterialPalette, MaterialStyleMetrics, MaterialTypog
 import { ToolCard } from "../components/tool-card.slint";
 import { SectionHeader } from "../components/section-header.slint";
 import { AppIcons } from "../components/app-icons.slint";
+import { TopBar } from "../components/top-bar.slint";
 
 export component HomeScreen inherits VerticalLayout {
     in property <bool> is_wide: root.width >= 600px;
@@ -11,33 +12,17 @@ export component HomeScreen inherits VerticalLayout {
     callback toggle_favorite(int);
 
     property <bool> is_entered: false;
-    init => {
-        self.is_entered = true;
+    init => { self.is_entered = true; }
+
+    // Status bar clearance
+    Rectangle {
+        height: root.status_bar_inset;
     }
 
-    // Compact title row with entrance animation (content-forward, minimal chrome)
-    title_bar := HorizontalLayout {
-        padding_left: MaterialStyleMetrics.padding_16;
-        padding_right: MaterialStyleMetrics.padding_16;
-        padding_top: root.status_bar_inset + (root.is_entered ? 12px : 24px);
-        padding_bottom: MaterialStyleMetrics.padding_8;
-        alignment: start;
-        opacity: root.is_entered ? 1.0 : 0.0;
-
-        animate padding_top {
-            duration: 250ms;
-            easing: cubic-bezier(0.05, 0.7, 0.1, 1.0);
-        }
-        animate opacity {
-            duration: 250ms;
-            easing: cubic-bezier(0.05, 0.7, 0.1, 1.0);
-        }
-
-        MaterialText {
-            text: "DevKit";
-            style: MaterialTypography.title_large;
-            color: MaterialPalette.on_surface;
-        }
+    // Material 3 Small App Bar (56dp height, aligned on 28dp centerline)
+    TopBar {
+        title: "DevKit";
+        has_back: false;
     }
 
     // Scrollable Tool Grid

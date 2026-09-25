@@ -1,4 +1,5 @@
-import { AppBar, Icons, TextField, OutlinedCard, ScrollView, MaterialPalette, MaterialStyleMetrics, MaterialTypography, MaterialText } from "@material";
+import { Icons, TextField, OutlinedCard, ScrollView, MaterialPalette, MaterialStyleMetrics, MaterialTypography, MaterialText } from "@material";
+import { TopBar } from "../components/top-bar.slint";
 
 export component UuidScreen inherits VerticalLayout {
     callback back();
@@ -6,17 +7,11 @@ export component UuidScreen inherits VerticalLayout {
     property <bool> is_entered: false;
     init => { self.is_entered = true; }
 
-    AppBar {
+    TopBar {
         title: "UUID Generator";
+        has_back: true;
         show_background: true;
-        leading_button: {
-            icon: Icons.arrow_back,
-            tooltip: "Back",
-            enabled: true
-        };
-        leading_button_clicked => {
-            root.back();
-        }
+        back => { root.back(); }
     }
 
     ScrollView {

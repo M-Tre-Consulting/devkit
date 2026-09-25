@@ -1,0 +1,101 @@
+import { Icons, MaterialPalette, MaterialTypography, MaterialText, StateLayerArea } from "@material";
+
+export component TopBar inherits Rectangle {
+    in property <string> title: "DevKit";
+    in property <bool> has_back: false;
+    in property <bool> has_action: false;
+    in property <image> action_icon;
+    in property <bool> show_background: false;
+    callback back();
+    callback action();
+
+    height: 56px;
+    background: root.show_background ? MaterialPalette.surface_container : Colors.transparent;
+
+    HorizontalLayout {
+        padding_left: 4px;
+        padding_right: 4px;
+        spacing: 0px;
+
+        // Leading slot: 48x48dp touch target, centered at Y = 28px
+        if root.has_back : back_target := Rectangle {
+            width: 48px;
+            height: 48px;
+            y: (parent.height - self.height) / 2;
+
+            touch_area := StateLayerArea {
+                width: 48px;
+                height: 48px;
+                border_radius: 24px;
+                color: MaterialPalette.on_surface;
+
+                clicked => {
+                    root.back();
+                }
+
+                // 24x24dp visible glyph centered inside 48dp tap target
+                Image {
+                    source: Icons.arrow_back;
+                    width: 24px;
+                    height: 24px;
+                    x: (parent.width - self.width) / 2;
+                    y: (parent.height - self.height) / 2;
+                    colorize: MaterialPalette.on_surface;
+                }
+            }
+        }
+
+        // Gap between leading button (or left edge) and title:
+        // When back button is present: 4px edge + 48px button + 8px gap = 60px title start.
+        // When no back button: 4px edge + 12px gap = 16px title start (M3 standard 16dp margin).
+        Rectangle {
+            width: root.has_back ? 8px : 12px;
+        }
+
+        // Title text: vertically centered on the exact visual centerline (Y = 28px)
+        title_box := Rectangle {
+            horizontal_stretch: 1;
+            height: 100%;
+
+            MaterialText {
+                x: 0px;
+                y: (parent.height - self.height) / 2;
+                text: root.title;
+                style: MaterialTypography.title_large;
+                color: MaterialPalette.on_surface;
+                overflow: elide;
+            }
+        }
+
+        // Trailing action slot: 48x48dp touch target, right edge 4dp from screen edge
+        if root.has_action : action_target := Rectangle {
+            width: 48px;
+            height: 48px;
+            y: (parent.height - self.height) / 2;
+
+            action_touch := StateLayerArea {
+                width: 48px;
+                height: 48px;
+                border_radius: 24px;
+                color: MaterialPalette.on_surface_variant;
+
+                clicked => {
+                    root.action();
+                }
+
+                Image {
+                    source: root.action_icon;
+                    width: 24px;
+                    height: 24px;
+                    x: (parent.width - self.width) / 2;
+                    y: (parent.height - self.height) / 2;
+                    colorize: MaterialPalette.on_surface_variant;
+                }
+            }
+        }
+
+        if !root.has_action : Rectangle {
+            width: 12px;
+        }
+    }
+}

@@ -1,6 +1,7 @@
 import { Icons, ScrollView, Switch, HorizontalDivider, MaterialPalette, MaterialStyleMetrics, MaterialTypography, MaterialText, StateLayerArea, Icon } from "@material";
 import { SectionHeader } from "../components/section-header.slint";
 import { AppIcons } from "../components/app-icons.slint";
+import { TopBar } from "../components/top-bar.slint";
 
 export component SettingsScreen inherits VerticalLayout {
     in property <length> status_bar_inset: 24px;
@@ -11,19 +12,15 @@ export component SettingsScreen inherits VerticalLayout {
     property <bool> dark_theme_enabled: true;
     property <bool> dynamic_color_enabled: true;
 
-    // Top Title Bar
-    title_bar := HorizontalLayout {
-        padding_left: MaterialStyleMetrics.padding_16;
-        padding_right: MaterialStyleMetrics.padding_16;
-        padding_top: root.status_bar_inset + 12px;
-        padding_bottom: MaterialStyleMetrics.padding_8;
-        alignment: start;
+    // Status bar clearance
+    Rectangle {
+        height: root.status_bar_inset;
+    }
 
-        MaterialText {
-            text: "Settings";
-            style: MaterialTypography.title_large;
-            color: MaterialPalette.on_surface;
-        }
+    // Material 3 Small App Bar (56dp height, aligned on 28dp centerline)
+    TopBar {
+        title: "Settings";
+        has_back: false;
     }
 
     ScrollView {

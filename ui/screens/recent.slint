@@ -2,6 +2,7 @@ import { Icons, ScrollView, MaterialPalette, MaterialStyleMetrics, MaterialTypog
 import { ToolCard } from "../components/tool-card.slint";
 import { SectionHeader } from "../components/section-header.slint";
 import { AppIcons } from "../components/app-icons.slint";
+import { TopBar } from "../components/top-bar.slint";
 
 export component RecentScreen inherits VerticalLayout {
     in property <bool> is_wide: root.width >= 600px;
@@ -13,19 +14,15 @@ export component RecentScreen inherits VerticalLayout {
 
     property <bool> has_recents: root.recent_tools.length > 0;
 
-    // Top Title Bar
-    title_bar := HorizontalLayout {
-        padding_left: MaterialStyleMetrics.padding_16;
-        padding_right: MaterialStyleMetrics.padding_16;
-        padding_top: root.status_bar_inset + 12px;
-        padding_bottom: MaterialStyleMetrics.padding_8;
-        alignment: start;
+    // Status bar clearance
+    Rectangle {
+        height: root.status_bar_inset;
+    }
 
-        MaterialText {
-            text: "Recent Tools";
-            style: MaterialTypography.title_large;
-            color: MaterialPalette.on_surface;
-        }
+    // Material 3 Small App Bar (56dp height, aligned on 28dp centerline)
+    TopBar {
+        title: "Recent Tools";
+        has_back: false;
     }
 
     if !root.has_recents : VerticalLayout {
