@@ -11,3 +11,4 @@ pub mod formatter;
 pub mod chmod;
 pub mod color;
 pub mod contrast;
+pub mod jwt;

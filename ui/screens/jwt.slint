@@ -1,0 +1,169 @@
+import { Icons, TextField, OutlinedCard, ScrollView, MaterialPalette, MaterialStyleMetrics, MaterialTypography, MaterialText, Icon } from "@material";
+import { TopBar } from "../components/top-bar.slint";
+import { AppIcons } from "../components/app-icons.slint";
+
+export component JwtScreen inherits VerticalLayout {
+    callback back();
+
+    property <bool> is_entered: false;
+    init => { self.is_entered = true; }
+
+    TopBar {
+        title: "JWT Decoder";
+        has_back: true;
+        show_background: true;
+        back => { root.back(); }
+    }
+
+    ScrollView {
+        vertical-stretch: 1;
+        opacity: root.is_entered ? 1.0 : 0.0;
+
+        animate opacity {
+            duration: 200ms;
+            delay: 150ms;
+            easing: cubic-bezier(0.05, 0.7, 0.1, 1.0);
+        }
+
+        VerticalLayout {
+            padding: MaterialStyleMetrics.padding_16;
+            spacing: MaterialStyleMetrics.spacing_16;
+            alignment: start;
+
+            HorizontalLayout {
+                alignment: center;
+                MaterialText {
+                    text: "Coming soon";
+                    style: MaterialTypography.label_large;
+                    color: MaterialPalette.on_surface_variant;
+                }
+            }
+
+            // Input section
+            HorizontalLayout {
+                alignment: space-between;
+                MaterialText {
+                    text: "ENCODED JWT TOKEN";
+                    style: MaterialTypography.title_small;
+                    color: MaterialPalette.primary;
+                }
+                MaterialText {
+                    text: "Paste Example";
+                    style: MaterialTypography.label_medium;
+                    color: MaterialPalette.on_surface_variant;
+                }
+            }
+
+            TextField {
+                label: "eyJh... (header.payload.signature)";
+                enabled: false;
+            }
+
+            // Header Section
+            HorizontalLayout {
+                alignment: space-between;
+                MaterialText {
+                    text: "HEADER: ALGORITHM & TOKEN TYPE";
+                    style: MaterialTypography.title_small;
+                    color: #e91e63;
+                }
+                MaterialText {
+                    text: "Copy";
+                    style: MaterialTypography.label_medium;
+                    color: MaterialPalette.primary;
+                }
+            }
+
+            OutlinedCard {
+                VerticalLayout {
+                    padding: MaterialStyleMetrics.padding_16;
+                    spacing: MaterialStyleMetrics.spacing_8;
+
+                    Rectangle {
+                        background: MaterialPalette.surface_container;
+                        border_radius: MaterialStyleMetrics.border_radius_4;
+
+                        VerticalLayout {
+                            padding: MaterialStyleMetrics.padding_12;
+                            alignment: start;
+
+                            MaterialText {
+                                text: "{\n  \"alg\": \"HS256\",\n  \"typ\": \"JWT\"\n}";
+                                style: MaterialTypography.body_small;
+                                color: MaterialPalette.on_surface_variant;
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Payload Section
+            HorizontalLayout {
+                alignment: space-between;
+                MaterialText {
+                    text: "PAYLOAD: DATA CLAIMS";
+                    style: MaterialTypography.title_small;
+                    color: #9c27b0;
+                }
+                MaterialText {
+                    text: "Copy";
+                    style: MaterialTypography.label_medium;
+                    color: MaterialPalette.primary;
+                }
+            }
+
+            OutlinedCard {
+                VerticalLayout {
+                    padding: MaterialStyleMetrics.padding_16;
+                    spacing: MaterialStyleMetrics.spacing_8;
+
+                    Rectangle {
+                        background: MaterialPalette.surface_container;
+                        border_radius: MaterialStyleMetrics.border_radius_4;
+
+                        VerticalLayout {
+                            padding: MaterialStyleMetrics.padding_12;
+                            alignment: start;
+
+                            MaterialText {
+                                text: "{\n  \"sub\": \"1234567890\",\n  \"name\": \"John Doe\",\n  \"iat\": 1516239022\n}";
+                                style: MaterialTypography.body_small;
+                                color: MaterialPalette.on_surface_variant;
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Signature Section
+            MaterialText {
+                text: "SIGNATURE VERIFICATION";
+                style: MaterialTypography.title_small;
+                color: #00bcd4;
+            }
+
+            OutlinedCard {
+                VerticalLayout {
+                    padding: MaterialStyleMetrics.padding_16;
+                    spacing: MaterialStyleMetrics.spacing_8;
+
+                    Rectangle {
+                        background: MaterialPalette.surface_container;
+                        border_radius: MaterialStyleMetrics.border_radius_4;
+
+                        VerticalLayout {
+                            padding: MaterialStyleMetrics.padding_12;
+                            alignment: start;
+
+                            MaterialText {
+                                text: "HMACSHA256(\n  base64UrlEncode(header) + \".\" +\n  base64UrlEncode(payload),\n  secret\n)";
+                                style: MaterialTypography.body_small;
+                                color: MaterialPalette.on_surface_variant;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
