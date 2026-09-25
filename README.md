@@ -34,6 +34,12 @@ Screenshots will be added as visual polish and component styling stabilize.
 
 <!-- TODO: add home, tool, and pill screenshots -->
 
+## Releases
+
+Pre-built signed APKs are available on the GitHub Releases page.
+
+> Built with [Slint](https://slint.dev) — a Rust UI toolkit.
+
 ## Building and running
 
 ### Prerequisites
@@ -76,9 +82,24 @@ src/                     Rust application backend and lifecycle glue
 
 ## License
 
-License: TBD
+DevKit is licensed under the Apache License, Version 2.0.
+See [LICENSE](LICENSE) for the full text.
+
+### Third-Party Licenses
+
+This project uses the [Slint UI framework](https://slint.dev),
+licensed under the Slint Royalty-free Desktop, Mobile, and Web
+Applications License. See [NOTICE](NOTICE) for attribution details.
 
 ## Acknowledgements
 
+- Built with [Slint](https://slint.dev) — a Rust UI toolkit for native applications.
 - The [Slint](https://slint.dev) project team and the authors of the Slint Material 3 component library.
 - Material Design 3 is a design system developed by Google and used here under its public specifications.
+
+---
+
+[![Made with Slint](https://slint.dev/logo/made-with-slint-badge.svg)](https://slint.dev)
+
+*Built with [Slint](https://slint.dev)*
+
