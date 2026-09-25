@@ -1,11 +1,30 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2026 MTRE Consulting
 
-import { Icons, TextField, OutlinedCard, ScrollView, MaterialPalette, MaterialStyleMetrics, MaterialTypography, MaterialText } from "@material";
+import { Icons, Switch, ScrollView, MaterialPalette, MaterialStyleMetrics, MaterialTypography, MaterialText, StateLayerArea, Icon } from "@material";
 import { TopBar } from "../components/top-bar.slint";
+import { ToolErrorBanner } from "../components/tool-error-banner.slint";
+import { ToolActionButton } from "../components/tool-action-button.slint";
+import { StepperInput } from "../components/stepper-input.slint";
+import { AppIcons } from "../components/app-icons.slint";
 
 export component UuidScreen inherits VerticalLayout {
+    in property <length> status_bar_inset: 24px;
+    in property <length> nav_bar_inset: 16px;
     callback back();
+
+    in-out property <int> version: 1; // 0=v1, 1=v4, 2=v7
+    in-out property <int> count: 1;
+    in-out property <bool> uppercase: false;
+    in-out property <bool> hyphens: true;
+    in-out property <[string]> uuids: ["4a2b9f30-6f7c-48be-a6b1-0949d21c97a2"];
+    in-out property <string> bulk_uuids: "4a2b9f30-6f7c-48be-a6b1-0949d21c97a2";
+    in-out property <string> error_message: "";
+    in-out property <bool> is_loading: false;
+
+    callback generate();
+    callback clear();
+    callback copy(string);
 
     property <bool> is_entered: false;
     init => { self.is_entered = true; }
@@ -28,55 +47,269 @@ export component UuidScreen inherits VerticalLayout {
         }
 
         VerticalLayout {
-            padding: MaterialStyleMetrics.padding_16;
+            padding_left: MaterialStyleMetrics.padding_16;
+            padding_right: MaterialStyleMetrics.padding_16;
+            padding_top: MaterialStyleMetrics.padding_16;
+            padding_bottom: 96px + root.nav_bar_inset;
             spacing: MaterialStyleMetrics.spacing_16;
             alignment: start;
 
+            ToolErrorBanner {
+                message: root.error_message;
+            }
+
+            // Version Selector: v1, v4, v7
+            MaterialText {
+                text: "UUID VERSION";
+                style: MaterialTypography.label_large;
+                color: MaterialPalette.primary;
+            }
+
             HorizontalLayout {
-                alignment: center;
-                MaterialText {
-                    text: "Coming soon";
-                    style: MaterialTypography.label_large;
-                    color: MaterialPalette.on_surface_variant;
+                spacing: MaterialStyleMetrics.spacing_8;
+
+                // v1
+                Rectangle {
+                    horizontal-stretch: 1;
+                    height: 40px;
+                    border_radius: MaterialStyleMetrics.border_radius_8;
+                    background: root.version == 0 ? MaterialPalette.secondary_container : MaterialPalette.surface_container;
+                    border_width: 1px;
+                    border_color: root.version == 0 ? MaterialPalette.primary : MaterialPalette.outline_variant.with_alpha(20%);
+
+                    StateLayerArea {
+                        width: 100%;
+                        height: 100%;
+                        border_radius: parent.border_radius;
+                        color: MaterialPalette.primary;
+                        clicked => { root.version = 0; }
+                        HorizontalLayout {
+                            alignment: center;
+                            VerticalLayout {
+                                alignment: center;
+                                MaterialText {
+                                    text: "v1 (Time)";
+                                    style: MaterialTypography.label_medium;
+                                    color: root.version == 0 ? MaterialPalette.on_secondary_container : MaterialPalette.on_surface;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // v4
+                Rectangle {
+                    horizontal-stretch: 1;
+                    height: 40px;
+                    border_radius: MaterialStyleMetrics.border_radius_8;
+                    background: root.version == 1 ? MaterialPalette.secondary_container : MaterialPalette.surface_container;
+                    border_width: 1px;
+                    border_color: root.version == 1 ? MaterialPalette.primary : MaterialPalette.outline_variant.with_alpha(20%);
+
+                    StateLayerArea {
+                        width: 100%;
+                        height: 100%;
+                        border_radius: parent.border_radius;
+                        color: MaterialPalette.primary;
+                        clicked => { root.version = 1; }
+                        HorizontalLayout {
+                            alignment: center;
+                            VerticalLayout {
+                                alignment: center;
+                                MaterialText {
+                                    text: "v4 (Random)";
+                                    style: MaterialTypography.label_medium;
+                                    color: root.version == 1 ? MaterialPalette.on_secondary_container : MaterialPalette.on_surface;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // v7
+                Rectangle {
+                    horizontal-stretch: 1;
+                    height: 40px;
+                    border_radius: MaterialStyleMetrics.border_radius_8;
+                    background: root.version == 2 ? MaterialPalette.secondary_container : MaterialPalette.surface_container;
+                    border_width: 1px;
+                    border_color: root.version == 2 ? MaterialPalette.primary : MaterialPalette.outline_variant.with_alpha(20%);
+
+                    StateLayerArea {
+                        width: 100%;
+                        height: 100%;
+                        border_radius: parent.border_radius;
+                        color: MaterialPalette.primary;
+                        clicked => { root.version = 2; }
+                        HorizontalLayout {
+                            alignment: center;
+                            VerticalLayout {
+                                alignment: center;
+                                MaterialText {
+                                    text: "v7 (Epoch)";
+                                    style: MaterialTypography.label_medium;
+                                    color: root.version == 2 ? MaterialPalette.on_secondary_container : MaterialPalette.on_surface;
+                                }
+                            }
+                        }
+                    }
                 }
             }
 
-            MaterialText {
-                text: "CONFIGURATION";
-                style: MaterialTypography.title_small;
-                color: MaterialPalette.primary;
-            }
+            // Stepper Count Input
+            Rectangle {
+                border_radius: MaterialStyleMetrics.border_radius_12;
+                background: MaterialPalette.surface_container;
+                border_width: 1px;
+                border_color: MaterialPalette.outline_variant.with_alpha(15%);
 
-            TextField {
-                label: "UUID Version (v4 random / v7 timestamp)";
-                enabled: false;
-            }
-
-            MaterialText {
-                text: "GENERATED UUIDS";
-                style: MaterialTypography.title_small;
-                color: MaterialPalette.primary;
-            }
-
-            OutlinedCard {
                 VerticalLayout {
-                    padding: MaterialStyleMetrics.padding_16;
+                    padding: MaterialStyleMetrics.padding_12;
+                    StepperInput {
+                        label: "Quantity to Generate";
+                        value <=> root.count;
+                        min_val: 1;
+                        max_val: 50;
+                    }
+                }
+            }
+
+            // Options: Uppercase & Hyphens
+            Rectangle {
+                border_radius: MaterialStyleMetrics.border_radius_12;
+                background: MaterialPalette.surface_container;
+                border_width: 1px;
+                border_color: MaterialPalette.outline_variant.with_alpha(15%);
+
+                VerticalLayout {
+                    padding: MaterialStyleMetrics.padding_12;
                     spacing: MaterialStyleMetrics.spacing_8;
 
-                    MaterialText {
-                        text: "UUID: —";
-                        style: MaterialTypography.body_medium;
-                        color: MaterialPalette.on_surface_variant;
+                    HorizontalLayout {
+                        alignment: space-between;
+                        VerticalLayout {
+                            alignment: center;
+                            MaterialText {
+                                text: "Uppercase Letters";
+                                style: MaterialTypography.body_medium;
+                                color: MaterialPalette.on_surface;
+                            }
+                        }
+                        Switch {
+                            checked <=> root.uppercase;
+                        }
                     }
-                    MaterialText {
-                        text: "URN: —";
-                        style: MaterialTypography.body_medium;
-                        color: MaterialPalette.on_surface_variant;
+
+                    HorizontalLayout {
+                        alignment: space-between;
+                        VerticalLayout {
+                            alignment: center;
+                            MaterialText {
+                                text: "Hyphens Formatted";
+                                style: MaterialTypography.body_medium;
+                                color: MaterialPalette.on_surface;
+                            }
+                        }
+                        Switch {
+                            checked <=> root.hyphens;
+                        }
                     }
-                    MaterialText {
-                        text: "Hex (raw): —";
-                        style: MaterialTypography.body_medium;
-                        color: MaterialPalette.on_surface_variant;
+                }
+            }
+
+            ToolActionButton {
+                text: "Generate UUIDs";
+                enabled: !root.is_loading;
+                has_clear: true;
+                clicked => { root.generate(); }
+                clear => {
+                    root.uuids = [];
+                    root.bulk_uuids = "";
+                    root.error_message = "";
+                    root.clear();
+                }
+            }
+
+            // Output List Area
+            HorizontalLayout {
+                alignment: space-between;
+                MaterialText {
+                    text: "GENERATED UUIDS";
+                    style: MaterialTypography.title_small;
+                    color: MaterialPalette.primary;
+                }
+                if root.bulk_uuids != "" : Rectangle {
+                    width: 32px;
+                    height: 32px;
+                    border_radius: 16px;
+                    StateLayerArea {
+                        width: 100%;
+                        height: 100%;
+                        border_radius: parent.border_radius;
+                        color: MaterialPalette.primary;
+                        clicked => { root.copy(root.bulk_uuids); }
+                        HorizontalLayout {
+                            alignment: center;
+                            VerticalLayout {
+                                alignment: center;
+                                Icon {
+                                    source: AppIcons.copy;
+                                    colorize: MaterialPalette.primary;
+                                    width: 18px;
+                                    height: 18px;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            VerticalLayout {
+                spacing: MaterialStyleMetrics.spacing_8;
+
+                for uuid[idx] in root.uuids: Rectangle {
+                    border_radius: MaterialStyleMetrics.border_radius_12;
+                    background: MaterialPalette.surface_container;
+                    border_width: 1px;
+                    border_color: MaterialPalette.outline_variant.with_alpha(15%);
+
+                    HorizontalLayout {
+                        padding: MaterialStyleMetrics.padding_12;
+                        alignment: space-between;
+
+                        VerticalLayout {
+                            alignment: center;
+                            MaterialText {
+                                text: uuid;
+                                style: MaterialTypography.body_medium;
+                                color: MaterialPalette.on_surface;
+                            }
+                        }
+
+                        Rectangle {
+                            width: 32px;
+                            height: 32px;
+                            border_radius: 16px;
+                            StateLayerArea {
+                                width: 100%;
+                                height: 100%;
+                                border_radius: parent.border_radius;
+                                color: MaterialPalette.primary;
+                                clicked => { root.copy(uuid); }
+                                HorizontalLayout {
+                                    alignment: center;
+                                    VerticalLayout {
+                                        alignment: center;
+                                        Icon {
+                                            source: AppIcons.copy;
+                                            colorize: MaterialPalette.primary;
+                                            width: 16px;
+                                            height: 16px;
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
             }
