@@ -31,6 +31,11 @@ pub fn update_recents(ui: &crate::AppWindow) {
     ui.set_recent_tools(model);
 }
 
+pub fn update_high_refresh_rate(ui: &crate::AppWindow) {
+    let enabled = crate::storage::load_high_refresh_rate();
+    ui.set_high_refresh_rate_enabled(enabled);
+}
+
 pub fn setup_tool_handlers(ui: &crate::AppWindow) {
     // 1. Subnet Calculator
     ui.on_calculate_subnet(move |ip| {
@@ -111,6 +116,7 @@ pub fn setup_tool_handlers(ui: &crate::AppWindow) {
 pub fn setup_app_state(ui: &crate::AppWindow) {
     update_favorites(ui);
     update_recents(ui);
+    update_high_refresh_rate(ui);
     setup_tool_handlers(ui);
 
     let nav_state = Rc::new(RefCell::new(NavigationState::new()));
@@ -162,6 +168,14 @@ pub fn setup_app_state(ui: &crate::AppWindow) {
         crate::storage::clear_favorites();
         if let Some(ui) = ui_handle.upgrade() {
             update_favorites(&ui);
+        }
+    });
+
+    let ui_handle = ui.as_weak();
+    ui.on_high_refresh_rate_changed(move |enabled| {
+        crate::storage::save_high_refresh_rate(enabled);
+        if let Some(ui) = ui_handle.upgrade() {
+            ui.set_high_refresh_rate_enabled(enabled);
         }
     });
 

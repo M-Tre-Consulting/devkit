@@ -51,6 +51,10 @@ fn favorites_file() -> PathBuf {
     get_storage_dir().join("favorites.txt")
 }
 
+fn high_refresh_rate_file() -> PathBuf {
+    get_storage_dir().join("high_refresh_rate.txt")
+}
+
 /// Load list of recent tool IDs (up to 5, most recent first).
 pub fn load_recents() -> Vec<i32> {
     let path = recents_file();
@@ -132,4 +136,46 @@ pub fn clear_recents() {
 /// Clear all saved favorite tools.
 pub fn clear_favorites() {
     let _ = fs::remove_file(favorites_file());
+}
+
+/// Load the persisted high refresh rate preference (defaults to false).
+pub fn load_high_refresh_rate() -> bool {
+    let path = high_refresh_rate_file();
+    if let Ok(content) = fs::read_to_string(path) {
+        content.trim().eq_ignore_ascii_case("true") || content.trim() == "1"
+    } else {
+        false
+    }
+}
+
+/// Save the high refresh rate preference.
+pub fn save_high_refresh_rate(enabled: bool) {
+    let dir = get_storage_dir();
+    let _ = fs::create_dir_all(&dir);
+    let _ = fs::write(high_refresh_rate_file(), if enabled { "true" } else { "false" });
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_high_refresh_rate_persistence() {
+        let temp_dir = std::env::temp_dir().join(format!("devkit_test_{}", std::process::id()));
+        init_storage_dir(temp_dir.clone());
+
+        // Default should be false when file does not exist
+        let _ = fs::remove_file(high_refresh_rate_file());
+        assert!(!load_high_refresh_rate());
+
+        // Save true and verify
+        save_high_refresh_rate(true);
+        assert!(load_high_refresh_rate());
+
+        // Save false and verify
+        save_high_refresh_rate(false);
+        assert!(!load_high_refresh_rate());
+
+        let _ = fs::remove_dir_all(&temp_dir);
+    }
 }
