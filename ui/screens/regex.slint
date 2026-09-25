@@ -1,11 +1,31 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2026 MTRE Consulting
 
-import { Icons, TextField, OutlinedCard, ScrollView, MaterialPalette, MaterialStyleMetrics, MaterialTypography, MaterialText } from "@material";
+import { Icons, TextField, Switch, ScrollView, MaterialPalette, MaterialStyleMetrics, MaterialTypography, MaterialText, StateLayerArea, Icon } from "@material";
 import { TopBar } from "../components/top-bar.slint";
+import { ToolErrorBanner } from "../components/tool-error-banner.slint";
+import { ToolActionButton } from "../components/tool-action-button.slint";
+import { ToolOutputArea } from "../components/tool-output-area.slint";
+import { AppIcons } from "../components/app-icons.slint";
 
 export component RegexScreen inherits VerticalLayout {
+    in property <length> status_bar_inset: 24px;
+    in property <length> nav_bar_inset: 16px;
     callback back();
+
+    in-out property <string> pattern: "[a-zA-Z0-9_]+";
+    in-out property <string> test_string: "DevKit_2026";
+    in-out property <bool> case_insensitive: false;
+    in-out property <bool> multiline: false;
+    in-out property <bool> dot_matches_newline: false;
+    in-out property <string> match_summary: "1 match found";
+    in-out property <[string]> matches_list: ["Match 1: 'DevKit_2026' [0..11]"];
+    in-out property <string> error_message: "";
+    in-out property <bool> is_loading: false;
+
+    callback evaluate();
+    callback clear();
+    callback copy(string);
 
     property <bool> is_entered: false;
     init => { self.is_entered = true; }
@@ -28,66 +48,186 @@ export component RegexScreen inherits VerticalLayout {
         }
 
         VerticalLayout {
-            padding: MaterialStyleMetrics.padding_16;
+            padding_left: MaterialStyleMetrics.padding_16;
+            padding_right: MaterialStyleMetrics.padding_16;
+            padding_top: MaterialStyleMetrics.padding_16;
+            padding_bottom: 96px + root.nav_bar_inset;
             spacing: MaterialStyleMetrics.spacing_16;
             alignment: start;
 
-            HorizontalLayout {
-                alignment: center;
-                MaterialText {
-                    text: "Coming soon";
-                    style: MaterialTypography.label_large;
-                    color: MaterialPalette.on_surface_variant;
+            ToolErrorBanner {
+                message: root.error_message;
+            }
+
+            // Pattern input
+            MaterialText {
+                text: "REGULAR EXPRESSION";
+                style: MaterialTypography.label_large;
+                color: MaterialPalette.primary;
+            }
+
+            TextField {
+                label: "Regex pattern (e.g. ^[a-z0-9_-]+$)";
+                text <=> root.pattern;
+                enabled: !root.is_loading;
+            }
+
+            // Flags selection
+            MaterialText {
+                text: "FLAGS & MODIFIERS";
+                style: MaterialTypography.label_large;
+                color: MaterialPalette.primary;
+            }
+
+            Rectangle {
+                border_radius: MaterialStyleMetrics.border_radius_12;
+                background: MaterialPalette.surface_container;
+                border_width: 1px;
+                border_color: MaterialPalette.outline_variant.with_alpha(15%);
+
+                VerticalLayout {
+                    padding: MaterialStyleMetrics.padding_12;
+                    spacing: MaterialStyleMetrics.spacing_8;
+
+                    // Case-insensitive
+                    HorizontalLayout {
+                        alignment: space-between;
+                        VerticalLayout {
+                            alignment: center;
+                            MaterialText {
+                                text: "Case Insensitive (i)";
+                                style: MaterialTypography.body_medium;
+                                color: MaterialPalette.on_surface;
+                            }
+                        }
+                        Switch {
+                            checked <=> root.case_insensitive;
+                        }
+                    }
+
+                    // Multiline
+                    HorizontalLayout {
+                        alignment: space-between;
+                        VerticalLayout {
+                            alignment: center;
+                            MaterialText {
+                                text: "Multiline Mode (m)";
+                                style: MaterialTypography.body_medium;
+                                color: MaterialPalette.on_surface;
+                            }
+                        }
+                        Switch {
+                            checked <=> root.multiline;
+                        }
+                    }
+
+                    // Dot matches newline
+                    HorizontalLayout {
+                        alignment: space-between;
+                        VerticalLayout {
+                            alignment: center;
+                            MaterialText {
+                                text: "Dot Matches Newline (s)";
+                                style: MaterialTypography.body_medium;
+                                color: MaterialPalette.on_surface;
+                            }
+                        }
+                        Switch {
+                            checked <=> root.dot_matches_newline;
+                        }
+                    }
                 }
             }
 
-            MaterialText {
-                text: "REGULAR EXPRESSION";
-                style: MaterialTypography.title_small;
-                color: MaterialPalette.primary;
-            }
-
-            TextField {
-                label: "Pattern (e.g. ^[a-zA-Z0-9_]+$)";
-                enabled: false;
-            }
-
+            // Test string input
             MaterialText {
                 text: "TEST STRING";
-                style: MaterialTypography.title_small;
+                style: MaterialTypography.label_large;
                 color: MaterialPalette.primary;
             }
 
             TextField {
-                label: "Enter text to evaluate regex match...";
-                enabled: false;
+                label: "Text to evaluate against regex...";
+                text <=> root.test_string;
+                enabled: !root.is_loading;
             }
 
+            ToolActionButton {
+                text: "Evaluate Regex";
+                enabled: root.pattern != "" && !root.is_loading;
+                has_clear: true;
+                clicked => { root.evaluate(); }
+                clear => {
+                    root.pattern = "";
+                    root.test_string = "";
+                    root.match_summary = "";
+                    root.matches_list = [];
+                    root.error_message = "";
+                    root.clear();
+                }
+            }
+
+            // Match Summary
+            ToolOutputArea {
+                title: "EVALUATION SUMMARY";
+                text: root.match_summary;
+                is_code: false;
+                has_copy: false;
+            }
+
+            // Matches List
             MaterialText {
-                text: "MATCH RESULTS";
+                text: "MATCHES & CAPTURES";
                 style: MaterialTypography.title_small;
                 color: MaterialPalette.primary;
             }
 
-            OutlinedCard {
-                VerticalLayout {
-                    padding: MaterialStyleMetrics.padding_16;
-                    spacing: MaterialStyleMetrics.spacing_8;
+            VerticalLayout {
+                spacing: MaterialStyleMetrics.spacing_8;
 
-                    MaterialText {
-                        text: "Match Status: —";
-                        style: MaterialTypography.body_medium;
-                        color: MaterialPalette.on_surface_variant;
-                    }
-                    MaterialText {
-                        text: "Match Count: —";
-                        style: MaterialTypography.body_medium;
-                        color: MaterialPalette.on_surface_variant;
-                    }
-                    MaterialText {
-                        text: "Capture Groups: —";
-                        style: MaterialTypography.body_medium;
-                        color: MaterialPalette.on_surface_variant;
+                for match[idx] in root.matches_list: Rectangle {
+                    border_radius: MaterialStyleMetrics.border_radius_12;
+                    background: MaterialPalette.surface_container;
+                    border_width: 1px;
+                    border_color: MaterialPalette.outline_variant.with_alpha(15%);
+
+                    HorizontalLayout {
+                        padding: MaterialStyleMetrics.padding_12;
+                        alignment: space-between;
+
+                        VerticalLayout {
+                            alignment: center;
+                            MaterialText {
+                                text: match;
+                                style: MaterialTypography.body_medium;
+                                color: MaterialPalette.on_surface;
+                            }
+                        }
+
+                        Rectangle {
+                            width: 32px;
+                            height: 32px;
+                            border_radius: 16px;
+                            StateLayerArea {
+                                width: 100%;
+                                height: 100%;
+                                border_radius: parent.border_radius;
+                                color: MaterialPalette.primary;
+                                clicked => { root.copy(match); }
+                                HorizontalLayout {
+                                    alignment: center;
+                                    VerticalLayout {
+                                        alignment: center;
+                                        Icon {
+                                            source: AppIcons.copy;
+                                            colorize: MaterialPalette.primary;
+                                            width: 16px;
+                                            height: 16px;
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
             }
