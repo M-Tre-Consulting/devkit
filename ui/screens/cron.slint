@@ -1,18 +1,39 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2026 MTRE Consulting
 
-import { Icons, TextField, OutlinedCard, ScrollView, MaterialPalette, MaterialStyleMetrics, MaterialTypography, MaterialText, Icon } from "@material";
+import { Icons, TextField, ScrollView, MaterialPalette, MaterialStyleMetrics, MaterialTypography, MaterialText, StateLayerArea, Icon } from "@material";
 import { TopBar } from "../components/top-bar.slint";
+import { ToolErrorBanner } from "../components/tool-error-banner.slint";
+import { ToolActionButton } from "../components/tool-action-button.slint";
+import { ToolOutputArea } from "../components/tool-output-area.slint";
 import { AppIcons } from "../components/app-icons.slint";
 
 export component CronScreen inherits VerticalLayout {
+    in property <length> status_bar_inset: 24px;
+    in property <length> nav_bar_inset: 16px;
     callback back();
+
+    in-out property <string> expression: "*/15 * * * *";
+    in-out property <string> description: "Every 15 minutes, every hour, every day";
+    in-out property <[string]> next_runs: [
+        "2026-09-25 12:00:00 UTC",
+        "2026-09-25 12:15:00 UTC",
+        "2026-09-25 12:30:00 UTC",
+        "2026-09-25 12:45:00 UTC",
+        "2026-09-25 13:00:00 UTC"
+    ];
+    in-out property <string> error_message: "";
+    in-out property <bool> is_loading: false;
+
+    callback parse();
+    callback clear();
+    callback copy(string);
 
     property <bool> is_entered: false;
     init => { self.is_entered = true; }
 
     TopBar {
-        title: "CRON Expression Parser";
+        title: "CRON Parser";
         has_back: true;
         show_background: true;
         back => { root.back(); }
@@ -29,94 +50,248 @@ export component CronScreen inherits VerticalLayout {
         }
 
         VerticalLayout {
-            padding: MaterialStyleMetrics.padding_16;
+            padding_left: MaterialStyleMetrics.padding_16;
+            padding_right: MaterialStyleMetrics.padding_16;
+            padding_top: MaterialStyleMetrics.padding_16;
+            padding_bottom: 96px + root.nav_bar_inset;
             spacing: MaterialStyleMetrics.spacing_16;
             alignment: start;
 
+            ToolErrorBanner {
+                message: root.error_message;
+            }
+
+            // Presets row
+            MaterialText {
+                text: "COMMON PRESETS";
+                style: MaterialTypography.label_large;
+                color: MaterialPalette.primary;
+            }
+
             HorizontalLayout {
-                alignment: center;
-                MaterialText {
-                    text: "Coming soon";
-                    style: MaterialTypography.label_large;
-                    color: MaterialPalette.on_surface_variant;
+                spacing: MaterialStyleMetrics.spacing_8;
+
+                Rectangle {
+                    horizontal-stretch: 1;
+                    height: 32px;
+                    border_radius: MaterialStyleMetrics.border_radius_8;
+                    background: MaterialPalette.surface_container;
+                    border_width: 1px;
+                    border_color: MaterialPalette.outline_variant.with_alpha(20%);
+
+                    StateLayerArea {
+                        width: 100%;
+                        height: 100%;
+                        border_radius: parent.border_radius;
+                        color: MaterialPalette.primary;
+                        clicked => {
+                            root.expression = "* * * * *";
+                            root.parse();
+                        }
+                        HorizontalLayout {
+                            alignment: center;
+                            VerticalLayout {
+                                alignment: center;
+                                MaterialText {
+                                    text: "Every min";
+                                    style: MaterialTypography.label_small;
+                                    color: MaterialPalette.on_surface;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                Rectangle {
+                    horizontal-stretch: 1;
+                    height: 32px;
+                    border_radius: MaterialStyleMetrics.border_radius_8;
+                    background: MaterialPalette.surface_container;
+                    border_width: 1px;
+                    border_color: MaterialPalette.outline_variant.with_alpha(20%);
+
+                    StateLayerArea {
+                        width: 100%;
+                        height: 100%;
+                        border_radius: parent.border_radius;
+                        color: MaterialPalette.primary;
+                        clicked => {
+                            root.expression = "0 * * * *";
+                            root.parse();
+                        }
+                        HorizontalLayout {
+                            alignment: center;
+                            VerticalLayout {
+                                alignment: center;
+                                MaterialText {
+                                    text: "Hourly";
+                                    style: MaterialTypography.label_small;
+                                    color: MaterialPalette.on_surface;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                Rectangle {
+                    horizontal-stretch: 1;
+                    height: 32px;
+                    border_radius: MaterialStyleMetrics.border_radius_8;
+                    background: MaterialPalette.surface_container;
+                    border_width: 1px;
+                    border_color: MaterialPalette.outline_variant.with_alpha(20%);
+
+                    StateLayerArea {
+                        width: 100%;
+                        height: 100%;
+                        border_radius: parent.border_radius;
+                        color: MaterialPalette.primary;
+                        clicked => {
+                            root.expression = "0 0 * * *";
+                            root.parse();
+                        }
+                        HorizontalLayout {
+                            alignment: center;
+                            VerticalLayout {
+                                alignment: center;
+                                MaterialText {
+                                    text: "Daily 00:00";
+                                    style: MaterialTypography.label_small;
+                                    color: MaterialPalette.on_surface;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                Rectangle {
+                    horizontal-stretch: 1;
+                    height: 32px;
+                    border_radius: MaterialStyleMetrics.border_radius_8;
+                    background: MaterialPalette.surface_container;
+                    border_width: 1px;
+                    border_color: MaterialPalette.outline_variant.with_alpha(20%);
+
+                    StateLayerArea {
+                        width: 100%;
+                        height: 100%;
+                        border_radius: parent.border_radius;
+                        color: MaterialPalette.primary;
+                        clicked => {
+                            root.expression = "0 0 * * 1";
+                            root.parse();
+                        }
+                        HorizontalLayout {
+                            alignment: center;
+                            VerticalLayout {
+                                alignment: center;
+                                MaterialText {
+                                    text: "Weekly";
+                                    style: MaterialTypography.label_small;
+                                    color: MaterialPalette.on_surface;
+                                }
+                            }
+                        }
+                    }
                 }
             }
 
             // Input section
-            HorizontalLayout {
-                alignment: space-between;
-                MaterialText {
-                    text: "CRON EXPRESSION";
-                    style: MaterialTypography.title_small;
-                    color: MaterialPalette.primary;
-                }
-                MaterialText {
-                    text: "Examples";
-                    style: MaterialTypography.label_medium;
-                    color: MaterialPalette.on_surface_variant;
-                }
+            MaterialText {
+                text: "CRON EXPRESSION";
+                style: MaterialTypography.label_large;
+                color: MaterialPalette.primary;
             }
 
             TextField {
-                label: "e.g. */15 * * * * or 0 0 * * 1";
-                enabled: false;
+                label: "e.g. */15 * * * * or 0 12 * * MON-FRI";
+                text <=> root.expression;
+                enabled: !root.is_loading;
             }
 
-            // Output section
+            ToolActionButton {
+                text: "Parse Expression";
+                enabled: root.expression != "" && !root.is_loading;
+                has_clear: true;
+                clicked => { root.parse(); }
+                clear => {
+                    root.expression = "";
+                    root.description = "";
+                    root.next_runs = [];
+                    root.error_message = "";
+                    root.clear();
+                }
+            }
+
+            // Description output
+            ToolOutputArea {
+                title: "SCHEDULE DESCRIPTION";
+                text: root.description;
+                is_code: false;
+                copy(str) => { root.copy(str); }
+            }
+
+            // Next runs list
             MaterialText {
-                text: "SCHEDULE BREAKDOWN";
+                text: "UPCOMING EXECUTIONS";
                 style: MaterialTypography.title_small;
                 color: MaterialPalette.primary;
             }
 
-            OutlinedCard {
-                VerticalLayout {
-                    padding: MaterialStyleMetrics.padding_16;
-                    spacing: MaterialStyleMetrics.spacing_12;
+            VerticalLayout {
+                spacing: MaterialStyleMetrics.spacing_8;
 
-                    Rectangle {
-                        background: MaterialPalette.surface_container;
-                        border_radius: MaterialStyleMetrics.border_radius_4;
+                for run[idx] in root.next_runs: Rectangle {
+                    border_radius: MaterialStyleMetrics.border_radius_12;
+                    background: MaterialPalette.surface_container;
+                    border_width: 1px;
+                    border_color: MaterialPalette.outline_variant.with_alpha(15%);
 
-                        VerticalLayout {
-                            padding: MaterialStyleMetrics.padding_12;
+                    HorizontalLayout {
+                        padding: MaterialStyleMetrics.padding_12;
+                        alignment: space-between;
+
+                        HorizontalLayout {
                             spacing: MaterialStyleMetrics.spacing_8;
+                            alignment: center;
+
+                            Icon {
+                                source: AppIcons.schedule;
+                                colorize: MaterialPalette.primary;
+                                width: 16px;
+                                height: 16px;
+                            }
 
                             MaterialText {
-                                text: "Human readable:";
-                                style: MaterialTypography.label_medium;
-                                color: MaterialPalette.primary;
-                            }
-                            MaterialText {
-                                text: "Every 15 minutes, every hour, every day";
+                                text: run;
                                 style: MaterialTypography.body_medium;
                                 color: MaterialPalette.on_surface;
                             }
                         }
-                    }
 
-                    VerticalLayout {
-                        spacing: MaterialStyleMetrics.spacing_4;
-
-                        MaterialText {
-                            text: "Next scheduled runs:";
-                            style: MaterialTypography.label_medium;
-                            color: MaterialPalette.on_surface_variant;
-                        }
-                        MaterialText {
-                            text: "• 2026-09-25 08:45:00 UTC";
-                            style: MaterialTypography.body_small;
-                            color: MaterialPalette.on_surface_variant;
-                        }
-                        MaterialText {
-                            text: "• 2026-09-25 09:00:00 UTC";
-                            style: MaterialTypography.body_small;
-                            color: MaterialPalette.on_surface_variant;
-                        }
-                        MaterialText {
-                            text: "• 2026-09-25 09:15:00 UTC";
-                            style: MaterialTypography.body_small;
-                            color: MaterialPalette.on_surface_variant;
+                        Rectangle {
+                            width: 32px;
+                            height: 32px;
+                            border_radius: 16px;
+                            StateLayerArea {
+                                width: 100%;
+                                height: 100%;
+                                border_radius: parent.border_radius;
+                                color: MaterialPalette.primary;
+                                clicked => { root.copy(run); }
+                                HorizontalLayout {
+                                    alignment: center;
+                                    VerticalLayout {
+                                        alignment: center;
+                                        Icon {
+                                            source: AppIcons.copy;
+                                            colorize: MaterialPalette.primary;
+                                            width: 16px;
+                                            height: 16px;
+                                        }
+                                    }
+                                }
+                            }
                         }
                     }
                 }
