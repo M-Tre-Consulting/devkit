@@ -1,0 +1,17 @@
+DevKit
+Copyright 2026 MTRE Consulting
+
+This product includes software developed by MTRE Consulting.
+
+---
+Third-party components and their licenses:
+
+This product uses the Slint UI framework (https://slint.dev),
+which is used under the Slint Royalty-free Desktop, Mobile,
+and Web Applications License.
+Copyright (c) SixtyFPS GmbH.
+
+This product uses the Slint Material 3 component library,
+developed by the Slint project (https://github.com/slint-ui/material).
+
+[Additional third-party components will be listed here as they are added.]
