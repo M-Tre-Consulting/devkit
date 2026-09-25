@@ -1,12 +1,29 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2026 MTRE Consulting
 
-import { Icons, TextField, OutlinedCard, ScrollView, MaterialPalette, MaterialStyleMetrics, MaterialTypography, MaterialText, Icon } from "@material";
+import { Icons, TextField, OutlinedCard, ScrollView, MaterialPalette, MaterialStyleMetrics, MaterialTypography, MaterialText, Icon, FilterChip } from "@material";
 import { TopBar } from "../components/top-bar.slint";
 import { AppIcons } from "../components/app-icons.slint";
+import { ToolOutputArea, ToolActionButton, ToolErrorBanner } from "../components/tool-components.slint";
 
 export component ContrastScreen inherits VerticalLayout {
     callback back();
+    callback check_contrast();
+    callback swap_colors();
+    callback select_preset(string, string);
+
+    in-out property <string> fg_color_text: "#FFFFFF";
+    in-out property <string> bg_color_text: "#6750A4";
+    in-out property <color> fg_color: #ffffff;
+    in-out property <color> bg_color: #6750a4;
+
+    in-out property <string> ratio_text: "7.15 : 1";
+    in-out property <bool> aa_normal_pass: true;
+    in-out property <bool> aa_large_pass: true;
+    in-out property <bool> aaa_normal_pass: true;
+    in-out property <bool> aaa_large_pass: true;
+    in-out property <bool> ui_components_pass: true;
+    in-out property <string> error_message: "";
 
     property <bool> is_entered: false;
     init => { self.is_entered = true; }
@@ -33,18 +50,65 @@ export component ContrastScreen inherits VerticalLayout {
             spacing: MaterialStyleMetrics.spacing_16;
             alignment: start;
 
-            HorizontalLayout {
-                alignment: center;
+            ToolErrorBanner {
+                error_message: root.error_message;
+            }
+
+            // Presets
+            VerticalLayout {
+                spacing: MaterialStyleMetrics.spacing_8;
+
                 MaterialText {
-                    text: "Coming soon";
-                    style: MaterialTypography.label_large;
-                    color: MaterialPalette.on_surface_variant;
+                    text: "PALETTE PAIRS";
+                    style: MaterialTypography.label_medium;
+                    color: MaterialPalette.primary;
+                }
+
+                HorizontalLayout {
+                    spacing: MaterialStyleMetrics.spacing_8;
+
+                    FilterChip {
+                        text: "White/Purple";
+                        selected: root.fg_color_text == "#FFFFFF" && root.bg_color_text == "#6750A4";
+                        clicked => {
+                            root.fg_color_text = "#FFFFFF";
+                            root.bg_color_text = "#6750A4";
+                            root.fg_color = #ffffff;
+                            root.bg_color = #6750a4;
+                            root.select_preset("#FFFFFF", "#6750A4");
+                        }
+                    }
+
+                    FilterChip {
+                        text: "Dark/Light";
+                        selected: root.fg_color_text == "#1C1B1F" && root.bg_color_text == "#F4EFF4";
+                        clicked => {
+                            root.fg_color_text = "#1C1B1F";
+                            root.bg_color_text = "#F4EFF4";
+                            root.fg_color = #1c1b1f;
+                            root.bg_color = #f4eff4;
+                            root.select_preset("#1C1B1F", "#F4EFF4");
+                        }
+                    }
+
+                    FilterChip {
+                        text: "Light/Dark";
+                        selected: root.fg_color_text == "#E6E1E5" && root.bg_color_text == "#1C1B1F";
+                        clicked => {
+                            root.fg_color_text = "#E6E1E5";
+                            root.bg_color_text = "#1C1B1F";
+                            root.fg_color = #e6e1e5;
+                            root.bg_color = #1c1b1f;
+                            root.select_preset("#E6E1E5", "#1C1B1F");
+                        }
+                    }
                 }
             }
 
             // Dual Color Inputs
             HorizontalLayout {
-                spacing: MaterialStyleMetrics.spacing_12;
+                spacing: MaterialStyleMetrics.spacing_8;
+                alignment: end;
 
                 VerticalLayout {
                     horizontal-stretch: 1;
@@ -57,8 +121,22 @@ export component ContrastScreen inherits VerticalLayout {
                     }
 
                     TextField {
-                        label: "#FFFFFF";
-                        enabled: false;
+                        placeholder_text: "#FFFFFF";
+                        text <=> root.fg_color_text;
+                        accepted => { root.check_contrast(); }
+                    }
+                }
+
+                VerticalLayout {
+                    alignment: end;
+                    padding_bottom: 2px;
+
+                    ToolActionButton {
+                        text: "⇄";
+                        primary: false;
+                        clicked => {
+                            root.swap_colors();
+                        }
                     }
                 }
 
@@ -73,16 +151,17 @@ export component ContrastScreen inherits VerticalLayout {
                     }
 
                     TextField {
-                        label: "#6750A4";
-                        enabled: false;
+                        placeholder_text: "#6750A4";
+                        text <=> root.bg_color_text;
+                        accepted => { root.check_contrast(); }
                     }
                 }
             }
 
             // Live Preview Card
             MaterialText {
-                text: "PREVIEW";
-                style: MaterialTypography.title_small;
+                text: "LIVE CONTRAST PREVIEW";
+                style: MaterialTypography.label_medium;
                 color: MaterialPalette.primary;
             }
 
@@ -92,35 +171,43 @@ export component ContrastScreen inherits VerticalLayout {
                     spacing: MaterialStyleMetrics.spacing_12;
 
                     Rectangle {
-                        background: #6750a4;
+                        background: root.bg_color;
                         border_radius: MaterialStyleMetrics.border_radius_8;
-                        min_height: 90px;
+                        border_width: 1px;
+                        border_color: MaterialPalette.outline_variant;
+                        min_height: 100px;
 
                         VerticalLayout {
                             padding: MaterialStyleMetrics.padding_16;
-                            spacing: MaterialStyleMetrics.spacing_6;
+                            spacing: MaterialStyleMetrics.spacing_8;
                             alignment: center;
 
                             MaterialText {
-                                text: "Material 3 Typography Preview";
-                                style: MaterialTypography.title_medium;
-                                color: #ffffff;
+                                text: "Headline 18pt Large Text";
+                                style: MaterialTypography.title_large;
+                                color: root.fg_color;
                             }
 
                             MaterialText {
-                                text: "The quick brown fox jumps over the lazy dog.";
-                                style: MaterialTypography.body_small;
-                                color: #ffffff;
+                                text: "The quick brown fox jumps over the lazy dog. Normal 14pt body text.";
+                                style: MaterialTypography.body_medium;
+                                color: root.fg_color;
                             }
                         }
                     }
                 }
             }
 
-            // Contrast Ratio & WCAG Score
+            ToolActionButton {
+                text: "Check Contrast Ratio";
+                primary: true;
+                clicked => { root.check_contrast(); }
+            }
+
+            // Contrast Ratio & WCAG Score Card
             MaterialText {
-                text: "WCAG 2.1 COMPLIANCE";
-                style: MaterialTypography.title_small;
+                text: "WCAG 2.1 COMPLIANCE RESULTS";
+                style: MaterialTypography.label_medium;
                 color: MaterialPalette.primary;
             }
 
@@ -134,62 +221,145 @@ export component ContrastScreen inherits VerticalLayout {
                         border_radius: MaterialStyleMetrics.border_radius_4;
 
                         VerticalLayout {
-                            padding: MaterialStyleMetrics.padding_12;
-                            spacing: MaterialStyleMetrics.spacing_8;
+                            padding: MaterialStyleMetrics.padding_16;
+                            spacing: MaterialStyleMetrics.spacing_12;
 
                             HorizontalLayout {
                                 alignment: space-between;
                                 MaterialText {
-                                    text: "Contrast Ratio:";
+                                    text: "Contrast Ratio";
                                     style: MaterialTypography.title_medium;
                                     color: MaterialPalette.on_surface;
                                 }
                                 MaterialText {
-                                    text: "7.15 : 1";
+                                    text: root.ratio_text;
                                     style: MaterialTypography.title_large;
                                     color: MaterialPalette.primary;
                                 }
                             }
 
+                            // AA Normal
                             HorizontalLayout {
                                 alignment: space-between;
                                 MaterialText {
-                                    text: "AA Normal Text (≥ 4.5:1):";
+                                    text: "AA Normal Text (≥ 4.5:1)";
                                     style: MaterialTypography.body_medium;
                                     color: MaterialPalette.on_surface_variant;
                                 }
-                                MaterialText {
-                                    text: "Pass";
-                                    style: MaterialTypography.label_large;
-                                    color: #4caf50;
+                                Rectangle {
+                                    border_radius: MaterialStyleMetrics.border_radius_4;
+                                    background: root.aa_normal_pass ? #1b5e20 : #b71c1c;
+                                    HorizontalLayout {
+                                        padding_left: 8px;
+                                        padding_right: 8px;
+                                        padding_top: 2px;
+                                        padding_bottom: 2px;
+                                        MaterialText {
+                                            text: root.aa_normal_pass ? "PASS" : "FAIL";
+                                            style: MaterialTypography.label_medium;
+                                            color: #ffffff;
+                                        }
+                                    }
                                 }
                             }
 
+                            // AA Large
                             HorizontalLayout {
                                 alignment: space-between;
                                 MaterialText {
-                                    text: "AA Large Text (≥ 3:1):";
+                                    text: "AA Large Text (≥ 3.0:1)";
                                     style: MaterialTypography.body_medium;
                                     color: MaterialPalette.on_surface_variant;
                                 }
-                                MaterialText {
-                                    text: "Pass";
-                                    style: MaterialTypography.label_large;
-                                    color: #4caf50;
+                                Rectangle {
+                                    border_radius: MaterialStyleMetrics.border_radius_4;
+                                    background: root.aa_large_pass ? #1b5e20 : #b71c1c;
+                                    HorizontalLayout {
+                                        padding_left: 8px;
+                                        padding_right: 8px;
+                                        padding_top: 2px;
+                                        padding_bottom: 2px;
+                                        MaterialText {
+                                            text: root.aa_large_pass ? "PASS" : "FAIL";
+                                            style: MaterialTypography.label_medium;
+                                            color: #ffffff;
+                                        }
+                                    }
                                 }
                             }
 
+                            // AAA Normal
                             HorizontalLayout {
                                 alignment: space-between;
                                 MaterialText {
-                                    text: "AAA Normal Text (≥ 7:1):";
+                                    text: "AAA Normal Text (≥ 7.0:1)";
                                     style: MaterialTypography.body_medium;
                                     color: MaterialPalette.on_surface_variant;
                                 }
+                                Rectangle {
+                                    border_radius: MaterialStyleMetrics.border_radius_4;
+                                    background: root.aaa_normal_pass ? #1b5e20 : #b71c1c;
+                                    HorizontalLayout {
+                                        padding_left: 8px;
+                                        padding_right: 8px;
+                                        padding_top: 2px;
+                                        padding_bottom: 2px;
+                                        MaterialText {
+                                            text: root.aaa_normal_pass ? "PASS" : "FAIL";
+                                            style: MaterialTypography.label_medium;
+                                            color: #ffffff;
+                                        }
+                                    }
+                                }
+                            }
+
+                            // AAA Large
+                            HorizontalLayout {
+                                alignment: space-between;
                                 MaterialText {
-                                    text: "Pass";
-                                    style: MaterialTypography.label_large;
-                                    color: #4caf50;
+                                    text: "AAA Large Text (≥ 4.5:1)";
+                                    style: MaterialTypography.body_medium;
+                                    color: MaterialPalette.on_surface_variant;
+                                }
+                                Rectangle {
+                                    border_radius: MaterialStyleMetrics.border_radius_4;
+                                    background: root.aaa_large_pass ? #1b5e20 : #b71c1c;
+                                    HorizontalLayout {
+                                        padding_left: 8px;
+                                        padding_right: 8px;
+                                        padding_top: 2px;
+                                        padding_bottom: 2px;
+                                        MaterialText {
+                                            text: root.aaa_large_pass ? "PASS" : "FAIL";
+                                            style: MaterialTypography.label_medium;
+                                            color: #ffffff;
+                                        }
+                                    }
+                                }
+                            }
+
+                            // UI Components
+                            HorizontalLayout {
+                                alignment: space-between;
+                                MaterialText {
+                                    text: "UI Components (≥ 3.0:1)";
+                                    style: MaterialTypography.body_medium;
+                                    color: MaterialPalette.on_surface_variant;
+                                }
+                                Rectangle {
+                                    border_radius: MaterialStyleMetrics.border_radius_4;
+                                    background: root.ui_components_pass ? #1b5e20 : #b71c1c;
+                                    HorizontalLayout {
+                                        padding_left: 8px;
+                                        padding_right: 8px;
+                                        padding_top: 2px;
+                                        padding_bottom: 2px;
+                                        MaterialText {
+                                            text: root.ui_components_pass ? "PASS" : "FAIL";
+                                            style: MaterialTypography.label_medium;
+                                            color: #ffffff;
+                                        }
+                                    }
                                 }
                             }
                         }
