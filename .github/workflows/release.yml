@@ -3,14 +3,11 @@ name: Release APK
 # ==============================================================================
 # GitHub Actions CI/CD Workflow: DevKit Release APK
 #
-# Triggers:
-# 1. Tag push matching 'v*' (e.g. v0.1.0):
-#    - Builds signed release APK
-#    - Uploads APK as workflow artifact ('devkit-apk')
-#    - Creates a GitHub Release and attaches target/release/apk/devkit.apk
-# 2. Manual trigger (workflow_dispatch):
-#    - Builds signed release APK
-#    - Uploads APK as workflow artifact ('devkit-apk') without creating a release
+# Trigger:
+# - Tag push matching 'v*' (e.g. v0.1.0):
+#   - Builds signed release APK
+#   - Uploads APK as workflow artifact ('devkit-apk')
+#   - Creates a GitHub Release and attaches target/release/apk/devkit.apk
 #
 # ==============================================================================
 # REQUIRED GITHUB REPOSITORY SECRETS
@@ -34,7 +31,6 @@ on:
   push:
     tags:
       - 'v*'
-  workflow_dispatch:
 
 permissions:
   contents: write
