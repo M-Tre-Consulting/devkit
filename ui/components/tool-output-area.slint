@@ -1,0 +1,71 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2026 MTRE Consulting
+
+import { MaterialPalette, MaterialStyleMetrics, MaterialTypography, MaterialText, Icon, StateLayerArea } from "@material";
+import { AppIcons } from "./app-icons.slint";
+
+export component ToolOutputArea inherits VerticalLayout {
+    in property <string> title: "OUTPUT";
+    in property <string> text: "";
+    in property <bool> is_code: true;
+    in property <bool> has_copy: true;
+    callback copy(string);
+
+    spacing: MaterialStyleMetrics.spacing_8;
+
+    HorizontalLayout {
+        alignment: space-between;
+
+        MaterialText {
+            text: root.title;
+            style: MaterialTypography.title_small;
+            color: MaterialPalette.primary;
+        }
+
+        if root.has_copy && root.text != "" : Rectangle {
+            width: 32px;
+            height: 32px;
+            border_radius: 16px;
+
+            StateLayerArea {
+                width: 100%;
+                height: 100%;
+                border_radius: parent.border_radius;
+                color: MaterialPalette.primary;
+                clicked => { root.copy(root.text); }
+
+                HorizontalLayout {
+                    alignment: center;
+                    VerticalLayout {
+                        alignment: center;
+                        Icon {
+                            source: AppIcons.copy;
+                            colorize: MaterialPalette.primary;
+                            width: 18px;
+                            height: 18px;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    Rectangle {
+        background: MaterialPalette.surface_container;
+        border_radius: MaterialStyleMetrics.border_radius_16;
+        border_width: 1px;
+        border_color: MaterialPalette.outline_variant.with_alpha(15%);
+
+        VerticalLayout {
+            padding: MaterialStyleMetrics.padding_16;
+            spacing: MaterialStyleMetrics.spacing_8;
+
+            MaterialText {
+                text: root.text != "" ? root.text : "—";
+                style: MaterialTypography.body_medium;
+                color: root.text != "" ? MaterialPalette.on_surface : MaterialPalette.on_surface_variant;
+                wrap: word-wrap;
+            }
+        }
+    }
+}

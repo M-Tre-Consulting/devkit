@@ -1,0 +1,112 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2026 MTRE Consulting
+
+import { MaterialPalette, MaterialStyleMetrics, MaterialTypography, MaterialText, Icon, StateLayerArea } from "@material";
+import { AppIcons } from "./app-icons.slint";
+
+export component StepperInput inherits HorizontalLayout {
+    in property <string> label: "Count";
+    in-out property <int> value: 1;
+    in property <int> min_val: 1;
+    in property <int> max_val: 100;
+    callback value_changed(int);
+
+    alignment: space-between;
+
+    VerticalLayout {
+        alignment: center;
+        MaterialText {
+            text: root.label;
+            style: MaterialTypography.label_large;
+            color: MaterialPalette.on_surface;
+        }
+    }
+
+    HorizontalLayout {
+        spacing: MaterialStyleMetrics.spacing_8;
+
+        Rectangle {
+            width: 40px;
+            height: 40px;
+            border_radius: 20px;
+            background: MaterialPalette.surface_container_high;
+
+            StateLayerArea {
+                width: 100%;
+                height: 100%;
+                border_radius: parent.border_radius;
+                color: MaterialPalette.primary;
+                clicked => {
+                    if root.value > root.min_val {
+                        root.value -= 1;
+                        root.value_changed(root.value);
+                    }
+                }
+
+                HorizontalLayout {
+                    alignment: center;
+                    VerticalLayout {
+                        alignment: center;
+                        MaterialText {
+                            text: "—";
+                            style: MaterialTypography.title_medium;
+                            color: root.value > root.min_val ? MaterialPalette.on_surface : MaterialPalette.on_surface_variant;
+                        }
+                    }
+                }
+            }
+        }
+
+        Rectangle {
+            width: 50px;
+            height: 40px;
+            border_radius: MaterialStyleMetrics.border_radius_8;
+            background: MaterialPalette.surface_container;
+
+            HorizontalLayout {
+                alignment: center;
+                VerticalLayout {
+                    alignment: center;
+                    MaterialText {
+                        text: "\{root.value}";
+                        style: MaterialTypography.title_medium;
+                        color: MaterialPalette.primary;
+                    }
+                }
+            }
+        }
+
+        Rectangle {
+            width: 40px;
+            height: 40px;
+            border_radius: 20px;
+            background: MaterialPalette.surface_container_high;
+
+            StateLayerArea {
+                width: 100%;
+                height: 100%;
+                border_radius: parent.border_radius;
+                color: MaterialPalette.primary;
+                clicked => {
+                    if root.value < root.max_val {
+                        root.value += 1;
+                        root.value_changed(root.value);
+                    }
+                }
+
+                HorizontalLayout {
+                    alignment: center;
+                    VerticalLayout {
+                        alignment: center;
+                        Icon {
+                            source: AppIcons.add;
+                            colorize: root.value < root.max_val ? MaterialPalette.on_surface : MaterialPalette.on_surface_variant;
+                            width: 20px;
+                            height: 20px;
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

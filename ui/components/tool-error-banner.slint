@@ -1,0 +1,46 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2026 MTRE Consulting
+
+import { MaterialPalette, MaterialStyleMetrics, MaterialTypography, MaterialText, Icon } from "@material";
+import { AppIcons } from "./app-icons.slint";
+
+export component ToolErrorBanner inherits Rectangle {
+    in property <string> message: "";
+    visible: root.message != "";
+    height: root.message != "" ? layout.preferred-height : 0px;
+    background: MaterialPalette.error_container;
+    border_radius: MaterialStyleMetrics.border_radius_12;
+    border_width: 1px;
+    border_color: MaterialPalette.error.with_alpha(20%);
+    clip: true;
+
+    layout := HorizontalLayout {
+        padding_left: MaterialStyleMetrics.padding_16;
+        padding_right: MaterialStyleMetrics.padding_16;
+        padding_top: MaterialStyleMetrics.padding_12;
+        padding_bottom: MaterialStyleMetrics.padding_12;
+        spacing: MaterialStyleMetrics.spacing_12;
+        alignment: start;
+
+        VerticalLayout {
+            alignment: center;
+            Icon {
+                source: AppIcons.error;
+                colorize: MaterialPalette.error;
+                width: 20px;
+                height: 20px;
+            }
+        }
+
+        VerticalLayout {
+            alignment: center;
+            horizontal-stretch: 1;
+            MaterialText {
+                text: root.message;
+                style: MaterialTypography.body_small;
+                color: MaterialPalette.on_error_container;
+                wrap: word-wrap;
+            }
+        }
+    }
+}

@@ -1,0 +1,74 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2026 MTRE Consulting
+
+import { MaterialPalette, MaterialStyleMetrics, MaterialTypography, MaterialText, Icon, StateLayerArea } from "@material";
+import { AppIcons } from "./app-icons.slint";
+
+export component ToolActionButton inherits HorizontalLayout {
+    in property <string> text: "Calculate";
+    in property <bool> enabled: true;
+    in property <bool> has_clear: true;
+    callback clicked();
+    callback clear();
+
+    spacing: MaterialStyleMetrics.spacing_12;
+
+    Rectangle {
+        horizontal-stretch: 1;
+        height: 48px;
+        border_radius: MaterialStyleMetrics.border_radius_24;
+        background: root.enabled ? MaterialPalette.primary : MaterialPalette.on_surface.with_alpha(12%);
+
+        StateLayerArea {
+            width: 100%;
+            height: 100%;
+            border_radius: parent.border_radius;
+            color: MaterialPalette.on_primary;
+            clicked => {
+                if root.enabled {
+                    root.clicked();
+                }
+            }
+
+            HorizontalLayout {
+                alignment: center;
+                VerticalLayout {
+                    alignment: center;
+                    MaterialText {
+                        text: root.text;
+                        style: MaterialTypography.label_large;
+                        color: root.enabled ? MaterialPalette.on_primary : MaterialPalette.on_surface_variant;
+                    }
+                }
+            }
+        }
+    }
+
+    if root.has_clear : Rectangle {
+        width: 48px;
+        height: 48px;
+        border_radius: 24px;
+        background: MaterialPalette.surface_container_high;
+
+        StateLayerArea {
+            width: 100%;
+            height: 100%;
+            border_radius: parent.border_radius;
+            color: MaterialPalette.error;
+            clicked => { root.clear(); }
+
+            HorizontalLayout {
+                alignment: center;
+                VerticalLayout {
+                    alignment: center;
+                    Icon {
+                        source: AppIcons.delete;
+                        colorize: MaterialPalette.on_surface_variant;
+                        width: 22px;
+                        height: 22px;
+                    }
+                }
+            }
+        }
+    }
+}
