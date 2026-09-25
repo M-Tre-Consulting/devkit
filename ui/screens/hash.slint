@@ -1,11 +1,28 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2026 MTRE Consulting
 
-import { Icons, TextField, OutlinedCard, ScrollView, MaterialPalette, MaterialStyleMetrics, MaterialTypography, MaterialText } from "@material";
+import { Icons, TextField, ScrollView, MaterialPalette, MaterialStyleMetrics, MaterialTypography, MaterialText, StateLayerArea, Icon } from "@material";
 import { TopBar } from "../components/top-bar.slint";
+import { ToolErrorBanner } from "../components/tool-error-banner.slint";
+import { ToolActionButton } from "../components/tool-action-button.slint";
+import { ToolOutputArea } from "../components/tool-output-area.slint";
+import { AppIcons } from "../components/app-icons.slint";
 
 export component HashScreen inherits VerticalLayout {
+    in property <length> status_bar_inset: 24px;
+    in property <length> nav_bar_inset: 16px;
     callback back();
+
+    in-out property <string> input_text: "";
+    in-out property <int> selected_algorithm: 2; // 0=MD5, 1=SHA-1, 2=SHA-256, 3=SHA-512, 4=BLAKE2b, 5=BLAKE3
+    in-out property <string> hex_digest: "";
+    in-out property <string> base64_digest: "";
+    in-out property <string> error_message: "";
+    in-out property <bool> is_loading: false;
+
+    callback calculate();
+    callback clear();
+    callback copy(string);
 
     property <bool> is_entered: false;
     init => { self.is_entered = true; }
@@ -28,62 +45,251 @@ export component HashScreen inherits VerticalLayout {
         }
 
         VerticalLayout {
-            padding: MaterialStyleMetrics.padding_16;
+            padding_left: MaterialStyleMetrics.padding_16;
+            padding_right: MaterialStyleMetrics.padding_16;
+            padding_top: MaterialStyleMetrics.padding_16;
+            padding_bottom: 96px + root.nav_bar_inset;
             spacing: MaterialStyleMetrics.spacing_16;
             alignment: start;
 
-            HorizontalLayout {
-                alignment: center;
-                MaterialText {
-                    text: "Coming soon";
-                    style: MaterialTypography.label_large;
-                    color: MaterialPalette.on_surface_variant;
-                }
+            ToolErrorBanner {
+                message: root.error_message;
             }
 
+            // Input Section
             MaterialText {
-                text: "TEXT INPUT";
-                style: MaterialTypography.title_small;
+                text: "INPUT TEXT";
+                style: MaterialTypography.label_large;
                 color: MaterialPalette.primary;
             }
 
             TextField {
-                label: "Enter string to compute hash...";
-                enabled: false;
+                label: "Enter text to hash...";
+                text <=> root.input_text;
+                enabled: !root.is_loading;
             }
 
+            // Algorithm Selection
             MaterialText {
-                text: "HASH DIGESTS";
-                style: MaterialTypography.title_small;
+                text: "ALGORITHM";
+                style: MaterialTypography.label_large;
                 color: MaterialPalette.primary;
             }
 
-            OutlinedCard {
-                VerticalLayout {
-                    padding: MaterialStyleMetrics.padding_16;
+            // Algorithm selection chips (2 rows of 3)
+            VerticalLayout {
+                spacing: MaterialStyleMetrics.spacing_8;
+
+                HorizontalLayout {
                     spacing: MaterialStyleMetrics.spacing_8;
 
-                    MaterialText {
-                        text: "MD5: —";
-                        style: MaterialTypography.body_medium;
-                        color: MaterialPalette.on_surface_variant;
+                    // MD5
+                    Rectangle {
+                        horizontal-stretch: 1;
+                        height: 36px;
+                        border_radius: MaterialStyleMetrics.border_radius_8;
+                        background: root.selected_algorithm == 0 ? MaterialPalette.secondary_container : MaterialPalette.surface_container;
+                        border_width: 1px;
+                        border_color: root.selected_algorithm == 0 ? MaterialPalette.primary : MaterialPalette.outline_variant.with_alpha(20%);
+
+                        StateLayerArea {
+                            width: 100%;
+                            height: 100%;
+                            border_radius: parent.border_radius;
+                            color: MaterialPalette.primary;
+                            clicked => { root.selected_algorithm = 0; }
+                            HorizontalLayout {
+                                alignment: center;
+                                VerticalLayout {
+                                    alignment: center;
+                                    MaterialText {
+                                        text: "MD5";
+                                        style: MaterialTypography.label_medium;
+                                        color: root.selected_algorithm == 0 ? MaterialPalette.on_secondary_container : MaterialPalette.on_surface;
+                                    }
+                                }
+                            }
+                        }
                     }
-                    MaterialText {
-                        text: "SHA-1: —";
-                        style: MaterialTypography.body_medium;
-                        color: MaterialPalette.on_surface_variant;
+
+                    // SHA-1
+                    Rectangle {
+                        horizontal-stretch: 1;
+                        height: 36px;
+                        border_radius: MaterialStyleMetrics.border_radius_8;
+                        background: root.selected_algorithm == 1 ? MaterialPalette.secondary_container : MaterialPalette.surface_container;
+                        border_width: 1px;
+                        border_color: root.selected_algorithm == 1 ? MaterialPalette.primary : MaterialPalette.outline_variant.with_alpha(20%);
+
+                        StateLayerArea {
+                            width: 100%;
+                            height: 100%;
+                            border_radius: parent.border_radius;
+                            color: MaterialPalette.primary;
+                            clicked => { root.selected_algorithm = 1; }
+                            HorizontalLayout {
+                                alignment: center;
+                                VerticalLayout {
+                                    alignment: center;
+                                    MaterialText {
+                                        text: "SHA-1";
+                                        style: MaterialTypography.label_medium;
+                                        color: root.selected_algorithm == 1 ? MaterialPalette.on_secondary_container : MaterialPalette.on_surface;
+                                    }
+                                }
+                            }
+                        }
                     }
-                    MaterialText {
-                        text: "SHA-256: —";
-                        style: MaterialTypography.body_medium;
-                        color: MaterialPalette.on_surface_variant;
-                    }
-                    MaterialText {
-                        text: "SHA-512: —";
-                        style: MaterialTypography.body_medium;
-                        color: MaterialPalette.on_surface_variant;
+
+                    // SHA-256
+                    Rectangle {
+                        horizontal-stretch: 1;
+                        height: 36px;
+                        border_radius: MaterialStyleMetrics.border_radius_8;
+                        background: root.selected_algorithm == 2 ? MaterialPalette.secondary_container : MaterialPalette.surface_container;
+                        border_width: 1px;
+                        border_color: root.selected_algorithm == 2 ? MaterialPalette.primary : MaterialPalette.outline_variant.with_alpha(20%);
+
+                        StateLayerArea {
+                            width: 100%;
+                            height: 100%;
+                            border_radius: parent.border_radius;
+                            color: MaterialPalette.primary;
+                            clicked => { root.selected_algorithm = 2; }
+                            HorizontalLayout {
+                                alignment: center;
+                                VerticalLayout {
+                                    alignment: center;
+                                    MaterialText {
+                                        text: "SHA-256";
+                                        style: MaterialTypography.label_medium;
+                                        color: root.selected_algorithm == 2 ? MaterialPalette.on_secondary_container : MaterialPalette.on_surface;
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
+
+                HorizontalLayout {
+                    spacing: MaterialStyleMetrics.spacing_8;
+
+                    // SHA-512
+                    Rectangle {
+                        horizontal-stretch: 1;
+                        height: 36px;
+                        border_radius: MaterialStyleMetrics.border_radius_8;
+                        background: root.selected_algorithm == 3 ? MaterialPalette.secondary_container : MaterialPalette.surface_container;
+                        border_width: 1px;
+                        border_color: root.selected_algorithm == 3 ? MaterialPalette.primary : MaterialPalette.outline_variant.with_alpha(20%);
+
+                        StateLayerArea {
+                            width: 100%;
+                            height: 100%;
+                            border_radius: parent.border_radius;
+                            color: MaterialPalette.primary;
+                            clicked => { root.selected_algorithm = 3; }
+                            HorizontalLayout {
+                                alignment: center;
+                                VerticalLayout {
+                                    alignment: center;
+                                    MaterialText {
+                                        text: "SHA-512";
+                                        style: MaterialTypography.label_medium;
+                                        color: root.selected_algorithm == 3 ? MaterialPalette.on_secondary_container : MaterialPalette.on_surface;
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    // BLAKE2b
+                    Rectangle {
+                        horizontal-stretch: 1;
+                        height: 36px;
+                        border_radius: MaterialStyleMetrics.border_radius_8;
+                        background: root.selected_algorithm == 4 ? MaterialPalette.secondary_container : MaterialPalette.surface_container;
+                        border_width: 1px;
+                        border_color: root.selected_algorithm == 4 ? MaterialPalette.primary : MaterialPalette.outline_variant.with_alpha(20%);
+
+                        StateLayerArea {
+                            width: 100%;
+                            height: 100%;
+                            border_radius: parent.border_radius;
+                            color: MaterialPalette.primary;
+                            clicked => { root.selected_algorithm = 4; }
+                            HorizontalLayout {
+                                alignment: center;
+                                VerticalLayout {
+                                    alignment: center;
+                                    MaterialText {
+                                        text: "BLAKE2b";
+                                        style: MaterialTypography.label_medium;
+                                        color: root.selected_algorithm == 4 ? MaterialPalette.on_secondary_container : MaterialPalette.on_surface;
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    // BLAKE3
+                    Rectangle {
+                        horizontal-stretch: 1;
+                        height: 36px;
+                        border_radius: MaterialStyleMetrics.border_radius_8;
+                        background: root.selected_algorithm == 5 ? MaterialPalette.secondary_container : MaterialPalette.surface_container;
+                        border_width: 1px;
+                        border_color: root.selected_algorithm == 5 ? MaterialPalette.primary : MaterialPalette.outline_variant.with_alpha(20%);
+
+                        StateLayerArea {
+                            width: 100%;
+                            height: 100%;
+                            border_radius: parent.border_radius;
+                            color: MaterialPalette.primary;
+                            clicked => { root.selected_algorithm = 5; }
+                            HorizontalLayout {
+                                alignment: center;
+                                VerticalLayout {
+                                    alignment: center;
+                                    MaterialText {
+                                        text: "BLAKE3";
+                                        style: MaterialTypography.label_medium;
+                                        color: root.selected_algorithm == 5 ? MaterialPalette.on_secondary_container : MaterialPalette.on_surface;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            ToolActionButton {
+                text: "Calculate Hash";
+                enabled: root.input_text != "" && !root.is_loading;
+                has_clear: true;
+                clicked => { root.calculate(); }
+                clear => {
+                    root.input_text = "";
+                    root.hex_digest = "";
+                    root.base64_digest = "";
+                    root.error_message = "";
+                    root.clear();
+                }
+            }
+
+            // Output Section
+            ToolOutputArea {
+                title: "HEX DIGEST";
+                text: root.hex_digest;
+                is_code: true;
+                copy(str) => { root.copy(str); }
+            }
+
+            ToolOutputArea {
+                title: "BASE64 DIGEST";
+                text: root.base64_digest;
+                is_code: true;
+                copy(str) => { root.copy(str); }
             }
         }
     }
