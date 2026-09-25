@@ -56,6 +56,12 @@ pub fn convert(_input: &Base64Input) -> Result<Base64Output, Base64Error> {
     todo!()
 }
 
+/// Encodes the input text string into base64 format with proper padding and variant.
+fn encode(input: &Base64Input) -> String {
+    let engine = select_engine(input.variant, input.padding);
+    engine.encode(input.input_text.as_bytes())
+}
+
 /// Dynamically selects the appropriate Base64 engine based on variant and padding.
 fn select_engine(variant: Base64Variant, padding: bool) -> GeneralPurpose {
     match (variant, padding) {
