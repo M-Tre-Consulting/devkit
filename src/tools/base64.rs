@@ -103,7 +103,6 @@ mod tests {
     use super::*;
 
     #[test]
-    #[ignore = "not implemented yet"]
     fn test_encode_standard() {
         let input = Base64Input {
             input_text: "hello".to_string(),
@@ -116,7 +115,6 @@ mod tests {
     }
 
     #[test]
-    #[ignore = "not implemented yet"]
     fn test_decode_standard() {
         let input = Base64Input {
             input_text: "aGVsbG8=".to_string(),
