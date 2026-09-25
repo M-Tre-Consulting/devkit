@@ -25,6 +25,7 @@ slint-build = { version = "1.18" }
 package = "it.mtreconsulting.devkit"
 apk_name = "devkit"
 label = "DevKit"
+resources = "res"
 min_sdk = 26
 target_sdk = 35
 min_sdk_version = 26
@@ -33,3 +34,5 @@ target_archs = ["arm64-v8a", "armeabi-v7a", "x86_64"]
 
 [package.metadata.android.application]
 label = "DevKit"
+icon = "@mipmap/ic_launcher"
+round_icon = "@mipmap/ic_launcher_round"
