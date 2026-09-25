@@ -53,7 +53,21 @@ pub enum Base64Error {
 ///
 /// Checks the mode and performs the appropriate encoding or decoding operation.
 pub fn convert(_input: &Base64Input) -> Result<Base64Output, Base64Error> {
-    todo!()
+    match _input.mode {
+        Base64Mode::Encode => {
+            let output_text = encode(_input);
+            Ok(Base64Output { output_text })
+        }
+        Base64Mode::Decode => {
+            let output_text = decode(_input);
+
+            if let Ok(text) = output_text {
+                Ok(Base64Output { output_text: text })
+            } else {
+                Err(output_text.err().unwrap())
+            }
+        }
+    }
 }
 
 /// Encodes the input text string into base64 format with proper padding and variant.
