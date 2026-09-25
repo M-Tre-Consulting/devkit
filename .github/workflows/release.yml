@@ -94,11 +94,50 @@ jobs:
       # ------------------------------------------------------------------------
       - name: Install Android SDK and NDK
         run: |
+          ANDROID_ROOT="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-/usr/local/lib/android/sdk}}"
+
+          # Add cmdline-tools and platform-tools to PATH
+          if [ -d "$ANDROID_ROOT/cmdline-tools/latest/bin" ]; then
+            CMDLINE_BIN="$ANDROID_ROOT/cmdline-tools/latest/bin"
+          else
+            CMDLINE_BIN=$(dirname "$(find "$ANDROID_ROOT/cmdline-tools" -name sdkmanager -type f | head -n 1)")
+          fi
+
+          export PATH="$CMDLINE_BIN:$ANDROID_ROOT/platform-tools:$PATH"
+          echo "$CMDLINE_BIN" >> $GITHUB_PATH
+          echo "$ANDROID_ROOT/platform-tools" >> $GITHUB_PATH
+
+          # Accept SDK licenses
           yes | sdkmanager --licenses > /dev/null 2>&1 || true
-          sdkmanager --install "platforms;android-35" "build-tools;35.0.0" "ndk;27.2.12479018"
-          echo "ANDROID_HOME=$ANDROID_HOME" >> $GITHUB_ENV
-          echo "NDK_HOME=$ANDROID_HOME/ndk/27.2.12479018" >> $GITHUB_ENV
-          echo "ANDROID_NDK_HOME=$ANDROID_HOME/ndk/27.2.12479018" >> $GITHUB_ENV
+
+          # Install / verify required platform and build-tools
+          sdkmanager --install "platforms;android-35" "build-tools;35.0.0"
+
+          # Detect or install Android NDK
+          if [ -d "$ANDROID_ROOT/ndk" ] && [ -n "$(ls -A "$ANDROID_ROOT/ndk" 2>/dev/null)" ]; then
+            NDK_DIR=$(find "$ANDROID_ROOT/ndk" -maxdepth 1 -mindepth 1 -type d | sort -V | tail -n 1)
+            echo "Found pre-installed NDK at: $NDK_DIR"
+          else
+            echo "Installing NDK via sdkmanager..."
+            sdkmanager --install "ndk;27.2.12479018"
+            NDK_DIR="$ANDROID_ROOT/ndk/27.2.12479018"
+          fi
+
+          # Add build-tools to PATH for apksigner and zipalign
+          BUILD_TOOLS_DIR=$(find "$ANDROID_ROOT/build-tools" -maxdepth 1 -mindepth 1 -type d | sort -V | tail -n 1)
+          if [ -n "$BUILD_TOOLS_DIR" ]; then
+            export PATH="$BUILD_TOOLS_DIR:$PATH"
+            echo "$BUILD_TOOLS_DIR" >> $GITHUB_PATH
+          fi
+
+          # Export SDK and NDK paths to GitHub Environment
+          echo "ANDROID_HOME=$ANDROID_ROOT" >> $GITHUB_ENV
+          echo "ANDROID_SDK_ROOT=$ANDROID_ROOT" >> $GITHUB_ENV
+          echo "NDK_HOME=$NDK_DIR" >> $GITHUB_ENV
+          echo "ANDROID_NDK_HOME=$NDK_DIR" >> $GITHUB_ENV
+          echo "ANDROID_NDK_ROOT=$NDK_DIR" >> $GITHUB_ENV
+          echo "Using Android SDK at: $ANDROID_ROOT"
+          echo "Using Android NDK at: $NDK_DIR"
 
       # ------------------------------------------------------------------------
       # Step 5: Install Rust toolchain with aarch64-linux-android target
@@ -144,17 +183,31 @@ jobs:
           echo "$KEYSTORE_BASE64" | base64 -d > /home/runner/.android/release.keystore
 
       # ------------------------------------------------------------------------
-      # Step 10: Build signed release APK
+      # Step 10: Build release APK
       # ------------------------------------------------------------------------
-      - name: Build signed release APK
-        env:
-          CARGO_APK_RELEASE_KEYSTORE: /home/runner/.android/release.keystore
-          CARGO_APK_RELEASE_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+      - name: Build release APK
         run: |
           cargo apk build --target aarch64-linux-android --lib --release
 
       # ------------------------------------------------------------------------
-      # Step 11: Verify release APK exists
+      # Step 11: Sign release APK with apksigner
+      # ------------------------------------------------------------------------
+      - name: Sign release APK
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          apksigner sign \
+            --ks /home/runner/.android/release.keystore \
+            --ks-pass "pass:$KEYSTORE_PASSWORD" \
+            --ks-key-alias "$KEY_ALIAS" \
+            --key-pass "pass:$KEY_PASSWORD" \
+            target/release/apk/devkit.apk
+          apksigner verify --verbose target/release/apk/devkit.apk
+
+      # ------------------------------------------------------------------------
+      # Step 12: Verify release APK exists
       # ------------------------------------------------------------------------
       - name: Verify release APK exists
         run: |
@@ -167,7 +220,7 @@ jobs:
           ls -lh target/release/apk/devkit.apk
 
       # ------------------------------------------------------------------------
-      # Step 12: Upload APK as workflow artifact (always produced)
+      # Step 13: Upload APK as workflow artifact (always produced)
       # ------------------------------------------------------------------------
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
@@ -177,7 +230,7 @@ jobs:
           if-no-files-found: error
 
       # ------------------------------------------------------------------------
-      # Step 13: Create GitHub Release on tag push (v*)
+      # Step 14: Create GitHub Release on tag push (v*)
       # ------------------------------------------------------------------------
       - name: Create GitHub Release
         if: startsWith(github.ref, 'refs/tags/v')
@@ -187,7 +240,7 @@ jobs:
           generate_release_notes: true
 
       # ------------------------------------------------------------------------
-      # Step 14: Defense-in-depth keystore cleanup (always runs)
+      # Step 15: Defense-in-depth keystore cleanup (always runs)
       # ------------------------------------------------------------------------
       - name: Cleanup keystore
         if: always()
