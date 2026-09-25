@@ -144,6 +144,8 @@ export component AppWindow inherits Window {
                 HomeScreen {
                     status_bar_inset: root.status_bar_inset;
                     nav_bar_inset: root.nav_bar_inset;
+                    pill_height: pill_nav.height;
+                    pill_bottom_margin: root.pill_bottom_margin;
                     tool_favorites: root.tool_favorites;
                     open_tool(id) => {
                         root.open_tool(id);
@@ -175,6 +177,8 @@ export component AppWindow inherits Window {
                 RecentScreen {
                     status_bar_inset: root.status_bar_inset;
                     nav_bar_inset: root.nav_bar_inset;
+                    pill_height: pill_nav.height;
+                    pill_bottom_margin: root.pill_bottom_margin;
                     recent_tools: root.recent_tools;
                     tool_favorites: root.tool_favorites;
                     open_tool(id) => {
@@ -207,6 +211,8 @@ export component AppWindow inherits Window {
                 FavoritesScreen {
                     status_bar_inset: root.status_bar_inset;
                     nav_bar_inset: root.nav_bar_inset;
+                    pill_height: pill_nav.height;
+                    pill_bottom_margin: root.pill_bottom_margin;
                     tool_favorites: root.tool_favorites;
                     open_tool(id) => {
                         root.open_tool(id);
@@ -238,6 +244,8 @@ export component AppWindow inherits Window {
                 SettingsScreen {
                     status_bar_inset: root.status_bar_inset;
                     nav_bar_inset: root.nav_bar_inset;
+                    pill_height: pill_nav.height;
+                    pill_bottom_margin: root.pill_bottom_margin;
                     clear_recents => {
                         root.clear_recents();
                     }

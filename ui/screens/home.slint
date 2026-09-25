@@ -11,6 +11,9 @@ export component HomeScreen inherits VerticalLayout {
     in property <bool> is_wide: root.width >= 600px;
     in property <length> status_bar_inset: 24px;
     in property <length> nav_bar_inset: 16px;
+    in property <length> pill_height: 56px;
+    in property <length> pill_bottom_margin: 28px;
+    property <length> bottom_clearance: root.pill_height + root.pill_bottom_margin + root.nav_bar_inset + 24px;
     in property <[bool]> tool_favorites: [false, false, false, false, false, false, false, false, false, false, false, false, false, false, false];
     callback open_tool(int);
     callback toggle_favorite(int);
@@ -37,7 +40,7 @@ export component HomeScreen inherits VerticalLayout {
             padding_left: MaterialStyleMetrics.padding_16;
             padding_right: MaterialStyleMetrics.padding_16;
             padding_top: MaterialStyleMetrics.padding_8;
-            padding_bottom: 70px + 28px + root.nav_bar_inset + 16px; // 70dp pill height + 28dp pill margin + system nav inset + 16dp buffer
+            padding_bottom: root.bottom_clearance;
             spacing: MaterialStyleMetrics.spacing_16;
             alignment: start;
 

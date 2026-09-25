@@ -9,6 +9,9 @@ import { TopBar } from "../components/top-bar.slint";
 export component SettingsScreen inherits VerticalLayout {
     in property <length> status_bar_inset: 24px;
     in property <length> nav_bar_inset: 16px;
+    in property <length> pill_height: 56px;
+    in property <length> pill_bottom_margin: 28px;
+    property <length> bottom_clearance: root.pill_height + root.pill_bottom_margin + root.nav_bar_inset + 24px;
     callback clear_recents();
     callback clear_favorites();
     callback open_about();
@@ -35,7 +38,7 @@ export component SettingsScreen inherits VerticalLayout {
             padding_left: MaterialStyleMetrics.padding_16;
             padding_right: MaterialStyleMetrics.padding_16;
             padding_top: MaterialStyleMetrics.padding_8;
-            padding_bottom: 70px + 28px + root.nav_bar_inset + 16px;
+            padding_bottom: root.bottom_clearance;
             spacing: MaterialStyleMetrics.spacing_16;
             alignment: start;
 
