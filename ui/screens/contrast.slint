@@ -1,0 +1,198 @@
+import { Icons, TextField, OutlinedCard, ScrollView, MaterialPalette, MaterialStyleMetrics, MaterialTypography, MaterialText, Icon } from "@material";
+import { TopBar } from "../components/top-bar.slint";
+import { AppIcons } from "../components/app-icons.slint";
+
+export component ContrastScreen inherits VerticalLayout {
+    callback back();
+
+    property <bool> is_entered: false;
+    init => { self.is_entered = true; }
+
+    TopBar {
+        title: "Contrast Checker";
+        has_back: true;
+        show_background: true;
+        back => { root.back(); }
+    }
+
+    ScrollView {
+        vertical-stretch: 1;
+        opacity: root.is_entered ? 1.0 : 0.0;
+
+        animate opacity {
+            duration: 200ms;
+            delay: 150ms;
+            easing: cubic-bezier(0.05, 0.7, 0.1, 1.0);
+        }
+
+        VerticalLayout {
+            padding: MaterialStyleMetrics.padding_16;
+            spacing: MaterialStyleMetrics.spacing_16;
+            alignment: start;
+
+            HorizontalLayout {
+                alignment: center;
+                MaterialText {
+                    text: "Coming soon";
+                    style: MaterialTypography.label_large;
+                    color: MaterialPalette.on_surface_variant;
+                }
+            }
+
+            // Dual Color Inputs
+            HorizontalLayout {
+                spacing: MaterialStyleMetrics.spacing_12;
+
+                VerticalLayout {
+                    horizontal-stretch: 1;
+                    spacing: MaterialStyleMetrics.spacing_4;
+
+                    MaterialText {
+                        text: "TEXT COLOR";
+                        style: MaterialTypography.label_medium;
+                        color: MaterialPalette.primary;
+                    }
+
+                    TextField {
+                        label: "#FFFFFF";
+                        enabled: false;
+                    }
+                }
+
+                VerticalLayout {
+                    horizontal-stretch: 1;
+                    spacing: MaterialStyleMetrics.spacing_4;
+
+                    MaterialText {
+                        text: "BACKGROUND";
+                        style: MaterialTypography.label_medium;
+                        color: MaterialPalette.primary;
+                    }
+
+                    TextField {
+                        label: "#6750A4";
+                        enabled: false;
+                    }
+                }
+            }
+
+            // Live Preview Card
+            MaterialText {
+                text: "PREVIEW";
+                style: MaterialTypography.title_small;
+                color: MaterialPalette.primary;
+            }
+
+            OutlinedCard {
+                VerticalLayout {
+                    padding: MaterialStyleMetrics.padding_16;
+                    spacing: MaterialStyleMetrics.spacing_12;
+
+                    Rectangle {
+                        background: #6750a4;
+                        border_radius: MaterialStyleMetrics.border_radius_8;
+                        min_height: 90px;
+
+                        VerticalLayout {
+                            padding: MaterialStyleMetrics.padding_16;
+                            spacing: MaterialStyleMetrics.spacing_6;
+                            alignment: center;
+
+                            MaterialText {
+                                text: "Material 3 Typography Preview";
+                                style: MaterialTypography.title_medium;
+                                color: #ffffff;
+                            }
+
+                            MaterialText {
+                                text: "The quick brown fox jumps over the lazy dog.";
+                                style: MaterialTypography.body_small;
+                                color: #ffffff;
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Contrast Ratio & WCAG Score
+            MaterialText {
+                text: "WCAG 2.1 COMPLIANCE";
+                style: MaterialTypography.title_small;
+                color: MaterialPalette.primary;
+            }
+
+            OutlinedCard {
+                VerticalLayout {
+                    padding: MaterialStyleMetrics.padding_16;
+                    spacing: MaterialStyleMetrics.spacing_12;
+
+                    Rectangle {
+                        background: MaterialPalette.surface_container;
+                        border_radius: MaterialStyleMetrics.border_radius_4;
+
+                        VerticalLayout {
+                            padding: MaterialStyleMetrics.padding_12;
+                            spacing: MaterialStyleMetrics.spacing_8;
+
+                            HorizontalLayout {
+                                alignment: space-between;
+                                MaterialText {
+                                    text: "Contrast Ratio:";
+                                    style: MaterialTypography.title_medium;
+                                    color: MaterialPalette.on_surface;
+                                }
+                                MaterialText {
+                                    text: "7.15 : 1";
+                                    style: MaterialTypography.title_large;
+                                    color: MaterialPalette.primary;
+                                }
+                            }
+
+                            HorizontalLayout {
+                                alignment: space-between;
+                                MaterialText {
+                                    text: "AA Normal Text (≥ 4.5:1):";
+                                    style: MaterialTypography.body_medium;
+                                    color: MaterialPalette.on_surface_variant;
+                                }
+                                MaterialText {
+                                    text: "Pass";
+                                    style: MaterialTypography.label_large;
+                                    color: #4caf50;
+                                }
+                            }
+
+                            HorizontalLayout {
+                                alignment: space-between;
+                                MaterialText {
+                                    text: "AA Large Text (≥ 3:1):";
+                                    style: MaterialTypography.body_medium;
+                                    color: MaterialPalette.on_surface_variant;
+                                }
+                                MaterialText {
+                                    text: "Pass";
+                                    style: MaterialTypography.label_large;
+                                    color: #4caf50;
+                                }
+                            }
+
+                            HorizontalLayout {
+                                alignment: space-between;
+                                MaterialText {
+                                    text: "AAA Normal Text (≥ 7:1):";
+                                    style: MaterialTypography.body_medium;
+                                    color: MaterialPalette.on_surface_variant;
+                                }
+                                MaterialText {
+                                    text: "Pass";
+                                    style: MaterialTypography.label_large;
+                                    color: #4caf50;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
