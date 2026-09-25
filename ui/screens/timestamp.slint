@@ -1,11 +1,33 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2026 MTRE Consulting
 
-import { Icons, TextField, OutlinedCard, ScrollView, MaterialPalette, MaterialStyleMetrics, MaterialTypography, MaterialText } from "@material";
+import { Icons, TextField, ScrollView, MaterialPalette, MaterialStyleMetrics, MaterialTypography, MaterialText, StateLayerArea, Icon } from "@material";
 import { TopBar } from "../components/top-bar.slint";
+import { ToolErrorBanner } from "../components/tool-error-banner.slint";
+import { ToolActionButton } from "../components/tool-action-button.slint";
+import { ToolOutputArea } from "../components/tool-output-area.slint";
+import { AppIcons } from "../components/app-icons.slint";
 
 export component TimestampScreen inherits VerticalLayout {
+    in property <length> status_bar_inset: 24px;
+    in property <length> nav_bar_inset: 16px;
     callback back();
+
+    in-out property <string> input_value: "1700000000";
+    in-out property <int> mode: 0; // 0=Epoch->Date, 1=Date->Epoch
+    in-out property <int> timezone: 0; // 0=UTC, 1=Local
+    in-out property <string> unix_seconds: "1700000000";
+    in-out property <string> unix_millis: "1700000000000";
+    in-out property <string> iso_8601: "2023-11-14T22:13:20Z";
+    in-out property <string> rfc_2822: "Tue, 14 Nov 2023 22:13:20 +0000";
+    in-out property <string> human_readable: "Nov 14, 2023, 10:13:20 PM UTC";
+    in-out property <string> error_message: "";
+    in-out property <bool> is_loading: false;
+
+    callback convert();
+    callback set_now();
+    callback clear();
+    callback copy(string);
 
     property <bool> is_entered: false;
     init => { self.is_entered = true; }
@@ -28,62 +50,243 @@ export component TimestampScreen inherits VerticalLayout {
         }
 
         VerticalLayout {
-            padding: MaterialStyleMetrics.padding_16;
+            padding_left: MaterialStyleMetrics.padding_16;
+            padding_right: MaterialStyleMetrics.padding_16;
+            padding_top: MaterialStyleMetrics.padding_16;
+            padding_bottom: 96px + root.nav_bar_inset;
             spacing: MaterialStyleMetrics.spacing_16;
             alignment: start;
 
+            ToolErrorBanner {
+                message: root.error_message;
+            }
+
+            // Direction Selector: Epoch to Human vs Human to Epoch
+            MaterialText {
+                text: "CONVERSION DIRECTION";
+                style: MaterialTypography.label_large;
+                color: MaterialPalette.primary;
+            }
+
             HorizontalLayout {
-                alignment: center;
-                MaterialText {
-                    text: "Coming soon";
-                    style: MaterialTypography.label_large;
-                    color: MaterialPalette.on_surface_variant;
+                spacing: MaterialStyleMetrics.spacing_8;
+
+                Rectangle {
+                    horizontal-stretch: 1;
+                    height: 40px;
+                    border_radius: MaterialStyleMetrics.border_radius_8;
+                    background: root.mode == 0 ? MaterialPalette.primary_container : MaterialPalette.surface_container;
+                    border_width: 1px;
+                    border_color: root.mode == 0 ? MaterialPalette.primary : MaterialPalette.outline_variant.with_alpha(20%);
+
+                    StateLayerArea {
+                        width: 100%;
+                        height: 100%;
+                        border_radius: parent.border_radius;
+                        color: MaterialPalette.primary;
+                        clicked => { root.mode = 0; }
+                        HorizontalLayout {
+                            alignment: center;
+                            VerticalLayout {
+                                alignment: center;
+                                MaterialText {
+                                    text: "Epoch → Date";
+                                    style: MaterialTypography.label_large;
+                                    color: root.mode == 0 ? MaterialPalette.on_primary_container : MaterialPalette.on_surface;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                Rectangle {
+                    horizontal-stretch: 1;
+                    height: 40px;
+                    border_radius: MaterialStyleMetrics.border_radius_8;
+                    background: root.mode == 1 ? MaterialPalette.primary_container : MaterialPalette.surface_container;
+                    border_width: 1px;
+                    border_color: root.mode == 1 ? MaterialPalette.primary : MaterialPalette.outline_variant.with_alpha(20%);
+
+                    StateLayerArea {
+                        width: 100%;
+                        height: 100%;
+                        border_radius: parent.border_radius;
+                        color: MaterialPalette.primary;
+                        clicked => { root.mode = 1; }
+                        HorizontalLayout {
+                            alignment: center;
+                            VerticalLayout {
+                                alignment: center;
+                                MaterialText {
+                                    text: "Date → Epoch";
+                                    style: MaterialTypography.label_large;
+                                    color: root.mode == 1 ? MaterialPalette.on_primary_container : MaterialPalette.on_surface;
+                                }
+                            }
+                        }
+                    }
                 }
             }
 
+            // Timezone Selection
             MaterialText {
-                text: "EPOCH OR DATE INPUT";
-                style: MaterialTypography.title_small;
+                text: "TIMEZONE";
+                style: MaterialTypography.label_large;
                 color: MaterialPalette.primary;
+            }
+
+            HorizontalLayout {
+                spacing: MaterialStyleMetrics.spacing_8;
+
+                Rectangle {
+                    horizontal-stretch: 1;
+                    height: 36px;
+                    border_radius: MaterialStyleMetrics.border_radius_8;
+                    background: root.timezone == 0 ? MaterialPalette.secondary_container : MaterialPalette.surface_container;
+                    border_width: 1px;
+                    border_color: root.timezone == 0 ? MaterialPalette.primary : MaterialPalette.outline_variant.with_alpha(20%);
+
+                    StateLayerArea {
+                        width: 100%;
+                        height: 100%;
+                        border_radius: parent.border_radius;
+                        color: MaterialPalette.primary;
+                        clicked => { root.timezone = 0; }
+                        HorizontalLayout {
+                            alignment: center;
+                            VerticalLayout {
+                                alignment: center;
+                                MaterialText {
+                                    text: "UTC (Coordinated Universal Time)";
+                                    style: MaterialTypography.label_medium;
+                                    color: root.timezone == 0 ? MaterialPalette.on_secondary_container : MaterialPalette.on_surface;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                Rectangle {
+                    horizontal-stretch: 1;
+                    height: 36px;
+                    border_radius: MaterialStyleMetrics.border_radius_8;
+                    background: root.timezone == 1 ? MaterialPalette.secondary_container : MaterialPalette.surface_container;
+                    border_width: 1px;
+                    border_color: root.timezone == 1 ? MaterialPalette.primary : MaterialPalette.outline_variant.with_alpha(20%);
+
+                    StateLayerArea {
+                        width: 100%;
+                        height: 100%;
+                        border_radius: parent.border_radius;
+                        color: MaterialPalette.primary;
+                        clicked => { root.timezone = 1; }
+                        HorizontalLayout {
+                            alignment: center;
+                            VerticalLayout {
+                                alignment: center;
+                                MaterialText {
+                                    text: "Local Time";
+                                    style: MaterialTypography.label_medium;
+                                    color: root.timezone == 1 ? MaterialPalette.on_secondary_container : MaterialPalette.on_surface;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Input Value Field
+            HorizontalLayout {
+                alignment: space-between;
+                MaterialText {
+                    text: root.mode == 0 ? "UNIX TIMESTAMP INPUT" : "DATETIME STRING INPUT";
+                    style: MaterialTypography.label_large;
+                    color: MaterialPalette.primary;
+                }
+                Rectangle {
+                    height: 28px;
+                    border_radius: 14px;
+                    background: MaterialPalette.surface_container_high;
+                    StateLayerArea {
+                        width: 100%;
+                        height: 100%;
+                        border_radius: parent.border_radius;
+                        color: MaterialPalette.primary;
+                        clicked => { root.set_now(); }
+                        HorizontalLayout {
+                            padding_left: 10px;
+                            padding_right: 10px;
+                            alignment: center;
+                            VerticalLayout {
+                                alignment: center;
+                                MaterialText {
+                                    text: "Current Time (Now)";
+                                    style: MaterialTypography.label_small;
+                                    color: MaterialPalette.primary;
+                                }
+                            }
+                        }
+                    }
+                }
             }
 
             TextField {
-                label: "Timestamp (seconds/ms) or ISO 8601...";
-                enabled: false;
+                label: root.mode == 0 ? "e.g. 1700000000 or 1700000000000" : "e.g. 2023-11-14T22:13:20Z";
+                text <=> root.input_value;
+                enabled: !root.is_loading;
             }
 
-            MaterialText {
-                text: "CONVERTED TIMESTAMPS";
-                style: MaterialTypography.title_small;
-                color: MaterialPalette.primary;
-            }
-
-            OutlinedCard {
-                VerticalLayout {
-                    padding: MaterialStyleMetrics.padding_16;
-                    spacing: MaterialStyleMetrics.spacing_8;
-
-                    MaterialText {
-                        text: "Unix Seconds: —";
-                        style: MaterialTypography.body_medium;
-                        color: MaterialPalette.on_surface_variant;
-                    }
-                    MaterialText {
-                        text: "Unix Milliseconds: —";
-                        style: MaterialTypography.body_medium;
-                        color: MaterialPalette.on_surface_variant;
-                    }
-                    MaterialText {
-                        text: "ISO 8601 (UTC): —";
-                        style: MaterialTypography.body_medium;
-                        color: MaterialPalette.on_surface_variant;
-                    }
-                    MaterialText {
-                        text: "Local Time: —";
-                        style: MaterialTypography.body_medium;
-                        color: MaterialPalette.on_surface_variant;
-                    }
+            ToolActionButton {
+                text: "Convert Timestamp";
+                enabled: root.input_value != "" && !root.is_loading;
+                has_clear: true;
+                clicked => { root.convert(); }
+                clear => {
+                    root.input_value = "";
+                    root.unix_seconds = "";
+                    root.unix_millis = "";
+                    root.iso_8601 = "";
+                    root.rfc_2822 = "";
+                    root.human_readable = "";
+                    root.error_message = "";
+                    root.clear();
                 }
+            }
+
+            // Output Areas
+            ToolOutputArea {
+                title: "UNIX SECONDS";
+                text: root.unix_seconds;
+                is_code: true;
+                copy(str) => { root.copy(str); }
+            }
+
+            ToolOutputArea {
+                title: "UNIX MILLISECONDS";
+                text: root.unix_millis;
+                is_code: true;
+                copy(str) => { root.copy(str); }
+            }
+
+            ToolOutputArea {
+                title: "ISO 8601";
+                text: root.iso_8601;
+                is_code: true;
+                copy(str) => { root.copy(str); }
+            }
+
+            ToolOutputArea {
+                title: "RFC 2822";
+                text: root.rfc_2822;
+                is_code: true;
+                copy(str) => { root.copy(str); }
+            }
+
+            ToolOutputArea {
+                title: "HUMAN READABLE";
+                text: root.human_readable;
+                is_code: false;
+                copy(str) => { root.copy(str); }
             }
         }
     }
