@@ -1,15 +1,32 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2026 MTRE Consulting
 
-import { Icons, TextField, OutlinedCard, ScrollView, MaterialPalette, MaterialStyleMetrics, MaterialTypography, MaterialText, Icon } from "@material";
+import { Icons, TextField, ScrollView, MaterialPalette, MaterialStyleMetrics, MaterialTypography, MaterialText, StateLayerArea, Icon } from "@material";
 import { TopBar } from "../components/top-bar.slint";
+import { ToolErrorBanner } from "../components/tool-error-banner.slint";
+import { ToolActionButton } from "../components/tool-action-button.slint";
+import { ToolOutputArea } from "../components/tool-output-area.slint";
 import { AppIcons } from "../components/app-icons.slint";
 
 export component GzipScreen inherits VerticalLayout {
+    in property <length> status_bar_inset: 24px;
+    in property <length> nav_bar_inset: 16px;
     callback back();
 
+    in-out property <string> input_data: "DevKit: A native Rust + Slint developer toolbox for Android.";
+    in-out property <int> mode: 0; // 0=Compress, 1=Decompress
+    in-out property <string> result_data: "H4sICAEw+VkCA2RldmtpdAA...";
+    in-out property <string> original_size: "62 bytes";
+    in-out property <string> processed_size: "38 bytes";
+    in-out property <string> ratio: "38.7% reduction (0.61x)";
+    in-out property <string> error_message: "";
+    in-out property <bool> is_loading: false;
+
+    callback process();
+    callback clear();
+    callback copy(string);
+
     property <bool> is_entered: false;
-    property <bool> is_compress: true;
     init => { self.is_entered = true; }
 
     TopBar {
@@ -30,131 +47,183 @@ export component GzipScreen inherits VerticalLayout {
         }
 
         VerticalLayout {
-            padding: MaterialStyleMetrics.padding_16;
+            padding_left: MaterialStyleMetrics.padding_16;
+            padding_right: MaterialStyleMetrics.padding_16;
+            padding_top: MaterialStyleMetrics.padding_16;
+            padding_bottom: 96px + root.nav_bar_inset;
             spacing: MaterialStyleMetrics.spacing_16;
             alignment: start;
 
-            HorizontalLayout {
-                alignment: center;
-                MaterialText {
-                    text: "Coming soon";
-                    style: MaterialTypography.label_large;
-                    color: MaterialPalette.on_surface_variant;
-                }
+            ToolErrorBanner {
+                message: root.error_message;
             }
 
-            // Mode Toggle
+            // Mode Selector
+            MaterialText {
+                text: "OPERATION MODE";
+                style: MaterialTypography.label_large;
+                color: MaterialPalette.primary;
+            }
+
             HorizontalLayout {
                 spacing: MaterialStyleMetrics.spacing_8;
-                alignment: center;
 
                 Rectangle {
-                    background: MaterialPalette.surface_container;
-                    border_radius: MaterialStyleMetrics.border_radius_8;
+                    horizontal-stretch: 1;
                     height: 40px;
+                    border_radius: MaterialStyleMetrics.border_radius_8;
+                    background: root.mode == 0 ? MaterialPalette.primary_container : MaterialPalette.surface_container;
+                    border_width: 1px;
+                    border_color: root.mode == 0 ? MaterialPalette.primary : MaterialPalette.outline_variant.with_alpha(20%);
 
-                    HorizontalLayout {
-                        padding_left: MaterialStyleMetrics.padding_12;
-                        padding_right: MaterialStyleMetrics.padding_12;
-                        spacing: MaterialStyleMetrics.spacing_8;
-                        alignment: center;
-
-                        MaterialText {
-                            text: root.is_compress ? "Mode: Compress (GZip)" : "Mode: Decompress (GZip)";
-                            style: MaterialTypography.label_large;
-                            color: MaterialPalette.primary;
-                        }
-
-                        Icon {
-                            source: AppIcons.archive;
-                            colorize: MaterialPalette.primary;
-                            width: 20px;
-                            height: 20px;
+                    StateLayerArea {
+                        width: 100%;
+                        height: 100%;
+                        border_radius: parent.border_radius;
+                        color: MaterialPalette.primary;
+                        clicked => { root.mode = 0; }
+                        HorizontalLayout {
+                            alignment: center;
+                            VerticalLayout {
+                                alignment: center;
+                                MaterialText {
+                                    text: "Compress (GZip)";
+                                    style: MaterialTypography.label_large;
+                                    color: root.mode == 0 ? MaterialPalette.on_primary_container : MaterialPalette.on_surface;
+                                }
+                            }
                         }
                     }
+                }
 
-                    TouchArea {
-                        clicked => {
-                            root.is_compress = !root.is_compress;
+                Rectangle {
+                    horizontal-stretch: 1;
+                    height: 40px;
+                    border_radius: MaterialStyleMetrics.border_radius_8;
+                    background: root.mode == 1 ? MaterialPalette.primary_container : MaterialPalette.surface_container;
+                    border_width: 1px;
+                    border_color: root.mode == 1 ? MaterialPalette.primary : MaterialPalette.outline_variant.with_alpha(20%);
+
+                    StateLayerArea {
+                        width: 100%;
+                        height: 100%;
+                        border_radius: parent.border_radius;
+                        color: MaterialPalette.primary;
+                        clicked => { root.mode = 1; }
+                        HorizontalLayout {
+                            alignment: center;
+                            VerticalLayout {
+                                alignment: center;
+                                MaterialText {
+                                    text: "Decompress";
+                                    style: MaterialTypography.label_large;
+                                    color: root.mode == 1 ? MaterialPalette.on_primary_container : MaterialPalette.on_surface;
+                                }
+                            }
                         }
                     }
                 }
             }
 
             // Input section
-            HorizontalLayout {
-                alignment: space-between;
-                MaterialText {
-                    text: root.is_compress ? "RAW PAYLOAD / TEXT" : "COMPRESSED BYTES (BASE64)";
-                    style: MaterialTypography.title_small;
-                    color: MaterialPalette.primary;
-                }
-                MaterialText {
-                    text: "Clear";
-                    style: MaterialTypography.label_medium;
-                    color: MaterialPalette.on_surface_variant;
-                }
+            MaterialText {
+                text: root.mode == 0 ? "RAW TEXT INPUT" : "GZIP DATA INPUT (BASE64)";
+                style: MaterialTypography.label_large;
+                color: MaterialPalette.primary;
             }
 
             TextField {
-                label: root.is_compress ? "Text or bytes to compress..." : "Base64 or hex gzipped string...";
-                enabled: false;
+                label: root.mode == 0 ? "Text to compress..." : "Base64 gzip stream to unpack...";
+                text <=> root.input_data;
+                enabled: !root.is_loading;
             }
 
-            // Output section
-            HorizontalLayout {
-                alignment: space-between;
-                MaterialText {
-                    text: root.is_compress ? "COMPRESSED ARCHIVE" : "DECOMPRESSED OUTPUT";
-                    style: MaterialTypography.title_small;
-                    color: MaterialPalette.primary;
-                }
-                MaterialText {
-                    text: "Copy";
-                    style: MaterialTypography.label_medium;
-                    color: MaterialPalette.primary;
+            ToolActionButton {
+                text: root.mode == 0 ? "Compress with GZip" : "Decompress Payload";
+                enabled: root.input_data != "" && !root.is_loading;
+                has_clear: true;
+                clicked => { root.process(); }
+                clear => {
+                    root.input_data = "";
+                    root.result_data = "";
+                    root.original_size = "";
+                    root.processed_size = "";
+                    root.ratio = "";
+                    root.error_message = "";
+                    root.clear();
                 }
             }
 
-            OutlinedCard {
+            // Result output
+            ToolOutputArea {
+                title: root.mode == 0 ? "COMPRESSED OUTPUT (BASE64)" : "DECOMPRESSED TEXT";
+                text: root.result_data;
+                is_code: true;
+                copy(str) => { root.copy(str); }
+            }
+
+            // Compression statistics
+            MaterialText {
+                text: "SIZE & COMPRESSION STATISTICS";
+                style: MaterialTypography.title_small;
+                color: MaterialPalette.primary;
+            }
+
+            Rectangle {
+                border_radius: MaterialStyleMetrics.border_radius_12;
+                background: MaterialPalette.surface_container;
+                border_width: 1px;
+                border_color: MaterialPalette.outline_variant.with_alpha(15%);
+
                 VerticalLayout {
                     padding: MaterialStyleMetrics.padding_16;
                     spacing: MaterialStyleMetrics.spacing_12;
 
-                    Rectangle {
-                        background: MaterialPalette.surface_container;
-                        border_radius: MaterialStyleMetrics.border_radius_4;
-                        min_height: 90px;
+                    HorizontalLayout {
+                        spacing: MaterialStyleMetrics.spacing_16;
 
                         VerticalLayout {
-                            padding: MaterialStyleMetrics.padding_12;
-                            alignment: start;
-
+                            horizontal-stretch: 1;
+                            spacing: MaterialStyleMetrics.spacing_4;
                             MaterialText {
-                                text: root.is_compress ? "H4sICAAAAAAACjExLTYAAB... (gzip stream)" : "Original uncompressed content will appear here...";
+                                text: "Original Size";
                                 style: MaterialTypography.body_small;
                                 color: MaterialPalette.on_surface_variant;
+                            }
+                            MaterialText {
+                                text: root.original_size != "" ? root.original_size : "—";
+                                style: MaterialTypography.body_medium;
+                                color: MaterialPalette.on_surface;
+                            }
+                        }
+
+                        VerticalLayout {
+                            horizontal-stretch: 1;
+                            spacing: MaterialStyleMetrics.spacing_4;
+                            MaterialText {
+                                text: "Processed Size";
+                                style: MaterialTypography.body_small;
+                                color: MaterialPalette.on_surface_variant;
+                            }
+                            MaterialText {
+                                text: root.processed_size != "" ? root.processed_size : "—";
+                                style: MaterialTypography.body_medium;
+                                color: MaterialPalette.on_surface;
                             }
                         }
                     }
 
                     VerticalLayout {
                         spacing: MaterialStyleMetrics.spacing_4;
-
                         MaterialText {
-                            text: "Compression ratio: —";
-                            style: MaterialTypography.body_medium;
+                            text: "Compression Efficiency";
+                            style: MaterialTypography.body_small;
                             color: MaterialPalette.on_surface_variant;
                         }
                         MaterialText {
-                            text: "Original size: — bytes";
-                            style: MaterialTypography.body_medium;
-                            color: MaterialPalette.on_surface_variant;
-                        }
-                        MaterialText {
-                            text: "Compressed size: — bytes";
-                            style: MaterialTypography.body_medium;
-                            color: MaterialPalette.on_surface_variant;
+                            text: root.ratio != "" ? root.ratio : "—";
+                            style: MaterialTypography.title_medium;
+                            color: MaterialPalette.primary;
                         }
                     }
                 }
