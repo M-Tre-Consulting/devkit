@@ -1,12 +1,25 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2026 MTRE Consulting
 
-import { Icons, TextField, OutlinedCard, ScrollView, MaterialPalette, MaterialStyleMetrics, MaterialTypography, MaterialText, Icon } from "@material";
+import { Icons, TextField, OutlinedCard, ScrollView, MaterialPalette, MaterialStyleMetrics, MaterialTypography, MaterialText, Icon, FilterChip } from "@material";
 import { TopBar } from "../components/top-bar.slint";
 import { AppIcons } from "../components/app-icons.slint";
+import { ToolOutputArea, ToolActionButton, ToolErrorBanner } from "../components/tool-components.slint";
 
 export component JwtScreen inherits VerticalLayout {
     callback back();
+    callback decode();
+    callback paste_example();
+    callback copy_value(string);
+
+    in-out property <string> token_input: "";
+    in-out property <string> header_json: "{\n  \"alg\": \"HS256\",\n  \"typ\": \"JWT\"\n}";
+    in-out property <string> payload_json: "{\n  \"sub\": \"1234567890\",\n  \"name\": \"John Doe\",\n  \"iat\": 1516239022\n}";
+    in-out property <string> signature_output: "SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c";
+    in-out property <string> algorithm: "HS256";
+    in-out property <string> expiration_status: "No expiration claim";
+    in-out property <string> expiration_time: "None";
+    in-out property <string> error_message: "";
 
     property <bool> is_entered: false;
     init => { self.is_entered = true; }
@@ -33,139 +46,145 @@ export component JwtScreen inherits VerticalLayout {
             spacing: MaterialStyleMetrics.spacing_16;
             alignment: start;
 
-            HorizontalLayout {
-                alignment: center;
-                MaterialText {
-                    text: "Coming soon";
-                    style: MaterialTypography.label_large;
-                    color: MaterialPalette.on_surface_variant;
-                }
+            ToolErrorBanner {
+                error_message: root.error_message;
             }
 
-            // Input section
+            // Presets / Actions
             HorizontalLayout {
                 alignment: space-between;
+
                 MaterialText {
                     text: "ENCODED JWT TOKEN";
-                    style: MaterialTypography.title_small;
+                    style: MaterialTypography.label_medium;
                     color: MaterialPalette.primary;
                 }
-                MaterialText {
+
+                FilterChip {
                     text: "Paste Example";
-                    style: MaterialTypography.label_medium;
-                    color: MaterialPalette.on_surface_variant;
+                    selected: false;
+                    clicked => {
+                        root.token_input = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c";
+                        root.paste_example();
+                    }
                 }
             }
 
             TextField {
-                label: "eyJh... (header.payload.signature)";
-                enabled: false;
+                placeholder_text: "Paste header.payload.signature here...";
+                text <=> root.token_input;
+                accepted => { root.decode(); }
+            }
+
+            ToolActionButton {
+                text: "Decode JWT";
+                primary: true;
+                clicked => { root.decode(); }
+            }
+
+            // Token Metadata Card
+            MaterialText {
+                text: "TOKEN METADATA";
+                style: MaterialTypography.label_medium;
+                color: MaterialPalette.primary;
+            }
+
+            OutlinedCard {
+                VerticalLayout {
+                    padding: MaterialStyleMetrics.padding_16;
+                    spacing: MaterialStyleMetrics.spacing_12;
+
+                    Rectangle {
+                        background: MaterialPalette.surface_container;
+                        border_radius: MaterialStyleMetrics.border_radius_4;
+
+                        VerticalLayout {
+                            padding: MaterialStyleMetrics.padding_12;
+                            spacing: MaterialStyleMetrics.spacing_8;
+
+                            HorizontalLayout {
+                                alignment: space-between;
+                                MaterialText {
+                                    text: "Algorithm:";
+                                    style: MaterialTypography.body_medium;
+                                    color: MaterialPalette.on_surface_variant;
+                                }
+                                MaterialText {
+                                    text: root.algorithm;
+                                    style: MaterialTypography.title_medium;
+                                    color: MaterialPalette.primary;
+                                }
+                            }
+
+                            HorizontalLayout {
+                                alignment: space-between;
+                                MaterialText {
+                                    text: "Expiration Status:";
+                                    style: MaterialTypography.body_medium;
+                                    color: MaterialPalette.on_surface_variant;
+                                }
+                                MaterialText {
+                                    text: root.expiration_status;
+                                    style: MaterialTypography.title_medium;
+                                    color: root.expiration_status == "Expired" ? #b71c1c : (root.expiration_status == "Active" ? #1b5e20 : MaterialPalette.on_surface);
+                                }
+                            }
+
+                            HorizontalLayout {
+                                alignment: space-between;
+                                MaterialText {
+                                    text: "Expiration Time:";
+                                    style: MaterialTypography.body_medium;
+                                    color: MaterialPalette.on_surface_variant;
+                                }
+                                MaterialText {
+                                    text: root.expiration_time;
+                                    style: MaterialTypography.body_medium;
+                                    color: MaterialPalette.on_surface;
+                                }
+                            }
+                        }
+                    }
+                }
             }
 
             // Header Section
-            HorizontalLayout {
-                alignment: space-between;
-                MaterialText {
-                    text: "HEADER: ALGORITHM & TOKEN TYPE";
-                    style: MaterialTypography.title_small;
-                    color: #e91e63;
-                }
-                MaterialText {
-                    text: "Copy";
-                    style: MaterialTypography.label_medium;
-                    color: MaterialPalette.primary;
-                }
+            MaterialText {
+                text: "HEADER: ALGORITHM & TYPE";
+                style: MaterialTypography.label_medium;
+                color: #e91e63;
             }
 
-            OutlinedCard {
-                VerticalLayout {
-                    padding: MaterialStyleMetrics.padding_16;
-                    spacing: MaterialStyleMetrics.spacing_8;
-
-                    Rectangle {
-                        background: MaterialPalette.surface_container;
-                        border_radius: MaterialStyleMetrics.border_radius_4;
-
-                        VerticalLayout {
-                            padding: MaterialStyleMetrics.padding_12;
-                            alignment: start;
-
-                            MaterialText {
-                                text: "{\n  \"alg\": \"HS256\",\n  \"typ\": \"JWT\"\n}";
-                                style: MaterialTypography.body_small;
-                                color: MaterialPalette.on_surface_variant;
-                            }
-                        }
-                    }
-                }
+            ToolOutputArea {
+                label: "Decoded JSON Header";
+                value: root.header_json;
+                copy => { root.copy_value(root.header_json); }
             }
 
             // Payload Section
-            HorizontalLayout {
-                alignment: space-between;
-                MaterialText {
-                    text: "PAYLOAD: DATA CLAIMS";
-                    style: MaterialTypography.title_small;
-                    color: #9c27b0;
-                }
-                MaterialText {
-                    text: "Copy";
-                    style: MaterialTypography.label_medium;
-                    color: MaterialPalette.primary;
-                }
+            MaterialText {
+                text: "PAYLOAD: CLAIMS";
+                style: MaterialTypography.label_medium;
+                color: #9c27b0;
             }
 
-            OutlinedCard {
-                VerticalLayout {
-                    padding: MaterialStyleMetrics.padding_16;
-                    spacing: MaterialStyleMetrics.spacing_8;
-
-                    Rectangle {
-                        background: MaterialPalette.surface_container;
-                        border_radius: MaterialStyleMetrics.border_radius_4;
-
-                        VerticalLayout {
-                            padding: MaterialStyleMetrics.padding_12;
-                            alignment: start;
-
-                            MaterialText {
-                                text: "{\n  \"sub\": \"1234567890\",\n  \"name\": \"John Doe\",\n  \"iat\": 1516239022\n}";
-                                style: MaterialTypography.body_small;
-                                color: MaterialPalette.on_surface_variant;
-                            }
-                        }
-                    }
-                }
+            ToolOutputArea {
+                label: "Decoded JSON Payload";
+                value: root.payload_json;
+                copy => { root.copy_value(root.payload_json); }
             }
 
             // Signature Section
             MaterialText {
-                text: "SIGNATURE VERIFICATION";
-                style: MaterialTypography.title_small;
+                text: "SIGNATURE";
+                style: MaterialTypography.label_medium;
                 color: #00bcd4;
             }
 
-            OutlinedCard {
-                VerticalLayout {
-                    padding: MaterialStyleMetrics.padding_16;
-                    spacing: MaterialStyleMetrics.spacing_8;
-
-                    Rectangle {
-                        background: MaterialPalette.surface_container;
-                        border_radius: MaterialStyleMetrics.border_radius_4;
-
-                        VerticalLayout {
-                            padding: MaterialStyleMetrics.padding_12;
-                            alignment: start;
-
-                            MaterialText {
-                                text: "HMACSHA256(\n  base64UrlEncode(header) + \".\" +\n  base64UrlEncode(payload),\n  secret\n)";
-                                style: MaterialTypography.body_small;
-                                color: MaterialPalette.on_surface_variant;
-                            }
-                        }
-                    }
-                }
+            ToolOutputArea {
+                label: "Raw Signature";
+                value: root.signature_output;
+                copy => { root.copy_value(root.signature_output); }
             }
         }
     }
