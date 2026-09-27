@@ -310,15 +310,15 @@ export component AppWindow inherits Window {
             }
 
             if root.displayed_tool == 5 : TimestampScreen {
-                back => { root.back(); }
-                convert => { root.convert_timestamp(self.input_value, self.timezone == 0 ? "UTC" : "Local"); }
-                copy(val) => { root.copy_text(val); }
+                timestamp-back => { root.back(); }
+                timestamp-convert => { root.convert_timestamp(self.input_value, self.timezone == 0 ? "UTC" : "Local"); }
+                timestamp-copy(val) => { root.copy_text(val); }
             }
 
             if root.displayed_tool == 6 : RegexScreen {
-                back => { root.back(); }
-                evaluate => { root.evaluate_regex(self.pattern, self.test_string, self.case_insensitive, self.multiline, self.dot_matches_newline); }
-                copy(val) => { root.copy_text(val); }
+                regex-back => { root.back(); }
+                regex-test => { root.evaluate_regex(self.pattern, self.test_string, self.case_insensitive, self.multiline, self.dot_matches_newline); }
+                regex-copy-match(val) => { root.copy_text(val); }
             }
 
             if root.displayed_tool == 7 : JsonYamlScreen {

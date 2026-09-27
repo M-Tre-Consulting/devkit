@@ -12,7 +12,10 @@ import { AppIcons } from "../components/app-icons.slint";
 export component RegexScreen inherits VerticalLayout {
     in property <length> status_bar_inset: 24px;
     in property <length> nav_bar_inset: 16px;
-    callback back();
+    callback regex-back();
+    callback regex-test();
+    callback regex-clear();
+    callback regex-copy-match(string);
 
     in-out property <string> pattern: "[a-zA-Z0-9_]+";
     in-out property <string> test_string: "DevKit_2026";
@@ -24,10 +27,6 @@ export component RegexScreen inherits VerticalLayout {
     in-out property <string> error_message: "";
     in-out property <bool> is_loading: false;
 
-    callback evaluate();
-    callback clear();
-    callback copy(string);
-
     property <bool> is_entered: false;
     init => { self.is_entered = true; }
 
@@ -35,7 +34,7 @@ export component RegexScreen inherits VerticalLayout {
         title: "Regex Tester";
         has_back: true;
         show_background: true;
-        back => { root.back(); }
+        back => { root.regex-back(); }
     }
 
     ScrollView {
@@ -154,14 +153,14 @@ export component RegexScreen inherits VerticalLayout {
                 text: "Evaluate Regex";
                 enabled: root.pattern != "" && !root.is_loading;
                 has_clear: true;
-                clicked => { root.evaluate(); }
+                clicked => { root.regex-test(); }
                 clear => {
                     root.pattern = "";
                     root.test_string = "";
                     root.match_summary = "";
                     root.matches_list = [];
                     root.error_message = "";
-                    root.clear();
+                    root.regex-clear();
                 }
             }
 
@@ -211,7 +210,7 @@ export component RegexScreen inherits VerticalLayout {
                                 height: 100%;
                                 border_radius: parent.border_radius;
                                 color: MaterialPalette.primary;
-                                clicked => { root.copy(match); }
+                                clicked => { root.regex-copy-match(match); }
                                 HorizontalLayout {
                                     alignment: center;
                                     VerticalLayout {

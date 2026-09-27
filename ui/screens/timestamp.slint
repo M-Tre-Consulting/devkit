@@ -11,7 +11,12 @@ import { AppIcons } from "../components/app-icons.slint";
 export component TimestampScreen inherits VerticalLayout {
     in property <length> status_bar_inset: 24px;
     in property <length> nav_bar_inset: 16px;
-    callback back();
+    callback timestamp-back();
+    callback timestamp-convert();
+    callback timestamp-clear();
+    callback timestamp-copy(string);
+    callback timestamp-now();
+    callback timestamp-swap-mode();
 
     in-out property <string> input_value: "1700000000";
     in-out property <int> mode: 0; // 0=Epoch->Date, 1=Date->Epoch
@@ -24,11 +29,6 @@ export component TimestampScreen inherits VerticalLayout {
     in-out property <string> error_message: "";
     in-out property <bool> is_loading: false;
 
-    callback convert();
-    callback set_now();
-    callback clear();
-    callback copy(string);
-
     property <bool> is_entered: false;
     init => { self.is_entered = true; }
 
@@ -36,7 +36,7 @@ export component TimestampScreen inherits VerticalLayout {
         title: "Timestamp Converter";
         has_back: true;
         show_background: true;
-        back => { root.back(); }
+        back => { root.timestamp-back(); }
     }
 
     ScrollView {
@@ -84,7 +84,7 @@ export component TimestampScreen inherits VerticalLayout {
                         height: 100%;
                         border_radius: parent.border_radius;
                         color: MaterialPalette.primary;
-                        clicked => { root.mode = 0; }
+                        clicked => { root.mode = 0; root.timestamp-swap-mode(); }
                         HorizontalLayout {
                             alignment: center;
                             VerticalLayout {
@@ -112,7 +112,7 @@ export component TimestampScreen inherits VerticalLayout {
                         height: 100%;
                         border_radius: parent.border_radius;
                         color: MaterialPalette.primary;
-                        clicked => { root.mode = 1; }
+                        clicked => { root.mode = 1; root.timestamp-swap-mode(); }
                         HorizontalLayout {
                             alignment: center;
                             VerticalLayout {
@@ -212,7 +212,7 @@ export component TimestampScreen inherits VerticalLayout {
                         height: 100%;
                         border_radius: parent.border_radius;
                         color: MaterialPalette.primary;
-                        clicked => { root.set_now(); }
+                        clicked => { root.timestamp-now(); }
                         HorizontalLayout {
                             padding_left: 10px;
                             padding_right: 10px;
@@ -240,7 +240,7 @@ export component TimestampScreen inherits VerticalLayout {
                 text: "Convert Timestamp";
                 enabled: root.input_value != "" && !root.is_loading;
                 has_clear: true;
-                clicked => { root.convert(); }
+                clicked => { root.timestamp-convert(); }
                 clear => {
                     root.input_value = "";
                     root.unix_seconds = "";
@@ -249,7 +249,7 @@ export component TimestampScreen inherits VerticalLayout {
                     root.rfc_2822 = "";
                     root.human_readable = "";
                     root.error_message = "";
-                    root.clear();
+                    root.timestamp-clear();
                 }
             }
 
@@ -258,35 +258,35 @@ export component TimestampScreen inherits VerticalLayout {
                 title: "UNIX SECONDS";
                 text: root.unix_seconds;
                 is_code: true;
-                copy(str) => { root.copy(str); }
+                copy(str) => { root.timestamp-copy(str); }
             }
 
             ToolOutputArea {
                 title: "UNIX MILLISECONDS";
                 text: root.unix_millis;
                 is_code: true;
-                copy(str) => { root.copy(str); }
+                copy(str) => { root.timestamp-copy(str); }
             }
 
             ToolOutputArea {
                 title: "ISO 8601";
                 text: root.iso_8601;
                 is_code: true;
-                copy(str) => { root.copy(str); }
+                copy(str) => { root.timestamp-copy(str); }
             }
 
             ToolOutputArea {
                 title: "RFC 2822";
                 text: root.rfc_2822;
                 is_code: true;
-                copy(str) => { root.copy(str); }
+                copy(str) => { root.timestamp-copy(str); }
             }
 
             ToolOutputArea {
                 title: "HUMAN READABLE";
                 text: root.human_readable;
                 is_code: false;
-                copy(str) => { root.copy(str); }
+                copy(str) => { root.timestamp-copy(str); }
             }
         }
     }
