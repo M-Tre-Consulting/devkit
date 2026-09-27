@@ -18,7 +18,7 @@ export component ColorScreen inherits VerticalLayout {
 
     in-out property <string> color_input: "#6750A4";
     in-out property <int> selected_format: 0; // 0=Auto, 1=Hex, 2=Rgb, 3=Hsl, 4=Hsv
-    in-out property <color> preview_color: #6750a4;
+    in-out property <color> preview_color: MaterialPalette.primary;
 
     // Converted outputs
     in-out property <string> hex_output: "#6750A4";
@@ -82,7 +82,7 @@ export component ColorScreen inherits VerticalLayout {
                         HorizontalLayout {
                             alignment: center;
                             Rectangle {
-                                background: #00000088;
+                                background: MaterialPalette.scrim.with_alpha(50%);
                                 border_radius: MaterialStyleMetrics.border_radius_4;
                                 HorizontalLayout {
                                     padding_left: 12px;
@@ -92,7 +92,7 @@ export component ColorScreen inherits VerticalLayout {
                                     MaterialText {
                                         text: root.hex_output;
                                         style: MaterialTypography.title_medium;
-                                        color: #ffffff;
+                                        color: MaterialPalette.inverse_on_surface;
                                     }
                                 }
                             }
@@ -129,7 +129,7 @@ export component ColorScreen inherits VerticalLayout {
                             color: MaterialPalette.primary;
                             clicked => {
                                 root.color_input = "#6750A4";
-                                root.preview_color = #6750a4;
+                                root.preview_color = MaterialPalette.primary;
                                 root.select_preset("#6750A4");
                             }
                             HorizontalLayout {
@@ -161,7 +161,7 @@ export component ColorScreen inherits VerticalLayout {
                             color: MaterialPalette.primary;
                             clicked => {
                                 root.color_input = "#2196F3";
-                                root.preview_color = #2196f3;
+                                root.preview_color = MaterialPalette.secondary;
                                 root.select_preset("#2196F3");
                             }
                             HorizontalLayout {
@@ -193,7 +193,7 @@ export component ColorScreen inherits VerticalLayout {
                             color: MaterialPalette.primary;
                             clicked => {
                                 root.color_input = "#009688";
-                                root.preview_color = #009688;
+                                root.preview_color = MaterialPalette.tertiary;
                                 root.select_preset("#009688");
                             }
                             HorizontalLayout {
@@ -225,7 +225,7 @@ export component ColorScreen inherits VerticalLayout {
                             color: MaterialPalette.primary;
                             clicked => {
                                 root.color_input = "#FFC107";
-                                root.preview_color = #ffc107;
+                                root.preview_color = MaterialPalette.secondary_container;
                                 root.select_preset("#FFC107");
                             }
                             HorizontalLayout {

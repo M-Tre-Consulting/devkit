@@ -157,7 +157,7 @@ export component JwtScreen inherits VerticalLayout {
                                 MaterialText {
                                     text: root.expiration_status;
                                     style: MaterialTypography.title_medium;
-                                    color: root.expiration_status == "Expired" ? #b71c1c : (root.expiration_status == "Active" ? #1b5e20 : MaterialPalette.on_surface);
+                                    color: root.expiration_status == "Expired" ? MaterialPalette.error : (root.expiration_status == "Active" ? MaterialPalette.primary : MaterialPalette.on_surface);
                                 }
                             }
 
@@ -207,7 +207,7 @@ export component JwtScreen inherits VerticalLayout {
             MaterialText {
                 text: "SIGNATURE";
                 style: MaterialTypography.label_medium;
-                color: #00bcd4;
+                color: MaterialPalette.primary;
             }
 
             ToolOutputArea {

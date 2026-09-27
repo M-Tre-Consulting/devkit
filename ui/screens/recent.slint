@@ -141,7 +141,7 @@ export component RecentScreen inherits VerticalLayout {
                         title: "Subnet Calculator";
                         description: "IPv4 CIDR, netmask & range";
                         icon: AppIcons.lan;
-                        accent_color: #00897b;
+                        accent_color: MaterialPalette.primary;
                         is_favorite: root.tool_favorites[1];
                         clicked => { root.open_tool(1); }
                         toggle_favorite => { root.toggle_favorite(1); }
@@ -151,7 +151,7 @@ export component RecentScreen inherits VerticalLayout {
                         title: "Hash Calculator";
                         description: "MD5, SHA-256 checksums";
                         icon: AppIcons.lock;
-                        accent_color: #8e24aa;
+                        accent_color: MaterialPalette.secondary;
                         is_favorite: root.tool_favorites[2];
                         clicked => { root.open_tool(2); }
                         toggle_favorite => { root.toggle_favorite(2); }
@@ -161,7 +161,7 @@ export component RecentScreen inherits VerticalLayout {
                         title: "Base64";
                         description: "Encode & decode strings";
                         icon: AppIcons.code;
-                        accent_color: #f4511e;
+                        accent_color: MaterialPalette.tertiary;
                         is_favorite: root.tool_favorites[3];
                         clicked => { root.open_tool(3); }
                         toggle_favorite => { root.toggle_favorite(3); }
@@ -171,7 +171,7 @@ export component RecentScreen inherits VerticalLayout {
                         title: "UUID Generator";
                         description: "Generate unique identifiers";
                         icon: AppIcons.fingerprint;
-                        accent_color: #2e7d32;
+                        accent_color: MaterialPalette.primary;
                         is_favorite: root.tool_favorites[4];
                         clicked => { root.open_tool(4); }
                         toggle_favorite => { root.toggle_favorite(4); }
@@ -181,7 +181,7 @@ export component RecentScreen inherits VerticalLayout {
                         title: "Timestamp";
                         description: "Epoch & date conversions";
                         icon: AppIcons.timer;
-                        accent_color: #1e88e5;
+                        accent_color: MaterialPalette.secondary;
                         is_favorite: root.tool_favorites[5];
                         clicked => { root.open_tool(5); }
                         toggle_favorite => { root.toggle_favorite(5); }
@@ -191,7 +191,7 @@ export component RecentScreen inherits VerticalLayout {
                         title: "Regex Tester";
                         description: "Evaluate pattern matches";
                         icon: AppIcons.regex;
-                        accent_color: #d97706;
+                        accent_color: MaterialPalette.tertiary;
                         is_favorite: root.tool_favorites[6];
                         clicked => { root.open_tool(6); }
                         toggle_favorite => { root.toggle_favorite(6); }
@@ -201,7 +201,7 @@ export component RecentScreen inherits VerticalLayout {
                         title: "JSON ↔ YAML";
                         description: "Convert between formats";
                         icon: AppIcons.swap;
-                        accent_color: #0288d1;
+                        accent_color: MaterialPalette.primary;
                         is_favorite: root.tool_favorites[7];
                         clicked => { root.open_tool(7); }
                         toggle_favorite => { root.toggle_favorite(7); }
@@ -211,7 +211,7 @@ export component RecentScreen inherits VerticalLayout {
                         title: "CRON Parser";
                         description: "Parse schedule syntax";
                         icon: AppIcons.schedule;
-                        accent_color: #7b1fa2;
+                        accent_color: MaterialPalette.secondary;
                         is_favorite: root.tool_favorites[8];
                         clicked => { root.open_tool(8); }
                         toggle_favorite => { root.toggle_favorite(8); }
@@ -221,7 +221,7 @@ export component RecentScreen inherits VerticalLayout {
                         title: "GZip";
                         description: "Compress & decompress";
                         icon: AppIcons.archive;
-                        accent_color: #c2185b;
+                        accent_color: MaterialPalette.tertiary;
                         is_favorite: root.tool_favorites[9];
                         clicked => { root.open_tool(9); }
                         toggle_favorite => { root.toggle_favorite(9); }
@@ -231,7 +231,7 @@ export component RecentScreen inherits VerticalLayout {
                         title: "Code Formatter";
                         description: "Format code syntax";
                         icon: AppIcons.formatter;
-                        accent_color: #0097a7;
+                        accent_color: MaterialPalette.primary;
                         is_favorite: root.tool_favorites[10];
                         clicked => { root.open_tool(10); }
                         toggle_favorite => { root.toggle_favorite(10); }
@@ -241,7 +241,7 @@ export component RecentScreen inherits VerticalLayout {
                         title: "Chmod Calculator";
                         description: "Octal & symbolic bits";
                         icon: AppIcons.security;
-                        accent_color: #388e3c;
+                        accent_color: MaterialPalette.secondary;
                         is_favorite: root.tool_favorites[11];
                         clicked => { root.open_tool(11); }
                         toggle_favorite => { root.toggle_favorite(11); }
@@ -251,7 +251,7 @@ export component RecentScreen inherits VerticalLayout {
                         title: "Color Converter";
                         description: "HEX, RGB, HSL values";
                         icon: AppIcons.palette;
-                        accent_color: #f57c00;
+                        accent_color: MaterialPalette.tertiary;
                         is_favorite: root.tool_favorites[12];
                         clicked => { root.open_tool(12); }
                         toggle_favorite => { root.toggle_favorite(12); }
@@ -261,7 +261,7 @@ export component RecentScreen inherits VerticalLayout {
                         title: "Contrast Checker";
                         description: "WCAG contrast ratio";
                         icon: AppIcons.contrast;
-                        accent_color: #512da8;
+                        accent_color: MaterialPalette.primary;
                         is_favorite: root.tool_favorites[13];
                         clicked => { root.open_tool(13); }
                         toggle_favorite => { root.toggle_favorite(13); }
@@ -271,7 +271,7 @@ export component RecentScreen inherits VerticalLayout {
                         title: "JWT Decoder";
                         description: "Decode headers & claims";
                         icon: AppIcons.key;
-                        accent_color: #e64a19;
+                        accent_color: MaterialPalette.secondary;
                         is_favorite: root.tool_favorites[14];
                         clicked => { root.open_tool(14); }
                         toggle_favorite => { root.toggle_favorite(14); }

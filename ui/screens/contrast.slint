@@ -17,8 +17,8 @@ export component ContrastScreen inherits VerticalLayout {
 
     in-out property <string> fg_color_text: "#FFFFFF";
     in-out property <string> bg_color_text: "#6750A4";
-    in-out property <color> fg_color: #ffffff;
-    in-out property <color> bg_color: #6750a4;
+    in-out property <color> fg_color: MaterialPalette.on_primary;
+    in-out property <color> bg_color: MaterialPalette.primary;
 
     in-out property <string> ratio_text: "7.15 : 1";
     in-out property <bool> aa_normal_pass: true;
@@ -89,8 +89,8 @@ export component ContrastScreen inherits VerticalLayout {
                             clicked => {
                                 root.fg_color_text = "#FFFFFF";
                                 root.bg_color_text = "#6750A4";
-                                root.fg_color = #ffffff;
-                                root.bg_color = #6750a4;
+                                root.fg_color = MaterialPalette.on_primary;
+                                root.bg_color = MaterialPalette.primary;
                                 root.select_preset("#FFFFFF", "#6750A4");
                             }
                             HorizontalLayout {
@@ -123,8 +123,8 @@ export component ContrastScreen inherits VerticalLayout {
                             clicked => {
                                 root.fg_color_text = "#1C1B1F";
                                 root.bg_color_text = "#F4EFF4";
-                                root.fg_color = #1c1b1f;
-                                root.bg_color = #f4eff4;
+                                root.fg_color = MaterialPalette.on_surface;
+                                root.bg_color = MaterialPalette.surface;
                                 root.select_preset("#1C1B1F", "#F4EFF4");
                             }
                             HorizontalLayout {
@@ -157,8 +157,8 @@ export component ContrastScreen inherits VerticalLayout {
                             clicked => {
                                 root.fg_color_text = "#E6E1E5";
                                 root.bg_color_text = "#1C1B1F";
-                                root.fg_color = #e6e1e5;
-                                root.bg_color = #1c1b1f;
+                                root.fg_color = MaterialPalette.inverse_on_surface;
+                                root.bg_color = MaterialPalette.inverse_surface;
                                 root.select_preset("#E6E1E5", "#1C1B1F");
                             }
                             HorizontalLayout {
@@ -363,7 +363,7 @@ export component ContrastScreen inherits VerticalLayout {
                                 }
                                 Rectangle {
                                     border_radius: MaterialStyleMetrics.border_radius_4;
-                                    background: root.aa_normal_pass ? #1b5e20 : #b71c1c;
+                                    background: root.aa_normal_pass ? MaterialPalette.primary_container : MaterialPalette.error_container;
                                     HorizontalLayout {
                                         padding_left: 8px;
                                         padding_right: 8px;
@@ -372,7 +372,7 @@ export component ContrastScreen inherits VerticalLayout {
                                         MaterialText {
                                             text: root.aa_normal_pass ? "PASS" : "FAIL";
                                             style: MaterialTypography.label_medium;
-                                            color: #ffffff;
+                                            color: root.aa_normal_pass ? MaterialPalette.on_primary_container : MaterialPalette.on_error_container;
                                         }
                                     }
                                 }
@@ -388,7 +388,7 @@ export component ContrastScreen inherits VerticalLayout {
                                 }
                                 Rectangle {
                                     border_radius: MaterialStyleMetrics.border_radius_4;
-                                    background: root.aa_large_pass ? #1b5e20 : #b71c1c;
+                                    background: root.aa_large_pass ? MaterialPalette.primary_container : MaterialPalette.error_container;
                                     HorizontalLayout {
                                         padding_left: 8px;
                                         padding_right: 8px;
@@ -397,7 +397,7 @@ export component ContrastScreen inherits VerticalLayout {
                                         MaterialText {
                                             text: root.aa_large_pass ? "PASS" : "FAIL";
                                             style: MaterialTypography.label_medium;
-                                            color: #ffffff;
+                                            color: root.aa_large_pass ? MaterialPalette.on_primary_container : MaterialPalette.on_error_container;
                                         }
                                     }
                                 }
@@ -413,7 +413,7 @@ export component ContrastScreen inherits VerticalLayout {
                                 }
                                 Rectangle {
                                     border_radius: MaterialStyleMetrics.border_radius_4;
-                                    background: root.aaa_normal_pass ? #1b5e20 : #b71c1c;
+                                    background: root.aaa_normal_pass ? MaterialPalette.primary_container : MaterialPalette.error_container;
                                     HorizontalLayout {
                                         padding_left: 8px;
                                         padding_right: 8px;
@@ -422,7 +422,7 @@ export component ContrastScreen inherits VerticalLayout {
                                         MaterialText {
                                             text: root.aaa_normal_pass ? "PASS" : "FAIL";
                                             style: MaterialTypography.label_medium;
-                                            color: #ffffff;
+                                            color: root.aaa_normal_pass ? MaterialPalette.on_primary_container : MaterialPalette.on_error_container;
                                         }
                                     }
                                 }
@@ -438,7 +438,7 @@ export component ContrastScreen inherits VerticalLayout {
                                 }
                                 Rectangle {
                                     border_radius: MaterialStyleMetrics.border_radius_4;
-                                    background: root.aaa_large_pass ? #1b5e20 : #b71c1c;
+                                    background: root.aaa_large_pass ? MaterialPalette.primary_container : MaterialPalette.error_container;
                                     HorizontalLayout {
                                         padding_left: 8px;
                                         padding_right: 8px;
@@ -447,7 +447,7 @@ export component ContrastScreen inherits VerticalLayout {
                                         MaterialText {
                                             text: root.aaa_large_pass ? "PASS" : "FAIL";
                                             style: MaterialTypography.label_medium;
-                                            color: #ffffff;
+                                            color: root.aaa_large_pass ? MaterialPalette.on_primary_container : MaterialPalette.on_error_container;
                                         }
                                     }
                                 }
@@ -463,7 +463,7 @@ export component ContrastScreen inherits VerticalLayout {
                                 }
                                 Rectangle {
                                     border_radius: MaterialStyleMetrics.border_radius_4;
-                                    background: root.ui_components_pass ? #1b5e20 : #b71c1c;
+                                    background: root.ui_components_pass ? MaterialPalette.primary_container : MaterialPalette.error_container;
                                     HorizontalLayout {
                                         padding_left: 8px;
                                         padding_right: 8px;
@@ -472,7 +472,7 @@ export component ContrastScreen inherits VerticalLayout {
                                         MaterialText {
                                             text: root.ui_components_pass ? "PASS" : "FAIL";
                                             style: MaterialTypography.label_medium;
-                                            color: #ffffff;
+                                            color: root.ui_components_pass ? MaterialPalette.on_primary_container : MaterialPalette.on_error_container;
                                         }
                                     }
                                 }
