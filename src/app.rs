@@ -42,72 +42,72 @@ pub fn update_high_refresh_rate(ui: &crate::AppWindow) {
 
 pub fn setup_tool_handlers(ui: &crate::AppWindow) {
     // 1. Subnet Calculator
-    ui.on_calculate_subnet(move |ip| {
+    ui.on_subnet_calculate(move |ip| {
         let _ = crate::tools::handlers::handle_subnet(&ip);
     });
 
     // 2. Hash Calculator
-    ui.on_calculate_hash(move |text, algo| {
+    ui.on_hash_calculate(move |text, algo| {
         let _ = crate::tools::handlers::handle_hash(&text, algo);
     });
 
     // 3. Base64
-    ui.on_convert_base64(move |text, is_enc, is_url, pad| {
+    ui.on_base64_convert(move |text, is_enc, is_url, pad| {
         let _ = crate::tools::handlers::handle_base64(&text, is_enc, is_url, pad);
     });
 
     // 4. UUID Generator
-    ui.on_generate_uuid(move |ver, count, upper, hyphens| {
+    ui.on_uuid_generate(move |ver, count, upper, hyphens| {
         let _ = crate::tools::handlers::handle_uuid(ver, count as usize, upper, hyphens);
     });
 
     // 5. Timestamp Converter
-    ui.on_convert_timestamp(move |ts, tz| {
+    ui.on_timestamp_convert(move |ts, tz| {
         let _ = crate::tools::handlers::handle_timestamp(&ts, &tz);
     });
 
     // 6. Regex Tester
-    ui.on_evaluate_regex(move |pat, text, ci, ml, dot| {
+    ui.on_regex_test(move |pat, text, ci, ml, dot| {
         let _ = crate::tools::handlers::handle_regex(&pat, &text, ci, ml, dot);
     });
 
     // 7. JSON ↔ YAML Converter
-    ui.on_convert_json_yaml(move |src, is_j2y, ind| {
+    ui.on_json_yaml_convert(move |src, is_j2y, ind| {
         let _ = crate::tools::handlers::handle_json_yaml(&src, is_j2y, ind as usize);
     });
 
     // 8. CRON Parser
-    ui.on_parse_cron(move |expr| {
+    ui.on_cron_parse(move |expr| {
         let _ = crate::tools::handlers::handle_cron(&expr);
     });
 
     // 9. GZip Compressor
-    ui.on_process_gzip(move |data, is_comp| {
+    ui.on_gzip_compress(move |data, is_comp| {
         let _ = crate::tools::handlers::handle_gzip(&data, is_comp);
     });
 
     // 10. Code Formatter
-    ui.on_format_code(move |src, lang, ind| {
+    ui.on_format_format(move |src, lang, ind| {
         let _ = crate::tools::handlers::handle_formatter(&src, lang, ind as u8);
     });
 
     // 11. Chmod Calculator
-    ui.on_calculate_chmod(move |or, ow, ox, gr, gw, gx, tr, tw, tx| {
+    ui.on_chmod_apply(move |or, ow, ox, gr, gw, gx, tr, tw, tx| {
         let _ = crate::tools::handlers::handle_chmod(or, ow, ox, gr, gw, gx, tr, tw, tx);
     });
 
     // 12. Color Converter
-    ui.on_convert_color(move |val, fmt| {
+    ui.on_color_convert(move |val, fmt| {
         let _ = crate::tools::handlers::handle_color(&val, fmt);
     });
 
     // 13. Contrast Checker
-    ui.on_check_contrast(move |fg, bg| {
+    ui.on_contrast_check(move |fg, bg| {
         let _ = crate::tools::handlers::handle_contrast(&fg, &bg);
     });
 
     // 14. JWT Decoder
-    ui.on_decode_jwt(move |token| {
+    ui.on_jwt_decode(move |token| {
         let _ = crate::tools::handlers::handle_jwt(&token);
     });
 

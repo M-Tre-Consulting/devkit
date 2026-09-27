@@ -55,20 +55,20 @@ export component AppWindow inherits Window {
     callback copy_text(string);
 
     // Tool execution callbacks
-    callback calculate_subnet(string);
-    callback calculate_hash(string, int);
-    callback convert_base64(string, bool, bool, bool);
-    callback generate_uuid(int, int, bool, bool);
-    callback convert_timestamp(string, string);
-    callback evaluate_regex(string, string, bool, bool, bool);
-    callback convert_json_yaml(string, bool, int);
-    callback parse_cron(string);
-    callback process_gzip(string, bool);
-    callback format_code(string, int, int);
-    callback calculate_chmod(bool, bool, bool, bool, bool, bool, bool, bool, bool);
-    callback convert_color(string, int);
-    callback check_contrast(string, string);
-    callback decode_jwt(string);
+    callback subnet-calculate(string);
+    callback hash-calculate(string, int);
+    callback base64-convert(string, bool, bool, bool);
+    callback uuid-generate(int, int, bool, bool);
+    callback timestamp-convert(string, string);
+    callback regex-test(string, string, bool, bool, bool);
+    callback json-yaml-convert(string, bool, int);
+    callback cron-parse(string);
+    callback gzip-compress(string, bool);
+    callback format-format(string, int, int);
+    callback chmod-apply(bool, bool, bool, bool, bool, bool, bool, bool, bool);
+    callback color-convert(string, int);
+    callback contrast-check(string, string);
+    callback jwt-decode(string);
 
     property <int> last_tool: 1;
     changed active_tool => {
@@ -286,63 +286,63 @@ export component AppWindow inherits Window {
 
             if root.displayed_tool == 1 : SubnetScreen {
                 subnet-back => { root.back(); }
-                subnet-calculate => { root.calculate_subnet(self.ip_input); }
+                subnet-calculate => { root.subnet-calculate(self.ip_input); }
                 subnet-copy(val) => { root.copy_text(val); }
             }
 
             if root.displayed_tool == 2 : HashScreen {
                 hash-back => { root.back(); }
-                hash-calculate => { root.calculate_hash(self.input_text, self.selected_algorithm); }
+                hash-calculate => { root.hash-calculate(self.input_text, self.selected_algorithm); }
                 hash-copy(val) => { root.copy_text(val); }
             }
 
             if root.displayed_tool == 3 : Base64Screen {
                 base64-back => { root.back(); }
-                base64-convert => { root.convert_base64(self.input_text, self.mode == 0, self.variant == 1, self.use_padding); }
+                base64-convert => { root.base64-convert(self.input_text, self.mode == 0, self.variant == 1, self.use_padding); }
                 base64-copy(val) => { root.copy_text(val); }
             }
 
             if root.displayed_tool == 4 : UuidScreen {
                 uuid-back => { root.back(); }
-                uuid-generate => { root.generate_uuid(self.version, self.count, self.uppercase, self.hyphens); }
+                uuid-generate => { root.uuid-generate(self.version, self.count, self.uppercase, self.hyphens); }
                 uuid-copy-item(val) => { root.copy_text(val); }
                 uuid-copy-all => { root.copy_text(self.bulk_uuids); }
             }
 
             if root.displayed_tool == 5 : TimestampScreen {
                 timestamp-back => { root.back(); }
-                timestamp-convert => { root.convert_timestamp(self.input_value, self.timezone == 0 ? "UTC" : "Local"); }
+                timestamp-convert => { root.timestamp-convert(self.input_value, self.timezone == 0 ? "UTC" : "Local"); }
                 timestamp-copy(val) => { root.copy_text(val); }
             }
 
             if root.displayed_tool == 6 : RegexScreen {
                 regex-back => { root.back(); }
-                regex-test => { root.evaluate_regex(self.pattern, self.test_string, self.case_insensitive, self.multiline, self.dot_matches_newline); }
+                regex-test => { root.regex-test(self.pattern, self.test_string, self.case_insensitive, self.multiline, self.dot_matches_newline); }
                 regex-copy-match(val) => { root.copy_text(val); }
             }
 
             if root.displayed_tool == 7 : JsonYamlScreen {
                 json-yaml-back => { root.back(); }
-                json-yaml-convert => { root.convert_json_yaml(self.source_text, self.direction == 0, self.indent_size); }
+                json-yaml-convert => { root.json-yaml-convert(self.source_text, self.direction == 0, self.indent_size); }
                 json-yaml-copy(val) => { root.copy_text(val); }
             }
 
             if root.displayed_tool == 8 : CronScreen {
                 cron-back => { root.back(); }
-                cron-parse => { root.parse_cron(self.expression); }
+                cron-parse => { root.cron-parse(self.expression); }
                 cron-copy(val) => { root.copy_text(val); }
             }
 
             if root.displayed_tool == 9 : GzipScreen {
                 gzip-back => { root.back(); }
-                gzip-compress => { root.process_gzip(self.input_data, true); }
-                gzip-decompress => { root.process_gzip(self.input_data, false); }
+                gzip-compress => { root.gzip-compress(self.input_data, true); }
+                gzip-decompress => { root.gzip-compress(self.input_data, false); }
                 gzip-copy(val) => { root.copy_text(val); }
             }
 
             if root.displayed_tool == 10 : FormatterScreen {
                 format-back => { root.back(); }
-                format-format => { root.format_code(self.source_code, self.selected_lang, self.indent_size); }
+                format-format => { root.format-format(self.source_code, self.selected_lang, self.indent_size); }
                 format-copy(val) => { root.copy_text(val); }
             }
 
@@ -350,7 +350,7 @@ export component AppWindow inherits Window {
                 nav_bar_inset: root.nav_bar_inset;
                 chmod-back => { root.back(); }
                 chmod-apply => {
-                    root.calculate_chmod(
+                    root.chmod-apply(
                         self.owner_r, self.owner_w, self.owner_x,
                         self.group_r, self.group_w, self.group_x,
                         self.other_r, self.other_w, self.other_x,
@@ -362,21 +362,21 @@ export component AppWindow inherits Window {
             if root.displayed_tool == 12 : ColorScreen {
                 nav_bar_inset: root.nav_bar_inset;
                 color-back => { root.back(); }
-                color-convert => { root.convert_color(self.color_input, self.selected_format); }
+                color-convert => { root.color-convert(self.color_input, self.selected_format); }
                 color-copy(val) => { root.copy_text(val); }
             }
 
             if root.displayed_tool == 13 : ContrastScreen {
                 nav_bar_inset: root.nav_bar_inset;
                 contrast-back => { root.back(); }
-                contrast-check => { root.check_contrast(self.fg_color_text, self.bg_color_text); }
+                contrast-check => { root.contrast-check(self.fg_color_text, self.bg_color_text); }
                 contrast-copy(val) => { root.copy_text(val); }
             }
 
             if root.displayed_tool == 14 : JwtScreen {
                 nav_bar_inset: root.nav_bar_inset;
                 jwt-back => { root.back(); }
-                jwt-decode => { root.decode_jwt(self.token_input); }
+                jwt-decode => { root.jwt-decode(self.token_input); }
                 jwt-copy(val) => { root.copy_text(val); }
                 jwt-copy-header(val) => { root.copy_text(val); }
                 jwt-copy-payload(val) => { root.copy_text(val); }
