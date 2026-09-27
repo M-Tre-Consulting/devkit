@@ -149,10 +149,10 @@ export component AppWindow inherits Window {
                     pill_height: pill_nav.height;
                     pill_bottom_margin: root.pill_bottom_margin;
                     tool_favorites: root.tool_favorites;
-                    open_tool(id) => {
+                    home-open-tool(id) => {
                         root.open_tool(id);
                     }
-                    toggle_favorite(id) => {
+                    home-toggle-favorite(id) => {
                         root.toggle_favorite(id);
                     }
                 }
@@ -183,10 +183,10 @@ export component AppWindow inherits Window {
                     pill_bottom_margin: root.pill_bottom_margin;
                     recent_tools: root.recent_tools;
                     tool_favorites: root.tool_favorites;
-                    open_tool(id) => {
+                    recent-open-tool(id) => {
                         root.open_tool(id);
                     }
-                    toggle_favorite(id) => {
+                    recent-toggle-favorite(id) => {
                         root.toggle_favorite(id);
                     }
                 }
@@ -216,10 +216,10 @@ export component AppWindow inherits Window {
                     pill_height: pill_nav.height;
                     pill_bottom_margin: root.pill_bottom_margin;
                     tool_favorites: root.tool_favorites;
-                    open_tool(id) => {
+                    favorites-open-tool(id) => {
                         root.open_tool(id);
                     }
-                    toggle_favorite(id) => {
+                    favorites-toggle-favorite(id) => {
                         root.toggle_favorite(id);
                     }
                 }
@@ -249,17 +249,17 @@ export component AppWindow inherits Window {
                     pill_height: pill_nav.height;
                     pill_bottom_margin: root.pill_bottom_margin;
                     high_refresh_rate_enabled: root.high_refresh_rate_enabled;
-                    high_refresh_rate_changed(enabled) => {
+                    settings-high-refresh-rate-changed(enabled) => {
                         root.high_refresh_rate_enabled = enabled;
                         root.high_refresh_rate_changed(enabled);
                     }
-                    clear_recents => {
+                    settings-clear-recents => {
                         root.clear_recents();
                     }
-                    clear_favorites => {
+                    settings-clear-favorites => {
                         root.clear_favorites();
                     }
-                    open_about => {
+                    settings-open-about => {
                         root.open_about();
                     }
                 }
@@ -407,7 +407,7 @@ export component AppWindow inherits Window {
                 nav_bar_inset: root.nav_bar_inset;
                 pill_height: pill_nav.height;
                 pill_bottom_margin: root.pill_bottom_margin;
-                back => {
+                about-back => {
                     root.back();
                 }
             }

@@ -13,7 +13,7 @@ export component AboutScreen inherits VerticalLayout {
     in property <length> pill_height: 52px;
     in property <length> pill_bottom_margin: 24px;
     property <length> bottom_clearance: root.pill_height + root.pill_bottom_margin + root.nav_bar_inset + 24px;
-    callback back();
+    callback about-back();
 
     // Status bar clearance
     Rectangle {
@@ -24,7 +24,7 @@ export component AboutScreen inherits VerticalLayout {
     TopBar {
         title: "About DevKit";
         has_back: true;
-        back => { root.back(); }
+        back => { root.about-back(); }
     }
 
     ScrollView {

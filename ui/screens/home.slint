@@ -18,8 +18,8 @@ export component HomeScreen inherits VerticalLayout {
     in property <length> pill_bottom_margin: 28px;
     property <length> bottom_clearance: root.pill_height + root.pill_bottom_margin + root.nav_bar_inset + 24px;
     in property <[bool]> tool_favorites: [false, false, false, false, false, false, false, false, false, false, false, false, false, false, false];
-    callback open_tool(int);
-    callback toggle_favorite(int);
+    callback home-open-tool(int);
+    callback home-toggle-favorite(int);
 
     property <bool> is_entered: false;
     init => { self.is_entered = true; }
@@ -72,8 +72,8 @@ export component HomeScreen inherits VerticalLayout {
                         entrance_index: 0;
                         is_entered: root.is_entered;
                         is_favorite: root.tool_favorites[1];
-                        clicked => { root.open_tool(1); }
-                        toggle_favorite => { root.toggle_favorite(1); }
+                        clicked => { root.home-open-tool(1); }
+                        toggle_favorite => { root.home-toggle-favorite(1); }
                     }
                     ToolCard {
                         horizontal-stretch: 1;
@@ -84,8 +84,8 @@ export component HomeScreen inherits VerticalLayout {
                         entrance_index: 1;
                         is_entered: root.is_entered;
                         is_favorite: root.tool_favorites[2];
-                        clicked => { root.open_tool(2); }
-                        toggle_favorite => { root.toggle_favorite(2); }
+                        clicked => { root.home-open-tool(2); }
+                        toggle_favorite => { root.home-toggle-favorite(2); }
                     }
                 }
 
@@ -100,8 +100,8 @@ export component HomeScreen inherits VerticalLayout {
                         entrance_index: 2;
                         is_entered: root.is_entered;
                         is_favorite: root.tool_favorites[3];
-                        clicked => { root.open_tool(3); }
-                        toggle_favorite => { root.toggle_favorite(3); }
+                        clicked => { root.home-open-tool(3); }
+                        toggle_favorite => { root.home-toggle-favorite(3); }
                     }
                     ToolCard {
                         horizontal-stretch: 1;
@@ -112,8 +112,8 @@ export component HomeScreen inherits VerticalLayout {
                         entrance_index: 3;
                         is_entered: root.is_entered;
                         is_favorite: root.tool_favorites[4];
-                        clicked => { root.open_tool(4); }
-                        toggle_favorite => { root.toggle_favorite(4); }
+                        clicked => { root.home-open-tool(4); }
+                        toggle_favorite => { root.home-toggle-favorite(4); }
                     }
                 }
 
@@ -128,8 +128,8 @@ export component HomeScreen inherits VerticalLayout {
                         entrance_index: 4;
                         is_entered: root.is_entered;
                         is_favorite: root.tool_favorites[5];
-                        clicked => { root.open_tool(5); }
-                        toggle_favorite => { root.toggle_favorite(5); }
+                        clicked => { root.home-open-tool(5); }
+                        toggle_favorite => { root.home-toggle-favorite(5); }
                     }
                     ToolCard {
                         horizontal-stretch: 1;
@@ -140,8 +140,8 @@ export component HomeScreen inherits VerticalLayout {
                         entrance_index: 5;
                         is_entered: root.is_entered;
                         is_favorite: root.tool_favorites[6];
-                        clicked => { root.open_tool(6); }
-                        toggle_favorite => { root.toggle_favorite(6); }
+                        clicked => { root.home-open-tool(6); }
+                        toggle_favorite => { root.home-toggle-favorite(6); }
                     }
                 }
 
@@ -156,8 +156,8 @@ export component HomeScreen inherits VerticalLayout {
                         entrance_index: 6;
                         is_entered: root.is_entered;
                         is_favorite: root.tool_favorites[7];
-                        clicked => { root.open_tool(7); }
-                        toggle_favorite => { root.toggle_favorite(7); }
+                        clicked => { root.home-open-tool(7); }
+                        toggle_favorite => { root.home-toggle-favorite(7); }
                     }
                     ToolCard {
                         horizontal-stretch: 1;
@@ -168,8 +168,8 @@ export component HomeScreen inherits VerticalLayout {
                         entrance_index: 7;
                         is_entered: root.is_entered;
                         is_favorite: root.tool_favorites[8];
-                        clicked => { root.open_tool(8); }
-                        toggle_favorite => { root.toggle_favorite(8); }
+                        clicked => { root.home-open-tool(8); }
+                        toggle_favorite => { root.home-toggle-favorite(8); }
                     }
                 }
 
@@ -184,8 +184,8 @@ export component HomeScreen inherits VerticalLayout {
                         entrance_index: 8;
                         is_entered: root.is_entered;
                         is_favorite: root.tool_favorites[9];
-                        clicked => { root.open_tool(9); }
-                        toggle_favorite => { root.toggle_favorite(9); }
+                        clicked => { root.home-open-tool(9); }
+                        toggle_favorite => { root.home-toggle-favorite(9); }
                     }
                     ToolCard {
                         horizontal-stretch: 1;
@@ -196,8 +196,8 @@ export component HomeScreen inherits VerticalLayout {
                         entrance_index: 9;
                         is_entered: root.is_entered;
                         is_favorite: root.tool_favorites[10];
-                        clicked => { root.open_tool(10); }
-                        toggle_favorite => { root.toggle_favorite(10); }
+                        clicked => { root.home-open-tool(10); }
+                        toggle_favorite => { root.home-toggle-favorite(10); }
                     }
                 }
 
@@ -212,8 +212,8 @@ export component HomeScreen inherits VerticalLayout {
                         entrance_index: 10;
                         is_entered: root.is_entered;
                         is_favorite: root.tool_favorites[11];
-                        clicked => { root.open_tool(11); }
-                        toggle_favorite => { root.toggle_favorite(11); }
+                        clicked => { root.home-open-tool(11); }
+                        toggle_favorite => { root.home-toggle-favorite(11); }
                     }
                     ToolCard {
                         horizontal-stretch: 1;
@@ -224,8 +224,8 @@ export component HomeScreen inherits VerticalLayout {
                         entrance_index: 11;
                         is_entered: root.is_entered;
                         is_favorite: root.tool_favorites[12];
-                        clicked => { root.open_tool(12); }
-                        toggle_favorite => { root.toggle_favorite(12); }
+                        clicked => { root.home-open-tool(12); }
+                        toggle_favorite => { root.home-toggle-favorite(12); }
                     }
                 }
 
@@ -240,8 +240,8 @@ export component HomeScreen inherits VerticalLayout {
                         entrance_index: 12;
                         is_entered: root.is_entered;
                         is_favorite: root.tool_favorites[13];
-                        clicked => { root.open_tool(13); }
-                        toggle_favorite => { root.toggle_favorite(13); }
+                        clicked => { root.home-open-tool(13); }
+                        toggle_favorite => { root.home-toggle-favorite(13); }
                     }
                     ToolCard {
                         horizontal-stretch: 1;
@@ -252,8 +252,8 @@ export component HomeScreen inherits VerticalLayout {
                         entrance_index: 13;
                         is_entered: root.is_entered;
                         is_favorite: root.tool_favorites[14];
-                        clicked => { root.open_tool(14); }
-                        toggle_favorite => { root.toggle_favorite(14); }
+                        clicked => { root.home-open-tool(14); }
+                        toggle_favorite => { root.home-toggle-favorite(14); }
                     }
                 }
             }
@@ -273,8 +273,8 @@ export component HomeScreen inherits VerticalLayout {
                         entrance_index: 0;
                         is_entered: root.is_entered;
                         is_favorite: root.tool_favorites[1];
-                        clicked => { root.open_tool(1); }
-                        toggle_favorite => { root.toggle_favorite(1); }
+                        clicked => { root.home-open-tool(1); }
+                        toggle_favorite => { root.home-toggle-favorite(1); }
                     }
                     ToolCard {
                         horizontal-stretch: 1;
@@ -285,8 +285,8 @@ export component HomeScreen inherits VerticalLayout {
                         entrance_index: 1;
                         is_entered: root.is_entered;
                         is_favorite: root.tool_favorites[2];
-                        clicked => { root.open_tool(2); }
-                        toggle_favorite => { root.toggle_favorite(2); }
+                        clicked => { root.home-open-tool(2); }
+                        toggle_favorite => { root.home-toggle-favorite(2); }
                     }
                     ToolCard {
                         horizontal-stretch: 1;
@@ -297,8 +297,8 @@ export component HomeScreen inherits VerticalLayout {
                         entrance_index: 2;
                         is_entered: root.is_entered;
                         is_favorite: root.tool_favorites[3];
-                        clicked => { root.open_tool(3); }
-                        toggle_favorite => { root.toggle_favorite(3); }
+                        clicked => { root.home-open-tool(3); }
+                        toggle_favorite => { root.home-toggle-favorite(3); }
                     }
                 }
 
@@ -313,8 +313,8 @@ export component HomeScreen inherits VerticalLayout {
                         entrance_index: 3;
                         is_entered: root.is_entered;
                         is_favorite: root.tool_favorites[4];
-                        clicked => { root.open_tool(4); }
-                        toggle_favorite => { root.toggle_favorite(4); }
+                        clicked => { root.home-open-tool(4); }
+                        toggle_favorite => { root.home-toggle-favorite(4); }
                     }
                     ToolCard {
                         horizontal-stretch: 1;
@@ -325,8 +325,8 @@ export component HomeScreen inherits VerticalLayout {
                         entrance_index: 4;
                         is_entered: root.is_entered;
                         is_favorite: root.tool_favorites[5];
-                        clicked => { root.open_tool(5); }
-                        toggle_favorite => { root.toggle_favorite(5); }
+                        clicked => { root.home-open-tool(5); }
+                        toggle_favorite => { root.home-toggle-favorite(5); }
                     }
                     ToolCard {
                         horizontal-stretch: 1;
@@ -337,8 +337,8 @@ export component HomeScreen inherits VerticalLayout {
                         entrance_index: 5;
                         is_entered: root.is_entered;
                         is_favorite: root.tool_favorites[6];
-                        clicked => { root.open_tool(6); }
-                        toggle_favorite => { root.toggle_favorite(6); }
+                        clicked => { root.home-open-tool(6); }
+                        toggle_favorite => { root.home-toggle-favorite(6); }
                     }
                 }
 
@@ -353,8 +353,8 @@ export component HomeScreen inherits VerticalLayout {
                         entrance_index: 6;
                         is_entered: root.is_entered;
                         is_favorite: root.tool_favorites[7];
-                        clicked => { root.open_tool(7); }
-                        toggle_favorite => { root.toggle_favorite(7); }
+                        clicked => { root.home-open-tool(7); }
+                        toggle_favorite => { root.home-toggle-favorite(7); }
                     }
                     ToolCard {
                         horizontal-stretch: 1;
@@ -365,8 +365,8 @@ export component HomeScreen inherits VerticalLayout {
                         entrance_index: 7;
                         is_entered: root.is_entered;
                         is_favorite: root.tool_favorites[8];
-                        clicked => { root.open_tool(8); }
-                        toggle_favorite => { root.toggle_favorite(8); }
+                        clicked => { root.home-open-tool(8); }
+                        toggle_favorite => { root.home-toggle-favorite(8); }
                     }
                     ToolCard {
                         horizontal-stretch: 1;
@@ -377,8 +377,8 @@ export component HomeScreen inherits VerticalLayout {
                         entrance_index: 8;
                         is_entered: root.is_entered;
                         is_favorite: root.tool_favorites[9];
-                        clicked => { root.open_tool(9); }
-                        toggle_favorite => { root.toggle_favorite(9); }
+                        clicked => { root.home-open-tool(9); }
+                        toggle_favorite => { root.home-toggle-favorite(9); }
                     }
                 }
 
@@ -393,8 +393,8 @@ export component HomeScreen inherits VerticalLayout {
                         entrance_index: 9;
                         is_entered: root.is_entered;
                         is_favorite: root.tool_favorites[10];
-                        clicked => { root.open_tool(10); }
-                        toggle_favorite => { root.toggle_favorite(10); }
+                        clicked => { root.home-open-tool(10); }
+                        toggle_favorite => { root.home-toggle-favorite(10); }
                     }
                     ToolCard {
                         horizontal-stretch: 1;
@@ -405,8 +405,8 @@ export component HomeScreen inherits VerticalLayout {
                         entrance_index: 10;
                         is_entered: root.is_entered;
                         is_favorite: root.tool_favorites[11];
-                        clicked => { root.open_tool(11); }
-                        toggle_favorite => { root.toggle_favorite(11); }
+                        clicked => { root.home-open-tool(11); }
+                        toggle_favorite => { root.home-toggle-favorite(11); }
                     }
                     ToolCard {
                         horizontal-stretch: 1;
@@ -417,8 +417,8 @@ export component HomeScreen inherits VerticalLayout {
                         entrance_index: 11;
                         is_entered: root.is_entered;
                         is_favorite: root.tool_favorites[12];
-                        clicked => { root.open_tool(12); }
-                        toggle_favorite => { root.toggle_favorite(12); }
+                        clicked => { root.home-open-tool(12); }
+                        toggle_favorite => { root.home-toggle-favorite(12); }
                     }
                 }
 
@@ -433,8 +433,8 @@ export component HomeScreen inherits VerticalLayout {
                         entrance_index: 12;
                         is_entered: root.is_entered;
                         is_favorite: root.tool_favorites[13];
-                        clicked => { root.open_tool(13); }
-                        toggle_favorite => { root.toggle_favorite(13); }
+                        clicked => { root.home-open-tool(13); }
+                        toggle_favorite => { root.home-toggle-favorite(13); }
                     }
                     ToolCard {
                         horizontal-stretch: 1;
@@ -445,8 +445,8 @@ export component HomeScreen inherits VerticalLayout {
                         entrance_index: 13;
                         is_entered: root.is_entered;
                         is_favorite: root.tool_favorites[14];
-                        clicked => { root.open_tool(14); }
-                        toggle_favorite => { root.toggle_favorite(14); }
+                        clicked => { root.home-open-tool(14); }
+                        toggle_favorite => { root.home-toggle-favorite(14); }
                     }
                     Rectangle {
                         horizontal-stretch: 1;
@@ -469,8 +469,8 @@ export component HomeScreen inherits VerticalLayout {
                         entrance_index: 0;
                         is_entered: root.is_entered;
                         is_favorite: root.tool_favorites[1];
-                        clicked => { root.open_tool(1); }
-                        toggle_favorite => { root.toggle_favorite(1); }
+                        clicked => { root.home-open-tool(1); }
+                        toggle_favorite => { root.home-toggle-favorite(1); }
                     }
                     ToolCard {
                         horizontal-stretch: 1;
@@ -481,8 +481,8 @@ export component HomeScreen inherits VerticalLayout {
                         entrance_index: 1;
                         is_entered: root.is_entered;
                         is_favorite: root.tool_favorites[2];
-                        clicked => { root.open_tool(2); }
-                        toggle_favorite => { root.toggle_favorite(2); }
+                        clicked => { root.home-open-tool(2); }
+                        toggle_favorite => { root.home-toggle-favorite(2); }
                     }
                     ToolCard {
                         horizontal-stretch: 1;
@@ -493,8 +493,8 @@ export component HomeScreen inherits VerticalLayout {
                         entrance_index: 2;
                         is_entered: root.is_entered;
                         is_favorite: root.tool_favorites[3];
-                        clicked => { root.open_tool(3); }
-                        toggle_favorite => { root.toggle_favorite(3); }
+                        clicked => { root.home-open-tool(3); }
+                        toggle_favorite => { root.home-toggle-favorite(3); }
                     }
                     ToolCard {
                         horizontal-stretch: 1;
@@ -505,8 +505,8 @@ export component HomeScreen inherits VerticalLayout {
                         entrance_index: 3;
                         is_entered: root.is_entered;
                         is_favorite: root.tool_favorites[4];
-                        clicked => { root.open_tool(4); }
-                        toggle_favorite => { root.toggle_favorite(4); }
+                        clicked => { root.home-open-tool(4); }
+                        toggle_favorite => { root.home-toggle-favorite(4); }
                     }
                 }
 
@@ -521,8 +521,8 @@ export component HomeScreen inherits VerticalLayout {
                         entrance_index: 4;
                         is_entered: root.is_entered;
                         is_favorite: root.tool_favorites[5];
-                        clicked => { root.open_tool(5); }
-                        toggle_favorite => { root.toggle_favorite(5); }
+                        clicked => { root.home-open-tool(5); }
+                        toggle_favorite => { root.home-toggle-favorite(5); }
                     }
                     ToolCard {
                         horizontal-stretch: 1;
@@ -533,8 +533,8 @@ export component HomeScreen inherits VerticalLayout {
                         entrance_index: 5;
                         is_entered: root.is_entered;
                         is_favorite: root.tool_favorites[6];
-                        clicked => { root.open_tool(6); }
-                        toggle_favorite => { root.toggle_favorite(6); }
+                        clicked => { root.home-open-tool(6); }
+                        toggle_favorite => { root.home-toggle-favorite(6); }
                     }
                     ToolCard {
                         horizontal-stretch: 1;
@@ -545,8 +545,8 @@ export component HomeScreen inherits VerticalLayout {
                         entrance_index: 6;
                         is_entered: root.is_entered;
                         is_favorite: root.tool_favorites[7];
-                        clicked => { root.open_tool(7); }
-                        toggle_favorite => { root.toggle_favorite(7); }
+                        clicked => { root.home-open-tool(7); }
+                        toggle_favorite => { root.home-toggle-favorite(7); }
                     }
                     ToolCard {
                         horizontal-stretch: 1;
@@ -557,8 +557,8 @@ export component HomeScreen inherits VerticalLayout {
                         entrance_index: 7;
                         is_entered: root.is_entered;
                         is_favorite: root.tool_favorites[8];
-                        clicked => { root.open_tool(8); }
-                        toggle_favorite => { root.toggle_favorite(8); }
+                        clicked => { root.home-open-tool(8); }
+                        toggle_favorite => { root.home-toggle-favorite(8); }
                     }
                 }
 
@@ -573,8 +573,8 @@ export component HomeScreen inherits VerticalLayout {
                         entrance_index: 8;
                         is_entered: root.is_entered;
                         is_favorite: root.tool_favorites[9];
-                        clicked => { root.open_tool(9); }
-                        toggle_favorite => { root.toggle_favorite(9); }
+                        clicked => { root.home-open-tool(9); }
+                        toggle_favorite => { root.home-toggle-favorite(9); }
                     }
                     ToolCard {
                         horizontal-stretch: 1;
@@ -585,8 +585,8 @@ export component HomeScreen inherits VerticalLayout {
                         entrance_index: 9;
                         is_entered: root.is_entered;
                         is_favorite: root.tool_favorites[10];
-                        clicked => { root.open_tool(10); }
-                        toggle_favorite => { root.toggle_favorite(10); }
+                        clicked => { root.home-open-tool(10); }
+                        toggle_favorite => { root.home-toggle-favorite(10); }
                     }
                     ToolCard {
                         horizontal-stretch: 1;
@@ -597,8 +597,8 @@ export component HomeScreen inherits VerticalLayout {
                         entrance_index: 10;
                         is_entered: root.is_entered;
                         is_favorite: root.tool_favorites[11];
-                        clicked => { root.open_tool(11); }
-                        toggle_favorite => { root.toggle_favorite(11); }
+                        clicked => { root.home-open-tool(11); }
+                        toggle_favorite => { root.home-toggle-favorite(11); }
                     }
                     ToolCard {
                         horizontal-stretch: 1;
@@ -609,8 +609,8 @@ export component HomeScreen inherits VerticalLayout {
                         entrance_index: 11;
                         is_entered: root.is_entered;
                         is_favorite: root.tool_favorites[12];
-                        clicked => { root.open_tool(12); }
-                        toggle_favorite => { root.toggle_favorite(12); }
+                        clicked => { root.home-open-tool(12); }
+                        toggle_favorite => { root.home-toggle-favorite(12); }
                     }
                 }
 
@@ -625,8 +625,8 @@ export component HomeScreen inherits VerticalLayout {
                         entrance_index: 12;
                         is_entered: root.is_entered;
                         is_favorite: root.tool_favorites[13];
-                        clicked => { root.open_tool(13); }
-                        toggle_favorite => { root.toggle_favorite(13); }
+                        clicked => { root.home-open-tool(13); }
+                        toggle_favorite => { root.home-toggle-favorite(13); }
                     }
                     ToolCard {
                         horizontal-stretch: 1;
@@ -637,8 +637,8 @@ export component HomeScreen inherits VerticalLayout {
                         entrance_index: 13;
                         is_entered: root.is_entered;
                         is_favorite: root.tool_favorites[14];
-                        clicked => { root.open_tool(14); }
-                        toggle_favorite => { root.toggle_favorite(14); }
+                        clicked => { root.home-open-tool(14); }
+                        toggle_favorite => { root.home-toggle-favorite(14); }
                     }
                     Rectangle {
                         horizontal-stretch: 1;

@@ -13,10 +13,10 @@ export component SettingsScreen inherits VerticalLayout {
     in property <length> pill_bottom_margin: 28px;
     property <length> bottom_clearance: root.pill_height + root.pill_bottom_margin + root.nav_bar_inset + 24px;
     in-out property <bool> high_refresh_rate_enabled: false;
-    callback high_refresh_rate_changed(bool);
-    callback clear_recents();
-    callback clear_favorites();
-    callback open_about();
+    callback settings-high-refresh-rate-changed(bool);
+    callback settings-clear-recents();
+    callback settings-clear-favorites();
+    callback settings-open-about();
 
     // Local toggle state properties (stubbed for future engine wiring)
     property <bool> dark_theme_enabled: true;
@@ -144,7 +144,7 @@ export component SettingsScreen inherits VerticalLayout {
 
                     clicked => {
                         root.high_refresh_rate_enabled = !root.high_refresh_rate_enabled;
-                        root.high_refresh_rate_changed(root.high_refresh_rate_enabled);
+                        root.settings-high-refresh-rate-changed(root.high_refresh_rate_enabled);
                     }
 
                     HorizontalLayout {
@@ -175,7 +175,7 @@ export component SettingsScreen inherits VerticalLayout {
                                 checked: root.high_refresh_rate_enabled;
                                 checked_state_changed(checked) => {
                                     root.high_refresh_rate_enabled = checked;
-                                    root.high_refresh_rate_changed(checked);
+                                    root.settings-high-refresh-rate-changed(checked);
                                 }
                             }
                         }
@@ -283,7 +283,7 @@ export component SettingsScreen inherits VerticalLayout {
                             color: MaterialPalette.error;
 
                             clicked => {
-                                root.clear_recents();
+                                root.settings-clear-recents();
                             }
 
                             HorizontalLayout {
@@ -331,7 +331,7 @@ export component SettingsScreen inherits VerticalLayout {
                             color: MaterialPalette.error;
 
                             clicked => {
-                                root.clear_favorites();
+                                root.settings-clear-favorites();
                             }
 
                             HorizontalLayout {
@@ -391,7 +391,7 @@ export component SettingsScreen inherits VerticalLayout {
                             color: MaterialPalette.primary;
 
                             clicked => {
-                                root.open_about();
+                                root.settings-open-about();
                             }
 
                             HorizontalLayout {

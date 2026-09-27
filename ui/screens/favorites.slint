@@ -15,8 +15,8 @@ export component FavoritesScreen inherits VerticalLayout {
     in property <length> pill_bottom_margin: 28px;
     property <length> bottom_clearance: root.pill_height + root.pill_bottom_margin + root.nav_bar_inset + 24px;
     in property <[bool]> tool_favorites: [false, false, false, false, false, false, false, false, false, false, false, false, false, false, false];
-    callback open_tool(int);
-    callback toggle_favorite(int);
+    callback favorites-open-tool(int);
+    callback favorites-toggle-favorite(int);
 
     property <bool> has_favorites: root.tool_favorites[1] || root.tool_favorites[2] || root.tool_favorites[3] || root.tool_favorites[4] || root.tool_favorites[5] || root.tool_favorites[6] || root.tool_favorites[7] || root.tool_favorites[8] || root.tool_favorites[9] || root.tool_favorites[10] || root.tool_favorites[11] || root.tool_favorites[12] || root.tool_favorites[13] || root.tool_favorites[14];
 
@@ -141,8 +141,8 @@ export component FavoritesScreen inherits VerticalLayout {
                     icon: AppIcons.lan;
                     accent_color: MaterialPalette.primary;
                     is_favorite: true;
-                    clicked => { root.open_tool(1); }
-                    toggle_favorite => { root.toggle_favorite(1); }
+                    clicked => { root.favorites-open-tool(1); }
+                    toggle_favorite => { root.favorites-toggle-favorite(1); }
                 }
 
                 if root.tool_favorites[2] : ToolCard {
@@ -151,8 +151,8 @@ export component FavoritesScreen inherits VerticalLayout {
                     icon: AppIcons.lock;
                     accent_color: MaterialPalette.secondary;
                     is_favorite: true;
-                    clicked => { root.open_tool(2); }
-                    toggle_favorite => { root.toggle_favorite(2); }
+                    clicked => { root.favorites-open-tool(2); }
+                    toggle_favorite => { root.favorites-toggle-favorite(2); }
                 }
 
                 if root.tool_favorites[3] : ToolCard {
@@ -161,8 +161,8 @@ export component FavoritesScreen inherits VerticalLayout {
                     icon: AppIcons.code;
                     accent_color: MaterialPalette.tertiary;
                     is_favorite: true;
-                    clicked => { root.open_tool(3); }
-                    toggle_favorite => { root.toggle_favorite(3); }
+                    clicked => { root.favorites-open-tool(3); }
+                    toggle_favorite => { root.favorites-toggle-favorite(3); }
                 }
 
                 if root.tool_favorites[4] : ToolCard {
@@ -171,8 +171,8 @@ export component FavoritesScreen inherits VerticalLayout {
                     icon: AppIcons.fingerprint;
                     accent_color: MaterialPalette.primary;
                     is_favorite: true;
-                    clicked => { root.open_tool(4); }
-                    toggle_favorite => { root.toggle_favorite(4); }
+                    clicked => { root.favorites-open-tool(4); }
+                    toggle_favorite => { root.favorites-toggle-favorite(4); }
                 }
 
                 if root.tool_favorites[5] : ToolCard {
@@ -181,8 +181,8 @@ export component FavoritesScreen inherits VerticalLayout {
                     icon: AppIcons.timer;
                     accent_color: MaterialPalette.secondary;
                     is_favorite: true;
-                    clicked => { root.open_tool(5); }
-                    toggle_favorite => { root.toggle_favorite(5); }
+                    clicked => { root.favorites-open-tool(5); }
+                    toggle_favorite => { root.favorites-toggle-favorite(5); }
                 }
 
                 if root.tool_favorites[6] : ToolCard {
@@ -191,8 +191,8 @@ export component FavoritesScreen inherits VerticalLayout {
                     icon: AppIcons.regex;
                     accent_color: MaterialPalette.tertiary;
                     is_favorite: true;
-                    clicked => { root.open_tool(6); }
-                    toggle_favorite => { root.toggle_favorite(6); }
+                    clicked => { root.favorites-open-tool(6); }
+                    toggle_favorite => { root.favorites-toggle-favorite(6); }
                 }
 
                 if root.tool_favorites[7] : ToolCard {
@@ -201,8 +201,8 @@ export component FavoritesScreen inherits VerticalLayout {
                     icon: AppIcons.swap;
                     accent_color: MaterialPalette.primary;
                     is_favorite: true;
-                    clicked => { root.open_tool(7); }
-                    toggle_favorite => { root.toggle_favorite(7); }
+                    clicked => { root.favorites-open-tool(7); }
+                    toggle_favorite => { root.favorites-toggle-favorite(7); }
                 }
 
                 if root.tool_favorites[8] : ToolCard {
@@ -211,8 +211,8 @@ export component FavoritesScreen inherits VerticalLayout {
                     icon: AppIcons.schedule;
                     accent_color: MaterialPalette.secondary;
                     is_favorite: true;
-                    clicked => { root.open_tool(8); }
-                    toggle_favorite => { root.toggle_favorite(8); }
+                    clicked => { root.favorites-open-tool(8); }
+                    toggle_favorite => { root.favorites-toggle-favorite(8); }
                 }
 
                 if root.tool_favorites[9] : ToolCard {
@@ -221,8 +221,8 @@ export component FavoritesScreen inherits VerticalLayout {
                     icon: AppIcons.archive;
                     accent_color: MaterialPalette.tertiary;
                     is_favorite: true;
-                    clicked => { root.open_tool(9); }
-                    toggle_favorite => { root.toggle_favorite(9); }
+                    clicked => { root.favorites-open-tool(9); }
+                    toggle_favorite => { root.favorites-toggle-favorite(9); }
                 }
 
                 if root.tool_favorites[10] : ToolCard {
@@ -231,8 +231,8 @@ export component FavoritesScreen inherits VerticalLayout {
                     icon: AppIcons.formatter;
                     accent_color: MaterialPalette.primary;
                     is_favorite: true;
-                    clicked => { root.open_tool(10); }
-                    toggle_favorite => { root.toggle_favorite(10); }
+                    clicked => { root.favorites-open-tool(10); }
+                    toggle_favorite => { root.favorites-toggle-favorite(10); }
                 }
 
                 if root.tool_favorites[11] : ToolCard {
@@ -241,8 +241,8 @@ export component FavoritesScreen inherits VerticalLayout {
                     icon: AppIcons.security;
                     accent_color: MaterialPalette.secondary;
                     is_favorite: true;
-                    clicked => { root.open_tool(11); }
-                    toggle_favorite => { root.toggle_favorite(11); }
+                    clicked => { root.favorites-open-tool(11); }
+                    toggle_favorite => { root.favorites-toggle-favorite(11); }
                 }
 
                 if root.tool_favorites[12] : ToolCard {
@@ -251,8 +251,8 @@ export component FavoritesScreen inherits VerticalLayout {
                     icon: AppIcons.palette;
                     accent_color: MaterialPalette.tertiary;
                     is_favorite: true;
-                    clicked => { root.open_tool(12); }
-                    toggle_favorite => { root.toggle_favorite(12); }
+                    clicked => { root.favorites-open-tool(12); }
+                    toggle_favorite => { root.favorites-toggle-favorite(12); }
                 }
 
                 if root.tool_favorites[13] : ToolCard {
@@ -261,8 +261,8 @@ export component FavoritesScreen inherits VerticalLayout {
                     icon: AppIcons.contrast;
                     accent_color: MaterialPalette.primary;
                     is_favorite: true;
-                    clicked => { root.open_tool(13); }
-                    toggle_favorite => { root.toggle_favorite(13); }
+                    clicked => { root.favorites-open-tool(13); }
+                    toggle_favorite => { root.favorites-toggle-favorite(13); }
                 }
 
                 if root.tool_favorites[14] : ToolCard {
@@ -271,8 +271,8 @@ export component FavoritesScreen inherits VerticalLayout {
                     icon: AppIcons.key;
                     accent_color: MaterialPalette.secondary;
                     is_favorite: true;
-                    clicked => { root.open_tool(14); }
-                    toggle_favorite => { root.toggle_favorite(14); }
+                    clicked => { root.favorites-open-tool(14); }
+                    toggle_favorite => { root.favorites-toggle-favorite(14); }
                 }
             }
         }

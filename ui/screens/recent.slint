@@ -16,8 +16,8 @@ export component RecentScreen inherits VerticalLayout {
     property <length> bottom_clearance: root.pill_height + root.pill_bottom_margin + root.nav_bar_inset + 24px;
     in property <[int]> recent_tools: [];
     in property <[bool]> tool_favorites: [false, false, false, false, false, false, false, false, false, false, false, false, false, false, false];
-    callback open_tool(int);
-    callback toggle_favorite(int);
+    callback recent-open-tool(int);
+    callback recent-toggle-favorite(int);
 
     property <bool> has_recents: root.recent_tools.length > 0;
 
@@ -143,8 +143,8 @@ export component RecentScreen inherits VerticalLayout {
                         icon: AppIcons.lan;
                         accent_color: MaterialPalette.primary;
                         is_favorite: root.tool_favorites[1];
-                        clicked => { root.open_tool(1); }
-                        toggle_favorite => { root.toggle_favorite(1); }
+                        clicked => { root.recent-open-tool(1); }
+                        toggle_favorite => { root.recent-toggle-favorite(1); }
                     }
 
                     if tool_id == 2 : ToolCard {
@@ -153,8 +153,8 @@ export component RecentScreen inherits VerticalLayout {
                         icon: AppIcons.lock;
                         accent_color: MaterialPalette.secondary;
                         is_favorite: root.tool_favorites[2];
-                        clicked => { root.open_tool(2); }
-                        toggle_favorite => { root.toggle_favorite(2); }
+                        clicked => { root.recent-open-tool(2); }
+                        toggle_favorite => { root.recent-toggle-favorite(2); }
                     }
 
                     if tool_id == 3 : ToolCard {
@@ -163,8 +163,8 @@ export component RecentScreen inherits VerticalLayout {
                         icon: AppIcons.code;
                         accent_color: MaterialPalette.tertiary;
                         is_favorite: root.tool_favorites[3];
-                        clicked => { root.open_tool(3); }
-                        toggle_favorite => { root.toggle_favorite(3); }
+                        clicked => { root.recent-open-tool(3); }
+                        toggle_favorite => { root.recent-toggle-favorite(3); }
                     }
 
                     if tool_id == 4 : ToolCard {
@@ -173,8 +173,8 @@ export component RecentScreen inherits VerticalLayout {
                         icon: AppIcons.fingerprint;
                         accent_color: MaterialPalette.primary;
                         is_favorite: root.tool_favorites[4];
-                        clicked => { root.open_tool(4); }
-                        toggle_favorite => { root.toggle_favorite(4); }
+                        clicked => { root.recent-open-tool(4); }
+                        toggle_favorite => { root.recent-toggle-favorite(4); }
                     }
 
                     if tool_id == 5 : ToolCard {
@@ -183,8 +183,8 @@ export component RecentScreen inherits VerticalLayout {
                         icon: AppIcons.timer;
                         accent_color: MaterialPalette.secondary;
                         is_favorite: root.tool_favorites[5];
-                        clicked => { root.open_tool(5); }
-                        toggle_favorite => { root.toggle_favorite(5); }
+                        clicked => { root.recent-open-tool(5); }
+                        toggle_favorite => { root.recent-toggle-favorite(5); }
                     }
 
                     if tool_id == 6 : ToolCard {
@@ -193,8 +193,8 @@ export component RecentScreen inherits VerticalLayout {
                         icon: AppIcons.regex;
                         accent_color: MaterialPalette.tertiary;
                         is_favorite: root.tool_favorites[6];
-                        clicked => { root.open_tool(6); }
-                        toggle_favorite => { root.toggle_favorite(6); }
+                        clicked => { root.recent-open-tool(6); }
+                        toggle_favorite => { root.recent-toggle-favorite(6); }
                     }
 
                     if tool_id == 7 : ToolCard {
@@ -203,8 +203,8 @@ export component RecentScreen inherits VerticalLayout {
                         icon: AppIcons.swap;
                         accent_color: MaterialPalette.primary;
                         is_favorite: root.tool_favorites[7];
-                        clicked => { root.open_tool(7); }
-                        toggle_favorite => { root.toggle_favorite(7); }
+                        clicked => { root.recent-open-tool(7); }
+                        toggle_favorite => { root.recent-toggle-favorite(7); }
                     }
 
                     if tool_id == 8 : ToolCard {
@@ -213,8 +213,8 @@ export component RecentScreen inherits VerticalLayout {
                         icon: AppIcons.schedule;
                         accent_color: MaterialPalette.secondary;
                         is_favorite: root.tool_favorites[8];
-                        clicked => { root.open_tool(8); }
-                        toggle_favorite => { root.toggle_favorite(8); }
+                        clicked => { root.recent-open-tool(8); }
+                        toggle_favorite => { root.recent-toggle-favorite(8); }
                     }
 
                     if tool_id == 9 : ToolCard {
@@ -223,8 +223,8 @@ export component RecentScreen inherits VerticalLayout {
                         icon: AppIcons.archive;
                         accent_color: MaterialPalette.tertiary;
                         is_favorite: root.tool_favorites[9];
-                        clicked => { root.open_tool(9); }
-                        toggle_favorite => { root.toggle_favorite(9); }
+                        clicked => { root.recent-open-tool(9); }
+                        toggle_favorite => { root.recent-toggle-favorite(9); }
                     }
 
                     if tool_id == 10 : ToolCard {
@@ -233,8 +233,8 @@ export component RecentScreen inherits VerticalLayout {
                         icon: AppIcons.formatter;
                         accent_color: MaterialPalette.primary;
                         is_favorite: root.tool_favorites[10];
-                        clicked => { root.open_tool(10); }
-                        toggle_favorite => { root.toggle_favorite(10); }
+                        clicked => { root.recent-open-tool(10); }
+                        toggle_favorite => { root.recent-toggle-favorite(10); }
                     }
 
                     if tool_id == 11 : ToolCard {
@@ -243,8 +243,8 @@ export component RecentScreen inherits VerticalLayout {
                         icon: AppIcons.security;
                         accent_color: MaterialPalette.secondary;
                         is_favorite: root.tool_favorites[11];
-                        clicked => { root.open_tool(11); }
-                        toggle_favorite => { root.toggle_favorite(11); }
+                        clicked => { root.recent-open-tool(11); }
+                        toggle_favorite => { root.recent-toggle-favorite(11); }
                     }
 
                     if tool_id == 12 : ToolCard {
@@ -253,8 +253,8 @@ export component RecentScreen inherits VerticalLayout {
                         icon: AppIcons.palette;
                         accent_color: MaterialPalette.tertiary;
                         is_favorite: root.tool_favorites[12];
-                        clicked => { root.open_tool(12); }
-                        toggle_favorite => { root.toggle_favorite(12); }
+                        clicked => { root.recent-open-tool(12); }
+                        toggle_favorite => { root.recent-toggle-favorite(12); }
                     }
 
                     if tool_id == 13 : ToolCard {
@@ -263,8 +263,8 @@ export component RecentScreen inherits VerticalLayout {
                         icon: AppIcons.contrast;
                         accent_color: MaterialPalette.primary;
                         is_favorite: root.tool_favorites[13];
-                        clicked => { root.open_tool(13); }
-                        toggle_favorite => { root.toggle_favorite(13); }
+                        clicked => { root.recent-open-tool(13); }
+                        toggle_favorite => { root.recent-toggle-favorite(13); }
                     }
 
                     if tool_id == 14 : ToolCard {
@@ -273,8 +273,8 @@ export component RecentScreen inherits VerticalLayout {
                         icon: AppIcons.key;
                         accent_color: MaterialPalette.secondary;
                         is_favorite: root.tool_favorites[14];
-                        clicked => { root.open_tool(14); }
-                        toggle_favorite => { root.toggle_favorite(14); }
+                        clicked => { root.recent-open-tool(14); }
+                        toggle_favorite => { root.recent-toggle-favorite(14); }
                     }
                 }
             }
