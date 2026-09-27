@@ -125,10 +125,27 @@ export component ScrollView {
     // FIXME: remove. This property is currently set by the ListView and is used by the native style to draw the scrollbar differently when it has focus
     in_out property <bool> has_focus;
 
-    callback scrolled <=> flickable.flicked;
+    callback scrolled;
 
     property <length> scroll_bar_size: 8px;
     property <length> scroll_bar_padding: 1px;
+
+    in-out property <length> overscroll_y: 0px;
+    property <length> prev_content_y: 0px;
+
+    animate overscroll_y {
+        duration: 350ms;
+        easing: cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    spring_timer := Timer {
+        interval: 32ms;
+        running: false;
+        triggered => {
+            root.overscroll_y = 0px;
+            self.running = false;
+        }
+    }
 
     min_height: 50px;
     min_width: 50px;
@@ -139,11 +156,26 @@ export component ScrollView {
 
     flickable := Flickable {
         x: 0;
-        y: 0;
+        y: root.overscroll_y;
         content_y <=> vertical_bar.value;
         content_x <=> horizontal_bar.value;
         width: root.width - (root.vertical_scrollbar_policy != ScrollBarPolicy.always_off ? root.scroll_bar_size - 2 * root.scroll_bar_padding : 0);
         height: root.height - (root.horizontal_scrollbar_policy != ScrollBarPolicy.always_off ? root.scroll_bar_size : 0);
+
+        flicked => {
+            let max_s = self.content_height - self.height;
+            let dy = self.content_y - root.prev_content_y;
+            root.prev_content_y = self.content_y;
+
+            if self.content_y >= 0px && dy > 1px {
+                root.overscroll_y = min(48px, dy * 2.5);
+                spring_timer.running = true;
+            } else if max_s > 0px && self.content_y <= -max_s && dy < -1px {
+                root.overscroll_y = max(-48px, dy * 2.5);
+                spring_timer.running = true;
+            }
+            root.scrolled();
+        }
 
         @children
     }
