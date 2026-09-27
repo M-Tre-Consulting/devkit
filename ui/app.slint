@@ -368,16 +368,18 @@ export component AppWindow inherits Window {
 
             if root.displayed_tool == 13 : ContrastScreen {
                 nav_bar_inset: root.nav_bar_inset;
-                back => { root.back(); }
-                check_contrast => { root.check_contrast(self.fg_color_text, self.bg_color_text); }
-                copy(val) => { root.copy_text(val); }
+                contrast-back => { root.back(); }
+                contrast-check => { root.check_contrast(self.fg_color_text, self.bg_color_text); }
+                contrast-copy(val) => { root.copy_text(val); }
             }
 
             if root.displayed_tool == 14 : JwtScreen {
                 nav_bar_inset: root.nav_bar_inset;
-                back => { root.back(); }
-                decode => { root.decode_jwt(self.token_input); }
-                copy(val) => { root.copy_text(val); }
+                jwt-back => { root.back(); }
+                jwt-decode => { root.decode_jwt(self.token_input); }
+                jwt-copy(val) => { root.copy_text(val); }
+                jwt-copy-header(val) => { root.copy_text(val); }
+                jwt-copy-payload(val) => { root.copy_text(val); }
             }
         }
 

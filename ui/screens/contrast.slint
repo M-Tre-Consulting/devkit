@@ -9,11 +9,12 @@ import { AppIcons } from "../components/app-icons.slint";
 
 export component ContrastScreen inherits VerticalLayout {
     in property <length> nav_bar_inset: 16px;
-    callback back();
-    callback check_contrast();
-    callback swap_colors();
-    callback select_preset(string, string);
-    callback copy(string);
+    callback contrast-back();
+    callback contrast-check();
+    callback contrast-clear();
+    callback contrast-copy(string);
+    callback contrast-swap-colors();
+    callback contrast-select-preset(string, string);
 
     in-out property <string> fg_color_text: "#FFFFFF";
     in-out property <string> bg_color_text: "#6750A4";
@@ -35,7 +36,7 @@ export component ContrastScreen inherits VerticalLayout {
         title: "Contrast Checker";
         has_back: true;
         show_background: true;
-        back => { root.back(); }
+        back => { root.contrast-back(); }
     }
 
     ScrollView {
@@ -91,7 +92,7 @@ export component ContrastScreen inherits VerticalLayout {
                                 root.bg_color_text = "#6750A4";
                                 root.fg_color = MaterialPalette.on_primary;
                                 root.bg_color = MaterialPalette.primary;
-                                root.select_preset("#FFFFFF", "#6750A4");
+                                root.contrast-select-preset("#FFFFFF", "#6750A4");
                             }
                             HorizontalLayout {
                                 alignment: center;
@@ -125,7 +126,7 @@ export component ContrastScreen inherits VerticalLayout {
                                 root.bg_color_text = "#F4EFF4";
                                 root.fg_color = MaterialPalette.on_surface;
                                 root.bg_color = MaterialPalette.surface;
-                                root.select_preset("#1C1B1F", "#F4EFF4");
+                                root.contrast-select-preset("#1C1B1F", "#F4EFF4");
                             }
                             HorizontalLayout {
                                 alignment: center;
@@ -159,7 +160,7 @@ export component ContrastScreen inherits VerticalLayout {
                                 root.bg_color_text = "#1C1B1F";
                                 root.fg_color = MaterialPalette.inverse_on_surface;
                                 root.bg_color = MaterialPalette.inverse_surface;
-                                root.select_preset("#E6E1E5", "#1C1B1F");
+                                root.contrast-select-preset("#E6E1E5", "#1C1B1F");
                             }
                             HorizontalLayout {
                                 alignment: center;
@@ -199,7 +200,7 @@ export component ContrastScreen inherits VerticalLayout {
                             horizontal-stretch: 1;
                             placeholder_text: "#FFFFFF";
                             text <=> root.fg_color_text;
-                            accepted => { root.check_contrast(); }
+                            accepted => { root.contrast-check(); }
                         }
 
                         VerticalLayout {
@@ -234,7 +235,7 @@ export component ContrastScreen inherits VerticalLayout {
                             horizontal-stretch: 1;
                             placeholder_text: "#6750A4";
                             text <=> root.bg_color_text;
-                            accepted => { root.check_contrast(); }
+                            accepted => { root.contrast-check(); }
                         }
 
                         VerticalLayout {
@@ -257,7 +258,7 @@ export component ContrastScreen inherits VerticalLayout {
                 text: "Swap Colors";
                 icon: AppIcons.swap;
                 height: 40px;
-                clicked => { root.swap_colors(); }
+                clicked => { root.contrast-swap-colors(); }
             }
 
             // Live Preview Card
@@ -301,10 +302,23 @@ export component ContrastScreen inherits VerticalLayout {
             }
 
             // Primary Action: Check Contrast Ratio
-            FilledButton {
-                text: "Check Contrast Ratio";
-                height: 40px;
-                clicked => { root.check_contrast(); }
+            HorizontalLayout {
+                spacing: MaterialStyleMetrics.spacing_8;
+                FilledButton {
+                    horizontal-stretch: 1;
+                    text: "Check Contrast Ratio";
+                    height: 40px;
+                    clicked => { root.contrast-check(); }
+                }
+                OutlineButton {
+                    text: "Clear";
+                    height: 40px;
+                    clicked => {
+                        root.fg_color_text = "";
+                        root.bg_color_text = "";
+                        root.contrast-clear();
+                    }
+                }
             }
 
             // Contrast Ratio & WCAG Score Card
@@ -348,7 +362,7 @@ export component ContrastScreen inherits VerticalLayout {
                                     IconButton {
                                         icon: AppIcons.copy;
                                         tooltip: "Copy Ratio";
-                                        clicked => { root.copy(root.ratio_text); }
+                                        clicked => { root.contrast-copy(root.ratio_text); }
                                     }
                                 }
                             }

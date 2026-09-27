@@ -11,10 +11,13 @@ import { AppIcons } from "../components/app-icons.slint";
 
 export component JwtScreen inherits VerticalLayout {
     in property <length> nav_bar_inset: 16px;
-    callback back();
-    callback decode();
-    callback paste_example();
-    callback copy(string);
+    callback jwt-back();
+    callback jwt-decode();
+    callback jwt-clear();
+    callback jwt-copy-header(string);
+    callback jwt-copy-payload(string);
+    callback jwt-copy(string);
+    callback jwt-paste-example();
 
     in-out property <string> token_input: "";
     in-out property <string> header_json: "{\n  \"alg\": \"HS256\",\n  \"typ\": \"JWT\"\n}";
@@ -32,7 +35,7 @@ export component JwtScreen inherits VerticalLayout {
         title: "JWT Decoder";
         has_back: true;
         show_background: true;
-        back => { root.back(); }
+        back => { root.jwt-back(); }
     }
 
     ScrollView {
@@ -81,7 +84,7 @@ export component JwtScreen inherits VerticalLayout {
                         color: MaterialPalette.primary;
                         clicked => {
                             root.token_input = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c";
-                            root.paste_example();
+                            root.jwt-paste-example();
                         }
                         HorizontalLayout {
                             padding_left: 12px;
@@ -110,7 +113,12 @@ export component JwtScreen inherits VerticalLayout {
 
             ToolActionButton {
                 text: "Decode JWT";
-                clicked => { root.decode(); }
+                has_clear: true;
+                clicked => { root.jwt-decode(); }
+                clear => {
+                    root.token_input = "";
+                    root.jwt-clear();
+                }
             }
 
             // Token Metadata Card
@@ -188,7 +196,7 @@ export component JwtScreen inherits VerticalLayout {
                 has_copy: true;
                 min_box_height: 120px;
                 max_box_height: 200px;
-                copy(val) => { root.copy(val); }
+                copy(val) => { root.jwt-copy-header(val); }
             }
 
             // Payload Section
@@ -200,7 +208,7 @@ export component JwtScreen inherits VerticalLayout {
                 has_copy: true;
                 min_box_height: 140px;
                 max_box_height: 240px;
-                copy(val) => { root.copy(val); }
+                copy(val) => { root.jwt-copy-payload(val); }
             }
 
             // Signature Section
@@ -213,7 +221,7 @@ export component JwtScreen inherits VerticalLayout {
             ToolOutputArea {
                 title: "Raw Signature";
                 text: root.signature_output;
-                copy(val) => { root.copy(val); }
+                copy(val) => { root.jwt-copy(val); }
             }
         }
     }
