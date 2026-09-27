@@ -53,7 +53,16 @@ pub fn setup_tool_handlers(ui: &crate::AppWindow) {
 
     // 3. Base64
     ui.on_base64_convert(move |text, is_enc, is_url, pad| {
-        let _ = crate::tools::handlers::handle_base64(&text, is_enc, is_url, pad);
+        match crate::tools::handlers::handle_base64(&text, is_enc, is_url, pad) {
+            Ok(output) => crate::Base64Result {
+                output_text: output.output_text.into(),
+                error_message: "".into(),
+            },
+            Err(err) => crate::Base64Result {
+                output_text: "".into(),
+                error_message: err.into(),
+            },
+        }
     });
 
     // 4. UUID Generator

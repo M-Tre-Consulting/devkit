@@ -25,6 +25,11 @@ import { PillNavBar } from "./components/pill-nav-bar.slint";
 import { AppIcons } from "./components/app-icons.slint";
 export { MaterialWindowAdapter } from "@material";
 
+export struct Base64Result {
+    output_text: string,
+    error_message: string,
+}
+
 export component AppWindow inherits Window {
     title: "DevKit";
     min_width: 360px;
@@ -57,7 +62,7 @@ export component AppWindow inherits Window {
     // Tool execution callbacks
     callback subnet-calculate(string);
     callback hash-calculate(string, int);
-    callback base64-convert(string, bool, bool, bool);
+    callback base64-convert(string, bool, bool, bool) -> Base64Result;
     callback uuid-generate(int, int, bool, bool);
     callback timestamp-convert(string, string);
     callback regex-test(string, string, bool, bool, bool);
@@ -298,7 +303,11 @@ export component AppWindow inherits Window {
 
             if root.displayed_tool == 3 : Base64Screen {
                 base64-back => { root.back(); }
-                base64-convert => { root.base64-convert(self.input_text, self.mode == 0, self.variant == 1, self.use_padding); }
+                base64-convert => {
+                    let res = root.base64-convert(self.input_text, self.mode == 0, self.variant == 1, self.use_padding);
+                    self.output_text = res.output_text;
+                    self.error_message = res.error_message;
+                }
                 base64-copy(val) => { root.copy_text(val); }
             }
 
