@@ -262,6 +262,7 @@ pub fn android_main(android_app: slint::android::AndroidApp) {
     if let Some(path) = android_app.internal_data_path() {
         crate::storage::init_storage_dir(path.to_path_buf());
     }
+    crate::platform::android::configure_window_soft_input_mode(&android_app);
     let status_inset = crate::platform::android::query_status_bar_inset(&android_app);
     let nav_inset = crate::platform::android::query_navigation_bar_inset(&android_app);
     crate::platform::android::set_status_bar_inset(status_inset);

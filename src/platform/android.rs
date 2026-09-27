@@ -280,6 +280,36 @@ pub fn query_navigation_bar_inset(app: &slint::android::AndroidApp) -> f32 {
     }
 }
 
+/// Configure the window soft input mode to adjustResize (0x10) so Android notifies
+/// the window of IME insets and resizes the content area.
+#[cfg(target_os = "android")]
+pub fn configure_window_soft_input_mode(app: &slint::android::AndroidApp) {
+    let vm_ptr = app.vm_as_ptr();
+    let activity_ptr = app.activity_as_ptr();
+    if vm_ptr.is_null() || activity_ptr.is_null() {
+        return;
+    }
+
+    unsafe {
+        let vm = match jni::JavaVM::from_raw(vm_ptr as *mut _) {
+            Ok(v) => v,
+            Err(_) => return,
+        };
+        let mut env = match vm.attach_current_thread() {
+            Ok(e) => e,
+            Err(_) => return,
+        };
+
+        let activity = jni::objects::JObject::from_raw(activity_ptr as _);
+        if let Ok(window) = env.call_method(&activity, "getWindow", "()Landroid/view/Window;", &[]) {
+            if let Ok(window_obj) = window.l() {
+                // WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE = 0x10 (16)
+                let _ = env.call_method(&window_obj, "setSoftInputMode", "(I)V", &[16i32.into()]);
+            }
+        }
+        let _ = env.exception_clear();
+    }
+}
 
 /// Get the Android system accent color (Material You / Monet dynamic theming).
 pub fn get_system_accent_color() -> Option<(u8, u8, u8)> {

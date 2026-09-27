@@ -38,3 +38,7 @@ target_sdk_version = 35
 label = "DevKit"
 icon = "@mipmap/ic_launcher"
 round_icon = "@mipmap/ic_launcher_round"
+
+[package.metadata.android.activity]
+window_soft_input_mode = "adjustResize"
+
