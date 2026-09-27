@@ -48,8 +48,16 @@ export component CheckBox {
         border_radius: max(self.width, self.height) / 2;
         color: MaterialPalette.on_surface;
 
+        property <float> press_scale: state_area.pressed ? 0.96 : 1.0;
+        animate press_scale {
+            duration: state_area.pressed ? 100ms : 220ms;
+            easing: cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
         background_layer := Rectangle {
-            width: MaterialStyleMetrics.size_18;
+            x: (parent.width - self.width) / 2;
+            y: (parent.height - self.height) / 2;
+            width: MaterialStyleMetrics.size_18 * state_area.press_scale;
             height: self.width;
             border_radius: MaterialStyleMetrics.border_radius_2;
             border_width: root.checked ? 0 : 2px;

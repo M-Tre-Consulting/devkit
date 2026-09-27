@@ -32,7 +32,17 @@ export component Switch {
     touch_area := FocusTouchArea {
         enabled: root.enabled;
 
+        property <float> press_scale: touch_area.pressed ? 0.96 : 1.0;
+        animate press_scale {
+            duration: touch_area.pressed ? 100ms : 220ms;
+            easing: cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
         background_layer := Rectangle {
+            x: (parent.width - self.width) / 2;
+            y: (parent.height - self.height) / 2;
+            width: parent.width * touch_area.press_scale;
+            height: parent.height * touch_area.press_scale;
             background: root.checked ? MaterialPalette.primary : MaterialPalette.surface_container_highest;
             border_radius: self.height / 2;
             border_width: root.checked ? 0 : 2px;

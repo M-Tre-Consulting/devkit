@@ -46,7 +46,17 @@ export component ListTile {
     state_layer := StateLayerArea {
         color: root.color;
 
+        property <float> press_scale: state_layer.pressed ? 0.96 : 1.0;
+        animate press_scale {
+            duration: state_layer.pressed ? 100ms : 220ms;
+            easing: cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
         layout := HorizontalLayout {
+            x: (parent.width - self.width) / 2;
+            y: (parent.height - self.height) / 2;
+            width: parent.width * state_layer.press_scale;
+            height: parent.height * state_layer.press_scale;
             padding_left: MaterialStyleMetrics.padding_16;
             padding_right: MaterialStyleMetrics.padding_24;
             padding_top: MaterialStyleMetrics.padding_8;

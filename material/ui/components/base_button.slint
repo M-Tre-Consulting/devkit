@@ -30,9 +30,17 @@ export component BaseButton inherits StateLayerArea {
 
     min_width: max(root.min_layout_width, layout.min_width);
     min_height: max(root.min_layout_height, layout.min_height);
-    tooltip_offset: root.height / 2 + root.icon_size / 2 + MaterialStyleMetrics.padding_14;
+    property <float> press_scale: root.pressed ? 0.96 : 1.0;
+    animate press_scale {
+        duration: root.pressed ? 100ms : 220ms;
+        easing: cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
 
     layout := HorizontalLayout {
+        x: (parent.width - self.width) / 2;
+        y: (parent.height - self.height) / 2;
+        width: parent.width * root.press_scale;
+        height: parent.height * root.press_scale;
         padding_left: root.button_padding_left;
         padding_right: root.button_padding_right;
         padding_top: root.button_padding_top;
