@@ -18,25 +18,25 @@ export component ToolCard inherits Rectangle {
 
     min_height: 148px;
 
-    // Staggered entrance animation
+    // Staggered entrance animation (Material 3 Expressive entrance: 500ms)
     property <float> enter_opacity: root.is_entered ? 1.0 : 0.0;
     property <length> enter_y_offset: root.is_entered ? 0px : 16px;
 
     animate enter_opacity {
-        duration: 250ms;
+        duration: 500ms;
         delay: root.entrance_index * 40ms;
         easing: cubic-bezier(0.05, 0.7, 0.1, 1.0);
     }
     animate enter_y_offset {
-        duration: 250ms;
+        duration: 500ms;
         delay: root.entrance_index * 40ms;
         easing: cubic-bezier(0.05, 0.7, 0.1, 1.0);
     }
 
-    // Touch press scale animation (120ms in, 180ms out)
+    // Touch press scale animation (Material 3 Expressive small state change: 200ms)
     property <float> press_scale: touch_area.pressed ? 0.97 : 1.0;
     animate press_scale {
-        duration: touch_area.pressed ? 120ms : 180ms;
+        duration: 200ms;
         easing: cubic-bezier(0.05, 0.7, 0.1, 1.0);
     }
 
@@ -46,7 +46,7 @@ export component ToolCard inherits Rectangle {
         width: parent.width * root.press_scale;
         height: parent.height * root.press_scale;
         opacity: root.enter_opacity;
-        border_radius: MaterialStyleMetrics.border_radius_16;
+        border_radius: MaterialStyleMetrics.shape_large;
         background: MaterialPalette.surface_container_low;
 
         // Subtle outline for tonal contrast
@@ -73,7 +73,7 @@ export component ToolCard inherits Rectangle {
                     Rectangle {
                         width: 48px;
                         height: 48px;
-                        border_radius: MaterialStyleMetrics.border_radius_12;
+                        border_radius: MaterialStyleMetrics.shape_medium;
                         background: root.accent_color.with_alpha(18%);
 
                         Icon {
@@ -118,7 +118,7 @@ export component ToolCard inherits Rectangle {
             y: 12px;
             width: 36px;
             height: 36px;
-            border_radius: 18px;
+            border_radius: MaterialStyleMetrics.shape_full;
 
             star_touch := StateLayerArea {
                 width: 100%;
@@ -141,7 +141,7 @@ export component ToolCard inherits Rectangle {
                             height: 22px;
 
                             animate colorize {
-                                duration: 150ms;
+                                duration: 200ms;
                                 easing: cubic-bezier(0.05, 0.7, 0.1, 1.0);
                             }
                         }

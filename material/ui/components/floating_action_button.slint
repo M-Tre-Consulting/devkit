@@ -27,8 +27,8 @@ export component FloatingActionButton {
     accessible-action-default => { base.clicked(); }
 
     elevation := Elevation {
-        border_radius: root.style == FABStyle.small ? MaterialStyleMetrics.border_radius_12 :
-            root.style == FABStyle.standard ? MaterialStyleMetrics.border_radius_16 : MaterialStyleMetrics.border_radius_28;
+        border_radius: root.style == FABStyle.small ? MaterialStyleMetrics.shape_medium :
+            root.style == FABStyle.standard ? MaterialStyleMetrics.shape_large : MaterialStyleMetrics.shape_extra_large;
         background: MaterialPalette.primary;
         level: 3;
         width: 100%;

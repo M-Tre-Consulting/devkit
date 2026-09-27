@@ -22,7 +22,7 @@ export component PillNavBar inherits Rectangle {
     // Self-contained pill dimensions: wraps items in their resting layout
     width: root.items.length * root.icon_width + (root.active_index >= 0 ? root.extra_width : 0px) + root.inner_padding * 2;
     height: root.item_height + root.inner_padding * 2;
-    border_radius: self.height / 2;
+    border_radius: MaterialStyleMetrics.shape_full;
     background: MaterialPalette.surface_container_high.with_alpha(92%);
 
     // Material 3 elevation drop shadow for floating pill effect
@@ -36,7 +36,7 @@ export component PillNavBar inherits Rectangle {
 
     // Smoothly animate pill width if items or active state change
     animate width {
-        duration: 280ms;
+        duration: 400ms;
         easing: cubic-bezier(0.2, 0, 0, 1);
     }
 
@@ -48,15 +48,15 @@ export component PillNavBar inherits Rectangle {
         y: root.inner_padding;
         width: root.icon_width + (root.active_index >= 0 ? root.extra_width : 0px);
         height: root.item_height;
-        border_radius: self.height / 2;
+        border_radius: MaterialStyleMetrics.shape_full;
         background: MaterialPalette.secondary_container;
         visible: root.active_index >= 0;
 
         // Animate x and width together in a single animate block
-        // Easing: cubic-bezier(0.2, 0, 0, 1) - Material 3 Emphasized Decelerate
+        // Easing: cubic-bezier(0.05, 0.7, 0.1, 1.0) - Material 3 Emphasized Decelerate
         animate x, width {
-            duration: 280ms;
-            easing: cubic-bezier(0.2, 0, 0, 1);
+            duration: 400ms;
+            easing: cubic-bezier(0.05, 0.7, 0.1, 1.0);
         }
     }
 
@@ -79,19 +79,19 @@ export component PillNavBar inherits Rectangle {
 
             // Animate cell width to smoothly expand/collapse active item in lockstep with indicator
             animate width {
-                duration: 280ms;
-                easing: cubic-bezier(0.2, 0, 0, 1);
+                duration: 400ms;
+                easing: cubic-bezier(0.05, 0.7, 0.1, 1.0);
             }
 
             animate content_color {
-                duration: 280ms;
+                duration: 200ms;
                 easing: cubic-bezier(0.2, 0, 0, 1);
             }
 
             touch_area := StateLayerArea {
                 width: 100%;
                 height: 100%;
-                border_radius: self.height / 2;
+                border_radius: MaterialStyleMetrics.shape_full;
                 color: item_cell.content_color;
 
                 clicked => {
@@ -114,8 +114,8 @@ export component PillNavBar inherits Rectangle {
                             colorize: item_cell.content_color;
 
                             animate width {
-                                duration: 100ms;
-                                easing: ease-out;
+                                duration: 200ms;
+                                easing: cubic-bezier(0.2, 0, 0, 1);
                             }
                         }
                     }
@@ -127,8 +127,8 @@ export component PillNavBar inherits Rectangle {
 
                         // Synchronized width and opacity animations matching indicator exactly
                         animate width, opacity {
-                            duration: 280ms;
-                            easing: cubic-bezier(0.2, 0, 0, 1);
+                            duration: 400ms;
+                            easing: cubic-bezier(0.05, 0.7, 0.1, 1.0);
                         }
 
                         VerticalLayout {

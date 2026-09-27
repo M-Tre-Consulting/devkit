@@ -121,7 +121,7 @@ export component AppWindow inherits Window {
             visible: self.opacity > 0.01;
 
             animate width, height, opacity {
-                duration: root.is_tool ? 240ms : 220ms;
+                duration: root.is_tool ? 400ms : 200ms;
                 easing: cubic-bezier(0.05, 0.7, 0.1, 1.0);
             }
 
@@ -135,12 +135,12 @@ export component AppWindow inherits Window {
                 height: 100%;
 
                 animate x {
-                    duration: self.is_active ? 260ms : 180ms;
-                    easing: self.is_active ? cubic-bezier(0.05, 0.7, 0.1, 1.0) : cubic-bezier(0.3, 0, 1, 1);
+                    duration: self.is_active ? 400ms : 200ms;
+                    easing: self.is_active ? cubic-bezier(0.05, 0.7, 0.1, 1.0) : cubic-bezier(0.3, 0, 0.8, 0.15);
                 }
                 animate opacity {
-                    duration: self.is_active ? 260ms : 180ms;
-                    easing: self.is_active ? cubic-bezier(0.05, 0.7, 0.1, 1.0) : cubic-bezier(0.3, 0, 1, 1);
+                    duration: self.is_active ? 400ms : 200ms;
+                    easing: self.is_active ? cubic-bezier(0.05, 0.7, 0.1, 1.0) : cubic-bezier(0.3, 0, 0.8, 0.15);
                 }
 
                 HomeScreen {
@@ -168,12 +168,12 @@ export component AppWindow inherits Window {
                 height: 100%;
 
                 animate x {
-                    duration: self.is_active ? 260ms : 180ms;
-                    easing: self.is_active ? cubic-bezier(0.05, 0.7, 0.1, 1.0) : cubic-bezier(0.3, 0, 1, 1);
+                    duration: self.is_active ? 400ms : 200ms;
+                    easing: self.is_active ? cubic-bezier(0.05, 0.7, 0.1, 1.0) : cubic-bezier(0.3, 0, 0.8, 0.15);
                 }
                 animate opacity {
-                    duration: self.is_active ? 260ms : 180ms;
-                    easing: self.is_active ? cubic-bezier(0.05, 0.7, 0.1, 1.0) : cubic-bezier(0.3, 0, 1, 1);
+                    duration: self.is_active ? 400ms : 200ms;
+                    easing: self.is_active ? cubic-bezier(0.05, 0.7, 0.1, 1.0) : cubic-bezier(0.3, 0, 0.8, 0.15);
                 }
 
                 RecentScreen {
@@ -202,12 +202,12 @@ export component AppWindow inherits Window {
                 height: 100%;
 
                 animate x {
-                    duration: self.is_active ? 260ms : 180ms;
-                    easing: self.is_active ? cubic-bezier(0.05, 0.7, 0.1, 1.0) : cubic-bezier(0.3, 0, 1, 1);
+                    duration: self.is_active ? 400ms : 200ms;
+                    easing: self.is_active ? cubic-bezier(0.05, 0.7, 0.1, 1.0) : cubic-bezier(0.3, 0, 0.8, 0.15);
                 }
                 animate opacity {
-                    duration: self.is_active ? 260ms : 180ms;
-                    easing: self.is_active ? cubic-bezier(0.05, 0.7, 0.1, 1.0) : cubic-bezier(0.3, 0, 1, 1);
+                    duration: self.is_active ? 400ms : 200ms;
+                    easing: self.is_active ? cubic-bezier(0.05, 0.7, 0.1, 1.0) : cubic-bezier(0.3, 0, 0.8, 0.15);
                 }
 
                 FavoritesScreen {
@@ -235,12 +235,12 @@ export component AppWindow inherits Window {
                 height: 100%;
 
                 animate x {
-                    duration: self.is_active ? 260ms : 180ms;
-                    easing: self.is_active ? cubic-bezier(0.05, 0.7, 0.1, 1.0) : cubic-bezier(0.3, 0, 1, 1);
+                    duration: self.is_active ? 400ms : 200ms;
+                    easing: self.is_active ? cubic-bezier(0.05, 0.7, 0.1, 1.0) : cubic-bezier(0.3, 0, 0.8, 0.15);
                 }
                 animate opacity {
-                    duration: self.is_active ? 260ms : 180ms;
-                    easing: self.is_active ? cubic-bezier(0.05, 0.7, 0.1, 1.0) : cubic-bezier(0.3, 0, 1, 1);
+                    duration: self.is_active ? 400ms : 200ms;
+                    easing: self.is_active ? cubic-bezier(0.05, 0.7, 0.1, 1.0) : cubic-bezier(0.3, 0, 0.8, 0.15);
                 }
 
                 SettingsScreen {
@@ -276,12 +276,12 @@ export component AppWindow inherits Window {
             visible: self.opacity > 0.01;
 
             animate x {
-                duration: root.is_tool ? 280ms : 200ms;
-                easing: root.is_tool ? cubic-bezier(0.05, 0.7, 0.1, 1.0) : cubic-bezier(0.3, 0.0, 0.8, 0.15);
+                duration: root.is_tool ? 400ms : 200ms;
+                easing: root.is_tool ? cubic-bezier(0.05, 0.7, 0.1, 1.0) : cubic-bezier(0.3, 0, 0.8, 0.15);
             }
             animate opacity {
-                duration: root.is_tool ? 260ms : 200ms;
-                easing: root.is_tool ? cubic-bezier(0.05, 0.7, 0.1, 1.0) : cubic-bezier(0.3, 0.0, 0.8, 0.15);
+                duration: root.is_tool ? 400ms : 200ms;
+                easing: root.is_tool ? cubic-bezier(0.05, 0.7, 0.1, 1.0) : cubic-bezier(0.3, 0, 0.8, 0.15);
             }
 
             if root.displayed_tool == 1 : SubnetScreen {
@@ -390,12 +390,12 @@ export component AppWindow inherits Window {
             visible: self.opacity > 0.01;
 
             animate x {
-                duration: root.about_open ? 280ms : 200ms;
-                easing: root.about_open ? cubic-bezier(0.05, 0.7, 0.1, 1.0) : cubic-bezier(0.3, 0.0, 0.8, 0.15);
+                duration: root.about_open ? 400ms : 200ms;
+                easing: root.about_open ? cubic-bezier(0.05, 0.7, 0.1, 1.0) : cubic-bezier(0.3, 0, 0.8, 0.15);
             }
             animate opacity {
-                duration: root.about_open ? 260ms : 200ms;
-                easing: root.about_open ? cubic-bezier(0.05, 0.7, 0.1, 1.0) : cubic-bezier(0.3, 0.0, 0.8, 0.15);
+                duration: root.about_open ? 400ms : 200ms;
+                easing: root.about_open ? cubic-bezier(0.05, 0.7, 0.1, 1.0) : cubic-bezier(0.3, 0, 0.8, 0.15);
             }
 
             AboutScreen {

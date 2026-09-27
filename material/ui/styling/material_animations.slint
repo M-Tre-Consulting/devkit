@@ -2,11 +2,19 @@
 // SPDX-License-Identifier: MIT
 
 export global MaterialAnimations {
+    // Material 3 Expressive motion tokens
+    out property <easing> standard_easing: cubic-bezier(0.2, 0, 0, 1);
+    out property <easing> emphasized_decelerate_easing: cubic-bezier(0.05, 0.7, 0.1, 1.0);
+    out property <easing> emphasized_accelerate_easing: cubic-bezier(0.3, 0, 0.8, 0.15);
+    out property <duration> duration_small: 200ms;
+    out property <duration> duration_large: 400ms;
+    out property <duration> duration_entrance: 500ms;
+
+    // Base M3 motion tokens
     out property <easing> emphasized_easing: cubic-bezier(0.05, 0.7, 0.1, 1.0);
     out property <duration> emphasized_duration: 500ms;
     out property <duration> emphasized_decelerate_duration: 400ms;
     out property <duration> emphasized_accelerate_duration: 200ms;
-    out property <easing> standard_easing: cubic-bezier(0, 0, 0, 1);
     out property <duration> standard_decelerate_duration: 250ms;
     out property <duration> standard_accelerate_duration: 200ms;
     out property <duration> standard_fast_duration: 150ms;

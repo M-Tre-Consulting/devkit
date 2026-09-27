@@ -16,7 +16,7 @@ export component ToolActionButton inherits HorizontalLayout {
     Rectangle {
         horizontal-stretch: 1;
         height: 48px;
-        border_radius: 24px;
+        border_radius: MaterialStyleMetrics.shape_full;
         background: root.enabled ? MaterialPalette.primary : MaterialPalette.on_surface.with_alpha(12%);
 
         StateLayerArea {
@@ -47,7 +47,7 @@ export component ToolActionButton inherits HorizontalLayout {
     if root.has_clear : Rectangle {
         width: 48px;
         height: 48px;
-        border_radius: 24px;
+        border_radius: MaterialStyleMetrics.shape_full;
         background: MaterialPalette.surface_container_high;
 
         StateLayerArea {

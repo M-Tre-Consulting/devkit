@@ -13,7 +13,7 @@ component BaseCard {
     in property <color> border_color;
     in property <length> border_width;
 
-    in property <length> border_radius: MaterialStyleMetrics.border_radius_16;
+    in property <length> border_radius: MaterialStyleMetrics.shape_large;
 
     callback clicked();
 
@@ -47,7 +47,7 @@ component BaseCard {
 
     Rectangle {
         clip: true;
-        border_radius: MaterialStyleMetrics.border_radius_12;
+        border_radius: MaterialStyleMetrics.shape_medium;
 
         @children
     }
