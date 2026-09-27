@@ -12,15 +12,15 @@ export component TopBar inherits Rectangle {
     callback back();
     callback action();
 
-    height: 56px;
-    background: root.show_background ? MaterialPalette.surface_container : Colors.transparent;
+    height: 64px;
+    background: Colors.transparent;
 
     HorizontalLayout {
-        padding_left: 4px;
-        padding_right: 4px;
+        padding_left: root.has_back ? 4px : 16px;
+        padding_right: 8px;
         spacing: 0px;
 
-        // Leading slot: 48x48dp touch target, centered at Y = 28px
+        // Leading slot: 48x48dp touch target, centered at Y = 32px
         if root.has_back : back_target := Rectangle {
             width: 48px;
             height: 48px;
@@ -49,13 +49,11 @@ export component TopBar inherits Rectangle {
         }
 
         // Gap between leading button (or left edge) and title:
-        // When back button is present: 4px edge + 48px button + 8px gap = 60px title start.
-        // When no back button: 4px edge + 12px gap = 16px title start (M3 standard 16dp margin).
-        Rectangle {
-            width: root.has_back ? 8px : 12px;
+        if root.has_back : Rectangle {
+            width: 8px;
         }
 
-        // Title text: vertically centered on the exact visual centerline (Y = 28px)
+        // Title text: left-aligned, Material 3 headline_small typography
         title_box := Rectangle {
             horizontal_stretch: 1;
             height: 100%;
@@ -65,13 +63,13 @@ export component TopBar inherits Rectangle {
                 y: (parent.height - self.height) / 2;
                 width: 100%;
                 text: root.title;
-                style: MaterialTypography.title_large;
+                style: MaterialTypography.headline_small;
                 color: MaterialPalette.on_surface;
                 overflow: elide;
             }
         }
 
-        // Trailing action slot: 48x48dp touch target, right edge 4dp from screen edge
+        // Trailing action slot: 48x48dp touch target
         if root.has_action : action_target := Rectangle {
             width: 48px;
             height: 48px;
@@ -96,10 +94,6 @@ export component TopBar inherits Rectangle {
                     colorize: MaterialPalette.on_surface_variant;
                 }
             }
-        }
-
-        if !root.has_action : Rectangle {
-            width: 12px;
         }
     }
 }
