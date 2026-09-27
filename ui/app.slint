@@ -297,15 +297,16 @@ export component AppWindow inherits Window {
             }
 
             if root.displayed_tool == 3 : Base64Screen {
-                back => { root.back(); }
-                convert => { root.convert_base64(self.input_text, self.mode == 0, self.variant == 1, self.use_padding); }
-                copy(val) => { root.copy_text(val); }
+                base64-back => { root.back(); }
+                base64-convert => { root.convert_base64(self.input_text, self.mode == 0, self.variant == 1, self.use_padding); }
+                base64-copy(val) => { root.copy_text(val); }
             }
 
             if root.displayed_tool == 4 : UuidScreen {
-                back => { root.back(); }
-                generate => { root.generate_uuid(self.version, self.count, self.uppercase, self.hyphens); }
-                copy(val) => { root.copy_text(val); }
+                uuid-back => { root.back(); }
+                uuid-generate => { root.generate_uuid(self.version, self.count, self.uppercase, self.hyphens); }
+                uuid-copy-item(val) => { root.copy_text(val); }
+                uuid-copy-all => { root.copy_text(self.bulk_uuids); }
             }
 
             if root.displayed_tool == 5 : TimestampScreen {

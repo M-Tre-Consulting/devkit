@@ -12,7 +12,11 @@ import { AppIcons } from "../components/app-icons.slint";
 export component Base64Screen inherits VerticalLayout {
     in property <length> status_bar_inset: 24px;
     in property <length> nav_bar_inset: 16px;
-    callback back();
+    callback base64-back();
+    callback base64-convert();
+    callback base64-clear();
+    callback base64-copy(string);
+    callback base64-swap-mode();
 
     in-out property <string> input_text: "";
     in-out property <int> mode: 0; // 0=Encode, 1=Decode
@@ -22,10 +26,6 @@ export component Base64Screen inherits VerticalLayout {
     in-out property <string> error_message: "";
     in-out property <bool> is_loading: false;
 
-    callback convert();
-    callback clear();
-    callback copy(string);
-
     property <bool> is_entered: false;
     init => { self.is_entered = true; }
 
@@ -33,7 +33,7 @@ export component Base64Screen inherits VerticalLayout {
         title: "Base64";
         has_back: true;
         show_background: true;
-        back => { root.back(); }
+        back => { root.base64-back(); }
     }
 
     ScrollView {
@@ -81,7 +81,7 @@ export component Base64Screen inherits VerticalLayout {
                         height: 100%;
                         border_radius: parent.border_radius;
                         color: MaterialPalette.primary;
-                        clicked => { root.mode = 0; }
+                        clicked => { root.mode = 0; root.base64-swap-mode(); }
                         HorizontalLayout {
                             alignment: center;
                             VerticalLayout {
@@ -109,7 +109,7 @@ export component Base64Screen inherits VerticalLayout {
                         height: 100%;
                         border_radius: parent.border_radius;
                         color: MaterialPalette.primary;
-                        clicked => { root.mode = 1; }
+                        clicked => { root.mode = 1; root.base64-swap-mode(); }
                         HorizontalLayout {
                             alignment: center;
                             VerticalLayout {
@@ -233,12 +233,12 @@ export component Base64Screen inherits VerticalLayout {
                 text: root.mode == 0 ? "Encode to Base64" : "Decode from Base64";
                 enabled: root.input_text != "" && !root.is_loading;
                 has_clear: true;
-                clicked => { root.convert(); }
+                clicked => { root.base64-convert(); }
                 clear => {
                     root.input_text = "";
                     root.output_text = "";
                     root.error_message = "";
-                    root.clear();
+                    root.base64-clear();
                 }
             }
 
@@ -251,7 +251,7 @@ export component Base64Screen inherits VerticalLayout {
                 has_copy: true;
                 min_box_height: 140px;
                 max_box_height: 240px;
-                copy(str) => { root.copy(str); }
+                copy(str) => { root.base64-copy(str); }
             }
         }
     }

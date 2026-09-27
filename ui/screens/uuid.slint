@@ -11,7 +11,11 @@ import { AppIcons } from "../components/app-icons.slint";
 export component UuidScreen inherits VerticalLayout {
     in property <length> status_bar_inset: 24px;
     in property <length> nav_bar_inset: 16px;
-    callback back();
+    callback uuid-back();
+    callback uuid-generate();
+    callback uuid-clear();
+    callback uuid-copy-item(string);
+    callback uuid-copy-all();
 
     in-out property <int> version: 1; // 0=v1, 1=v4, 2=v7
     in-out property <int> count: 1;
@@ -22,10 +26,6 @@ export component UuidScreen inherits VerticalLayout {
     in-out property <string> error_message: "";
     in-out property <bool> is_loading: false;
 
-    callback generate();
-    callback clear();
-    callback copy(string);
-
     property <bool> is_entered: false;
     init => { self.is_entered = true; }
 
@@ -33,7 +33,7 @@ export component UuidScreen inherits VerticalLayout {
         title: "UUID Generator";
         has_back: true;
         show_background: true;
-        back => { root.back(); }
+        back => { root.uuid-back(); }
     }
 
     ScrollView {
@@ -221,12 +221,12 @@ export component UuidScreen inherits VerticalLayout {
                 text: "Generate UUIDs";
                 enabled: !root.is_loading;
                 has_clear: true;
-                clicked => { root.generate(); }
+                clicked => { root.uuid-generate(); }
                 clear => {
                     root.uuids = [];
                     root.bulk_uuids = "";
                     root.error_message = "";
-                    root.clear();
+                    root.uuid-clear();
                 }
             }
 
@@ -247,7 +247,7 @@ export component UuidScreen inherits VerticalLayout {
                         height: 100%;
                         border_radius: parent.border_radius;
                         color: MaterialPalette.primary;
-                        clicked => { root.copy(root.bulk_uuids); }
+                        clicked => { root.uuid-copy-all(); }
                         HorizontalLayout {
                             alignment: center;
                             VerticalLayout {
@@ -295,7 +295,7 @@ export component UuidScreen inherits VerticalLayout {
                                 height: 100%;
                                 border_radius: parent.border_radius;
                                 color: MaterialPalette.primary;
-                                clicked => { root.copy(uuid); }
+                                clicked => { root.uuid-copy-item(uuid); }
                                 HorizontalLayout {
                                     alignment: center;
                                     VerticalLayout {
