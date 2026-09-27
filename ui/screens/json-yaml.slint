@@ -12,7 +12,11 @@ import { AppIcons } from "../components/app-icons.slint";
 export component JsonYamlScreen inherits VerticalLayout {
     in property <length> status_bar_inset: 24px;
     in property <length> nav_bar_inset: 16px;
-    callback back();
+    callback json-yaml-back();
+    callback json-yaml-convert();
+    callback json-yaml-clear();
+    callback json-yaml-copy(string);
+    callback json-yaml-swap-direction();
 
     in-out property <string> source_text: "{\"name\": \"DevKit\", \"version\": \"0.1.0\"}";
     in-out property <int> direction: 0; // 0=JSON->YAML, 1=YAML->JSON
@@ -21,10 +25,6 @@ export component JsonYamlScreen inherits VerticalLayout {
     in-out property <string> error_message: "";
     in-out property <bool> is_loading: false;
 
-    callback convert();
-    callback clear();
-    callback copy(string);
-
     property <bool> is_entered: false;
     init => { self.is_entered = true; }
 
@@ -32,7 +32,7 @@ export component JsonYamlScreen inherits VerticalLayout {
         title: "JSON ↔ YAML Converter";
         has_back: true;
         show_background: true;
-        back => { root.back(); }
+        back => { root.json-yaml-back(); }
     }
 
     ScrollView {
@@ -80,7 +80,7 @@ export component JsonYamlScreen inherits VerticalLayout {
                         height: 100%;
                         border_radius: parent.border_radius;
                         color: MaterialPalette.primary;
-                        clicked => { root.direction = 0; }
+                        clicked => { root.direction = 0; root.json-yaml-swap-direction(); }
                         HorizontalLayout {
                             alignment: center;
                             VerticalLayout {
@@ -108,7 +108,7 @@ export component JsonYamlScreen inherits VerticalLayout {
                         height: 100%;
                         border_radius: parent.border_radius;
                         color: MaterialPalette.primary;
-                        clicked => { root.direction = 1; }
+                        clicked => { root.direction = 1; root.json-yaml-swap-direction(); }
                         HorizontalLayout {
                             alignment: center;
                             VerticalLayout {
@@ -206,12 +206,12 @@ export component JsonYamlScreen inherits VerticalLayout {
                 text: root.direction == 0 ? "Convert to YAML" : "Convert to JSON";
                 enabled: root.source_text != "" && !root.is_loading;
                 has_clear: true;
-                clicked => { root.convert(); }
+                clicked => { root.json-yaml-convert(); }
                 clear => {
                     root.source_text = "";
                     root.converted_text = "";
                     root.error_message = "";
-                    root.clear();
+                    root.json-yaml-clear();
                 }
             }
 
@@ -224,7 +224,7 @@ export component JsonYamlScreen inherits VerticalLayout {
                 has_copy: true;
                 min_box_height: 160px;
                 max_box_height: 240px;
-                copy(str) => { root.copy(str); }
+                copy(str) => { root.json-yaml-copy(str); }
             }
         }
     }

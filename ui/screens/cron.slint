@@ -11,7 +11,10 @@ import { AppIcons } from "../components/app-icons.slint";
 export component CronScreen inherits VerticalLayout {
     in property <length> status_bar_inset: 24px;
     in property <length> nav_bar_inset: 16px;
-    callback back();
+    callback cron-back();
+    callback cron-parse();
+    callback cron-clear();
+    callback cron-copy(string);
 
     in-out property <string> expression: "*/15 * * * *";
     in-out property <string> description: "Every 15 minutes, every hour, every day";
@@ -25,10 +28,6 @@ export component CronScreen inherits VerticalLayout {
     in-out property <string> error_message: "";
     in-out property <bool> is_loading: false;
 
-    callback parse();
-    callback clear();
-    callback copy(string);
-
     property <bool> is_entered: false;
     init => { self.is_entered = true; }
 
@@ -36,7 +35,7 @@ export component CronScreen inherits VerticalLayout {
         title: "CRON Parser";
         has_back: true;
         show_background: true;
-        back => { root.back(); }
+        back => { root.cron-back(); }
     }
 
     ScrollView {
@@ -86,7 +85,7 @@ export component CronScreen inherits VerticalLayout {
                         color: MaterialPalette.primary;
                         clicked => {
                             root.expression = "* * * * *";
-                            root.parse();
+                            root.cron-parse();
                         }
                         HorizontalLayout {
                             alignment: center;
@@ -117,7 +116,7 @@ export component CronScreen inherits VerticalLayout {
                         color: MaterialPalette.primary;
                         clicked => {
                             root.expression = "0 * * * *";
-                            root.parse();
+                            root.cron-parse();
                         }
                         HorizontalLayout {
                             alignment: center;
@@ -148,7 +147,7 @@ export component CronScreen inherits VerticalLayout {
                         color: MaterialPalette.primary;
                         clicked => {
                             root.expression = "0 0 * * *";
-                            root.parse();
+                            root.cron-parse();
                         }
                         HorizontalLayout {
                             alignment: center;
@@ -179,7 +178,7 @@ export component CronScreen inherits VerticalLayout {
                         color: MaterialPalette.primary;
                         clicked => {
                             root.expression = "0 0 * * 1";
-                            root.parse();
+                            root.cron-parse();
                         }
                         HorizontalLayout {
                             alignment: center;
@@ -213,13 +212,13 @@ export component CronScreen inherits VerticalLayout {
                 text: "Parse Expression";
                 enabled: root.expression != "" && !root.is_loading;
                 has_clear: true;
-                clicked => { root.parse(); }
+                clicked => { root.cron-parse(); }
                 clear => {
                     root.expression = "";
                     root.description = "";
                     root.next_runs = [];
                     root.error_message = "";
-                    root.clear();
+                    root.cron-clear();
                 }
             }
 
@@ -228,7 +227,7 @@ export component CronScreen inherits VerticalLayout {
                 title: "SCHEDULE DESCRIPTION";
                 text: root.description;
                 is_code: false;
-                copy(str) => { root.copy(str); }
+                copy(str) => { root.cron-copy(str); }
             }
 
             // Next runs list
@@ -278,7 +277,7 @@ export component CronScreen inherits VerticalLayout {
                                 height: 100%;
                                 border_radius: parent.border_radius;
                                 color: MaterialPalette.primary;
-                                clicked => { root.copy(run); }
+                                clicked => { root.cron-copy(run); }
                                 HorizontalLayout {
                                     alignment: center;
                                     VerticalLayout {

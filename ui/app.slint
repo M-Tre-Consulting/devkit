@@ -322,15 +322,15 @@ export component AppWindow inherits Window {
             }
 
             if root.displayed_tool == 7 : JsonYamlScreen {
-                back => { root.back(); }
-                convert => { root.convert_json_yaml(self.source_text, self.direction == 0, self.indent_size); }
-                copy(val) => { root.copy_text(val); }
+                json-yaml-back => { root.back(); }
+                json-yaml-convert => { root.convert_json_yaml(self.source_text, self.direction == 0, self.indent_size); }
+                json-yaml-copy(val) => { root.copy_text(val); }
             }
 
             if root.displayed_tool == 8 : CronScreen {
-                back => { root.back(); }
-                parse => { root.parse_cron(self.expression); }
-                copy(val) => { root.copy_text(val); }
+                cron-back => { root.back(); }
+                cron-parse => { root.parse_cron(self.expression); }
+                cron-copy(val) => { root.copy_text(val); }
             }
 
             if root.displayed_tool == 9 : GzipScreen {
