@@ -12,7 +12,8 @@
             android:name="com.google.androidgamesdk.GameActivity"
             android:configChanges="orientation|screenSize|screenLayout|keyboardHidden"
             android:exported="true"
-            android:label="DevKit">
+            android:label="DevKit"
+            android:windowSoftInputMode="adjustResize">
             <meta-data
                 android:name="android.app.lib_name"
                 android:value="devkit" />
