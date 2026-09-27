@@ -6,10 +6,16 @@
 //! Provides native integration with Android system APIs such as Material You
 //! dynamic colors (Monet), accessibility font scaling, and WindowInsets (status bar height).
 
+#[cfg(target_os = "android")]
+use std::sync::atomic::AtomicPtr;
 use std::sync::atomic::{AtomicU32, Ordering};
 
 static STATUS_BAR_INSET: AtomicU32 = AtomicU32::new(0);
 static NAVIGATION_BAR_INSET: AtomicU32 = AtomicU32::new(0);
+#[cfg(target_os = "android")]
+static VM_PTR: AtomicPtr<std::ffi::c_void> = AtomicPtr::new(std::ptr::null_mut());
+#[cfg(target_os = "android")]
+static ACTIVITY_PTR: AtomicPtr<std::ffi::c_void> = AtomicPtr::new(std::ptr::null_mut());
 
 /// Set the cached status bar inset.
 pub fn set_status_bar_inset(inset: f32) {
@@ -286,6 +292,8 @@ pub fn query_navigation_bar_inset(app: &slint::android::AndroidApp) -> f32 {
 pub fn configure_window_soft_input_mode(app: &slint::android::AndroidApp) {
     let vm_ptr = app.vm_as_ptr();
     let activity_ptr = app.activity_as_ptr();
+    VM_PTR.store(vm_ptr as *mut _, Ordering::SeqCst);
+    ACTIVITY_PTR.store(activity_ptr as *mut _, Ordering::SeqCst);
     if vm_ptr.is_null() || activity_ptr.is_null() {
         return;
     }
@@ -335,3 +343,45 @@ pub fn apply_refresh_rate_setting(enabled: bool) {
     }
     todo!("Query the display's supported modes, pick the mode with the highest refresh rate, call Window.setFrameRate() or set preferredDisplayModeId on API 30+, and fall back gracefully on older Android versions")
 }
+
+/// Perform a subtle haptic tap (KEYBOARD_TAP) via JNI on Android.
+///
+/// Respects the user's system haptic feedback setting (Settings.System.HAPTIC_FEEDBACK_ENABLED).
+#[cfg(target_os = "android")]
+pub fn haptic_tap() {
+    let vm_ptr = VM_PTR.load(Ordering::SeqCst);
+    let activity_ptr = ACTIVITY_PTR.load(Ordering::SeqCst);
+    if vm_ptr.is_null() || activity_ptr.is_null() {
+        return;
+    }
+
+    unsafe {
+        let vm = match jni::JavaVM::from_raw(vm_ptr as *mut _) {
+            Ok(v) => v,
+            Err(_) => return,
+        };
+        let mut env = match vm.attach_current_thread() {
+            Ok(e) => e,
+            Err(_) => return,
+        };
+
+        let activity = jni::objects::JObject::from_raw(activity_ptr as _);
+        if let Ok(window) = env.call_method(&activity, "getWindow", "()Landroid/view/Window;", &[]) {
+            if let Ok(window_obj) = window.l() {
+                if let Ok(decor) = env.call_method(&window_obj, "getDecorView", "()Landroid/view/View;", &[]) {
+                    if let Ok(decor_obj) = decor.l() {
+                        // HapticFeedbackConstants.KEYBOARD_TAP = 3
+                        // Automatically checks and respects system haptic feedback settings
+                        let _ = env.call_method(&decor_obj, "performHapticFeedback", "(I)Z", &[3i32.into()]);
+                    }
+                }
+            }
+        }
+        let _ = env.exception_clear();
+    }
+}
+
+/// Fallback for non-Android targets.
+#[cfg(not(target_os = "android"))]
+pub fn haptic_tap() {}
+

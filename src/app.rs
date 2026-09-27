@@ -43,16 +43,19 @@ pub fn update_high_refresh_rate(ui: &crate::AppWindow) {
 pub fn setup_tool_handlers(ui: &crate::AppWindow) {
     // 1. Subnet Calculator
     ui.on_subnet_calculate(move |ip| {
+        crate::platform::android::haptic_tap();
         let _ = crate::tools::handlers::handle_subnet(&ip);
     });
 
     // 2. Hash Calculator
     ui.on_hash_calculate(move |text, algo| {
+        crate::platform::android::haptic_tap();
         let _ = crate::tools::handlers::handle_hash(&text, algo);
     });
 
     // 3. Base64
     ui.on_base64_convert(move |text, is_enc, is_url, pad| {
+        crate::platform::android::haptic_tap();
         match crate::tools::handlers::handle_base64(&text, is_enc, is_url, pad) {
             Ok(output) => crate::Base64Result {
                 output_text: output.output_text.into(),
@@ -67,61 +70,73 @@ pub fn setup_tool_handlers(ui: &crate::AppWindow) {
 
     // 4. UUID Generator
     ui.on_uuid_generate(move |ver, count, upper, hyphens| {
+        crate::platform::android::haptic_tap();
         let _ = crate::tools::handlers::handle_uuid(ver, count as usize, upper, hyphens);
     });
 
     // 5. Timestamp Converter
     ui.on_timestamp_convert(move |ts, tz| {
+        crate::platform::android::haptic_tap();
         let _ = crate::tools::handlers::handle_timestamp(&ts, &tz);
     });
 
     // 6. Regex Tester
     ui.on_regex_test(move |pat, text, ci, ml, dot| {
+        crate::platform::android::haptic_tap();
         let _ = crate::tools::handlers::handle_regex(&pat, &text, ci, ml, dot);
     });
 
     // 7. JSON ↔ YAML Converter
     ui.on_json_yaml_convert(move |src, is_j2y, ind| {
+        crate::platform::android::haptic_tap();
         let _ = crate::tools::handlers::handle_json_yaml(&src, is_j2y, ind as usize);
     });
 
     // 8. CRON Parser
     ui.on_cron_parse(move |expr| {
+        crate::platform::android::haptic_tap();
         let _ = crate::tools::handlers::handle_cron(&expr);
     });
 
     // 9. GZip Compressor
     ui.on_gzip_compress(move |data, is_comp| {
+        crate::platform::android::haptic_tap();
         let _ = crate::tools::handlers::handle_gzip(&data, is_comp);
     });
 
     // 10. Code Formatter
     ui.on_format_format(move |src, lang, ind| {
+        crate::platform::android::haptic_tap();
         let _ = crate::tools::handlers::handle_formatter(&src, lang, ind as u8);
     });
 
     // 11. Chmod Calculator
     ui.on_chmod_apply(move |or, ow, ox, gr, gw, gx, tr, tw, tx| {
+        crate::platform::android::haptic_tap();
         let _ = crate::tools::handlers::handle_chmod(or, ow, ox, gr, gw, gx, tr, tw, tx);
     });
 
     // 12. Color Converter
     ui.on_color_convert(move |val, fmt| {
+        crate::platform::android::haptic_tap();
         let _ = crate::tools::handlers::handle_color(&val, fmt);
     });
 
     // 13. Contrast Checker
     ui.on_contrast_check(move |fg, bg| {
+        crate::platform::android::haptic_tap();
         let _ = crate::tools::handlers::handle_contrast(&fg, &bg);
     });
 
     // 14. JWT Decoder
     ui.on_jwt_decode(move |token| {
+        crate::platform::android::haptic_tap();
         let _ = crate::tools::handlers::handle_jwt(&token);
     });
 
     // Clipboard copy action
     ui.on_copy_text(move |_text| {
+        crate::platform::android::haptic_tap();
         // Ready for system clipboard integration
     });
 }
@@ -137,6 +152,7 @@ pub fn setup_app_state(ui: &crate::AppWindow) {
     let state_clone = nav_state.clone();
     let ui_handle = ui.as_weak();
     ui.on_switch_mode(move |mode_id| {
+        crate::platform::android::haptic_tap();
         let mode = AppMode::from_id(mode_id);
         state_clone.borrow_mut().switch_mode(mode);
         if let Some(ui) = ui_handle.upgrade() {
@@ -150,6 +166,7 @@ pub fn setup_app_state(ui: &crate::AppWindow) {
     let state_clone = nav_state.clone();
     let ui_handle = ui.as_weak();
     ui.on_open_tool(move |tool_id| {
+        crate::platform::android::haptic_tap();
         let _ = crate::storage::record_tool_opened(tool_id);
         state_clone.borrow_mut().open_tool(tool_id);
         if let Some(ui) = ui_handle.upgrade() {
@@ -162,6 +179,7 @@ pub fn setup_app_state(ui: &crate::AppWindow) {
 
     let ui_handle = ui.as_weak();
     ui.on_toggle_favorite(move |tool_id| {
+        crate::platform::android::haptic_tap();
         let _ = crate::storage::toggle_favorite(tool_id);
         if let Some(ui) = ui_handle.upgrade() {
             update_favorites(&ui);
