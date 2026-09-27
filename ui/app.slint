@@ -348,22 +348,22 @@ export component AppWindow inherits Window {
 
             if root.displayed_tool == 11 : ChmodScreen {
                 nav_bar_inset: root.nav_bar_inset;
-                back => { root.back(); }
-                calculate => {
+                chmod-back => { root.back(); }
+                chmod-apply => {
                     root.calculate_chmod(
                         self.owner_r, self.owner_w, self.owner_x,
                         self.group_r, self.group_w, self.group_x,
                         self.other_r, self.other_w, self.other_x,
                     );
                 }
-                copy(val) => { root.copy_text(val); }
+                chmod-copy(val) => { root.copy_text(val); }
             }
 
             if root.displayed_tool == 12 : ColorScreen {
                 nav_bar_inset: root.nav_bar_inset;
-                back => { root.back(); }
-                convert => { root.convert_color(self.color_input, self.selected_format); }
-                copy(val) => { root.copy_text(val); }
+                color-back => { root.back(); }
+                color-convert => { root.convert_color(self.color_input, self.selected_format); }
+                color-copy(val) => { root.copy_text(val); }
             }
 
             if root.displayed_tool == 13 : ContrastScreen {

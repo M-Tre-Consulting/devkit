@@ -10,11 +10,12 @@ import { AppIcons } from "../components/app-icons.slint";
 
 export component ColorScreen inherits VerticalLayout {
     in property <length> nav_bar_inset: 16px;
-    callback back();
-    callback convert();
-    callback select_preset(string);
-    callback copy(string);
-    callback clear_input();
+    callback color-back();
+    callback color-convert();
+    callback color-clear();
+    callback color-copy(string);
+    callback color-swap-format();
+    callback color-select-preset(string);
 
     in-out property <string> color_input: "#6750A4";
     in-out property <int> selected_format: 0; // 0=Auto, 1=Hex, 2=Rgb, 3=Hsl, 4=Hsv
@@ -35,7 +36,7 @@ export component ColorScreen inherits VerticalLayout {
         title: "Color Converter";
         has_back: true;
         show_background: true;
-        back => { root.back(); }
+        back => { root.color-back(); }
     }
 
     ScrollView {
@@ -130,7 +131,7 @@ export component ColorScreen inherits VerticalLayout {
                             clicked => {
                                 root.color_input = "#6750A4";
                                 root.preview_color = MaterialPalette.primary;
-                                root.select_preset("#6750A4");
+                                root.color-select-preset("#6750A4");
                             }
                             HorizontalLayout {
                                 alignment: center;
@@ -162,7 +163,7 @@ export component ColorScreen inherits VerticalLayout {
                             clicked => {
                                 root.color_input = "#2196F3";
                                 root.preview_color = MaterialPalette.secondary;
-                                root.select_preset("#2196F3");
+                                root.color-select-preset("#2196F3");
                             }
                             HorizontalLayout {
                                 alignment: center;
@@ -194,7 +195,7 @@ export component ColorScreen inherits VerticalLayout {
                             clicked => {
                                 root.color_input = "#009688";
                                 root.preview_color = MaterialPalette.tertiary;
-                                root.select_preset("#009688");
+                                root.color-select-preset("#009688");
                             }
                             HorizontalLayout {
                                 alignment: center;
@@ -226,7 +227,7 @@ export component ColorScreen inherits VerticalLayout {
                             clicked => {
                                 root.color_input = "#FFC107";
                                 root.preview_color = MaterialPalette.secondary_container;
-                                root.select_preset("#FFC107");
+                                root.color-select-preset("#FFC107");
                             }
                             HorizontalLayout {
                                 alignment: center;
@@ -271,7 +272,7 @@ export component ColorScreen inherits VerticalLayout {
                             height: 100%;
                             border_radius: parent.border_radius;
                             color: MaterialPalette.primary;
-                            clicked => { root.selected_format = 0; }
+                            clicked => { root.selected_format = 0; root.color-swap-format(); }
                             HorizontalLayout {
                                 alignment: center;
                                 VerticalLayout {
@@ -300,7 +301,7 @@ export component ColorScreen inherits VerticalLayout {
                             height: 100%;
                             border_radius: parent.border_radius;
                             color: MaterialPalette.primary;
-                            clicked => { root.selected_format = 1; }
+                            clicked => { root.selected_format = 1; root.color-swap-format(); }
                             HorizontalLayout {
                                 alignment: center;
                                 VerticalLayout {
@@ -329,7 +330,7 @@ export component ColorScreen inherits VerticalLayout {
                             height: 100%;
                             border_radius: parent.border_radius;
                             color: MaterialPalette.primary;
-                            clicked => { root.selected_format = 2; }
+                            clicked => { root.selected_format = 2; root.color-swap-format(); }
                             HorizontalLayout {
                                 alignment: center;
                                 VerticalLayout {
@@ -358,7 +359,7 @@ export component ColorScreen inherits VerticalLayout {
                             height: 100%;
                             border_radius: parent.border_radius;
                             color: MaterialPalette.primary;
-                            clicked => { root.selected_format = 3; }
+                            clicked => { root.selected_format = 3; root.color-swap-format(); }
                             HorizontalLayout {
                                 alignment: center;
                                 VerticalLayout {
@@ -387,7 +388,7 @@ export component ColorScreen inherits VerticalLayout {
                             height: 100%;
                             border_radius: parent.border_radius;
                             color: MaterialPalette.primary;
-                            clicked => { root.selected_format = 4; }
+                            clicked => { root.selected_format = 4; root.color-swap-format(); }
                             HorizontalLayout {
                                 alignment: center;
                                 VerticalLayout {
@@ -414,12 +415,17 @@ export component ColorScreen inherits VerticalLayout {
             TextField {
                 placeholder_text: "e.g. #6750A4, rgb(103, 80, 164), hsl(256, 34%, 48%)";
                 text <=> root.color_input;
-                accepted => { root.convert(); }
+                accepted => { root.color-convert(); }
             }
 
             ToolActionButton {
                 text: "Convert Color";
-                clicked => { root.convert(); }
+                has_clear: true;
+                clicked => { root.color-convert(); }
+                clear => {
+                    root.color_input = "";
+                    root.color-clear();
+                }
             }
 
             // Converted Formats Outputs
@@ -432,31 +438,31 @@ export component ColorScreen inherits VerticalLayout {
             ToolOutputArea {
                 title: "HEX";
                 text: root.hex_output;
-                copy(val) => { root.copy(val); }
+                copy(val) => { root.color-copy(val); }
             }
 
             ToolOutputArea {
                 title: "RGB";
                 text: root.rgb_output;
-                copy(val) => { root.copy(val); }
+                copy(val) => { root.color-copy(val); }
             }
 
             ToolOutputArea {
                 title: "HSL";
                 text: root.hsl_output;
-                copy(val) => { root.copy(val); }
+                copy(val) => { root.color-copy(val); }
             }
 
             ToolOutputArea {
                 title: "HSV";
                 text: root.hsv_output;
-                copy(val) => { root.copy(val); }
+                copy(val) => { root.color-copy(val); }
             }
 
             ToolOutputArea {
                 title: "CMYK";
                 text: root.cmyk_output;
-                copy(val) => { root.copy(val); }
+                copy(val) => { root.color-copy(val); }
             }
         }
     }
