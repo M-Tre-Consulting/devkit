@@ -334,15 +334,16 @@ export component AppWindow inherits Window {
             }
 
             if root.displayed_tool == 9 : GzipScreen {
-                back => { root.back(); }
-                process => { root.process_gzip(self.input_data, self.mode == 0); }
-                copy(val) => { root.copy_text(val); }
+                gzip-back => { root.back(); }
+                gzip-compress => { root.process_gzip(self.input_data, true); }
+                gzip-decompress => { root.process_gzip(self.input_data, false); }
+                gzip-copy(val) => { root.copy_text(val); }
             }
 
             if root.displayed_tool == 10 : FormatterScreen {
-                back => { root.back(); }
-                format => { root.format_code(self.source_code, self.selected_lang, self.indent_size); }
-                copy(val) => { root.copy_text(val); }
+                format-back => { root.back(); }
+                format-format => { root.format_code(self.source_code, self.selected_lang, self.indent_size); }
+                format-copy(val) => { root.copy_text(val); }
             }
 
             if root.displayed_tool == 11 : ChmodScreen {

@@ -12,7 +12,12 @@ import { AppIcons } from "../components/app-icons.slint";
 export component GzipScreen inherits VerticalLayout {
     in property <length> status_bar_inset: 24px;
     in property <length> nav_bar_inset: 16px;
-    callback back();
+    callback gzip-back();
+    callback gzip-compress();
+    callback gzip-decompress();
+    callback gzip-clear();
+    callback gzip-copy(string);
+    callback gzip-pick-file();
 
     in-out property <string> input_data: "DevKit: A native Rust + Slint developer toolbox for Android.";
     in-out property <int> mode: 0; // 0=Compress, 1=Decompress
@@ -23,10 +28,6 @@ export component GzipScreen inherits VerticalLayout {
     in-out property <string> error_message: "";
     in-out property <bool> is_loading: false;
 
-    callback process();
-    callback clear();
-    callback copy(string);
-
     property <bool> is_entered: false;
     init => { self.is_entered = true; }
 
@@ -34,7 +35,7 @@ export component GzipScreen inherits VerticalLayout {
         title: "GZip Compressor";
         has_back: true;
         show_background: true;
-        back => { root.back(); }
+        back => { root.gzip-back(); }
     }
 
     ScrollView {
@@ -141,7 +142,13 @@ export component GzipScreen inherits VerticalLayout {
                 text: root.mode == 0 ? "Compress with GZip" : "Decompress Payload";
                 enabled: root.input_data != "" && !root.is_loading;
                 has_clear: true;
-                clicked => { root.process(); }
+                clicked => {
+                    if root.mode == 0 {
+                        root.gzip-compress();
+                    } else {
+                        root.gzip-decompress();
+                    }
+                }
                 clear => {
                     root.input_data = "";
                     root.result_data = "";
@@ -149,7 +156,7 @@ export component GzipScreen inherits VerticalLayout {
                     root.processed_size = "";
                     root.ratio = "";
                     root.error_message = "";
-                    root.clear();
+                    root.gzip-clear();
                 }
             }
 
@@ -162,7 +169,7 @@ export component GzipScreen inherits VerticalLayout {
                 has_copy: true;
                 min_box_height: 140px;
                 max_box_height: 240px;
-                copy(str) => { root.copy(str); }
+                copy(str) => { root.gzip-copy(str); }
             }
 
             // Compression statistics

@@ -12,7 +12,10 @@ import { AppIcons } from "../components/app-icons.slint";
 export component FormatterScreen inherits VerticalLayout {
     in property <length> status_bar_inset: 24px;
     in property <length> nav_bar_inset: 16px;
-    callback back();
+    callback format-back();
+    callback format-format();
+    callback format-clear();
+    callback format-copy(string);
 
     in-out property <string> source_code: "{\"name\":\"DevKit\",\"version\":\"0.1.0\",\"status\":\"ready\"}";
     in-out property <int> selected_lang: 0; // 0: JSON, 1: YAML, 2: XML, 3: SQL, 4: TOML
@@ -21,10 +24,6 @@ export component FormatterScreen inherits VerticalLayout {
     in-out property <string> error_message: "";
     in-out property <bool> is_loading: false;
 
-    callback format();
-    callback clear();
-    callback copy(string);
-
     property <bool> is_entered: false;
     init => { self.is_entered = true; }
 
@@ -32,7 +31,7 @@ export component FormatterScreen inherits VerticalLayout {
         title: "Code Formatter";
         has_back: true;
         show_background: true;
-        back => { root.back(); }
+        back => { root.format-back(); }
     }
 
     ScrollView {
@@ -295,12 +294,12 @@ export component FormatterScreen inherits VerticalLayout {
                 text: "Format Code";
                 enabled: root.source_code != "" && !root.is_loading;
                 has_clear: true;
-                clicked => { root.format(); }
+                clicked => { root.format-format(); }
                 clear => {
                     root.source_code = "";
                     root.formatted_code = "";
                     root.error_message = "";
-                    root.clear();
+                    root.format-clear();
                 }
             }
 
@@ -313,7 +312,7 @@ export component FormatterScreen inherits VerticalLayout {
                 has_copy: true;
                 min_box_height: 160px;
                 max_box_height: 240px;
-                copy(str) => { root.copy(str); }
+                copy(str) => { root.format-copy(str); }
             }
         }
     }
