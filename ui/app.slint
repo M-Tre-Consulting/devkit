@@ -285,15 +285,15 @@ export component AppWindow inherits Window {
             }
 
             if root.displayed_tool == 1 : SubnetScreen {
-                back => { root.back(); }
-                calculate => { root.calculate_subnet(self.ip_input); }
-                copy(val) => { root.copy_text(val); }
+                subnet-back => { root.back(); }
+                subnet-calculate => { root.calculate_subnet(self.ip_input); }
+                subnet-copy(val) => { root.copy_text(val); }
             }
 
             if root.displayed_tool == 2 : HashScreen {
-                back => { root.back(); }
-                calculate => { root.calculate_hash(self.input_text, self.selected_algorithm); }
-                copy(val) => { root.copy_text(val); }
+                hash-back => { root.back(); }
+                hash-calculate => { root.calculate_hash(self.input_text, self.selected_algorithm); }
+                hash-copy(val) => { root.copy_text(val); }
             }
 
             if root.displayed_tool == 3 : Base64Screen {

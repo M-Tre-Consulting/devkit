@@ -10,7 +10,10 @@ import { AppIcons } from "../components/app-icons.slint";
 export component SubnetScreen inherits VerticalLayout {
     in property <length> status_bar_inset: 24px;
     in property <length> nav_bar_inset: 16px;
-    callback back();
+    callback subnet-back();
+    callback subnet-calculate();
+    callback subnet-clear();
+    callback subnet-copy(string);
 
     in-out property <string> ip_input: "192.168.1.1/24";
     in-out property <string> error_message: "";
@@ -24,10 +27,6 @@ export component SubnetScreen inherits VerticalLayout {
     in-out property <string> cidr_notation: "/24";
     in-out property <bool> is_loading: false;
 
-    callback calculate();
-    callback clear();
-    callback copy(string);
-
     property <bool> is_entered: false;
     init => { self.is_entered = true; }
 
@@ -35,7 +34,7 @@ export component SubnetScreen inherits VerticalLayout {
         title: "Subnet Calculator";
         has_back: true;
         show_background: true;
-        back => { root.back(); }
+        back => { root.subnet-back(); }
     }
 
     ScrollView {
@@ -78,7 +77,7 @@ export component SubnetScreen inherits VerticalLayout {
                 text: "Calculate Subnet";
                 enabled: root.ip_input != "" && !root.is_loading;
                 has_clear: true;
-                clicked => { root.calculate(); }
+                clicked => { root.subnet-calculate(); }
                 clear => {
                     root.ip_input = "";
                     root.network_address = "";
@@ -90,7 +89,7 @@ export component SubnetScreen inherits VerticalLayout {
                     root.wildcard_mask = "";
                     root.cidr_notation = "";
                     root.error_message = "";
-                    root.clear();
+                    root.subnet-clear();
                 }
             }
 
@@ -136,7 +135,7 @@ export component SubnetScreen inherits VerticalLayout {
                                 height: 100%;
                                 border_radius: parent.border_radius;
                                 color: MaterialPalette.primary;
-                                clicked => { root.copy(root.network_address); }
+                                clicked => { root.subnet-copy(root.network_address); }
                                 HorizontalLayout {
                                     alignment: center;
                                     VerticalLayout {
@@ -193,7 +192,7 @@ export component SubnetScreen inherits VerticalLayout {
                                 height: 100%;
                                 border_radius: parent.border_radius;
                                 color: MaterialPalette.primary;
-                                clicked => { root.copy(root.broadcast_address); }
+                                clicked => { root.subnet-copy(root.broadcast_address); }
                                 HorizontalLayout {
                                     alignment: center;
                                     VerticalLayout {
