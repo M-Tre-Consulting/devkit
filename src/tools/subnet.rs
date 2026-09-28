@@ -6,6 +6,8 @@
 //! Provides IPv4 and IPv6 CIDR network calculation, address range estimation,
 //! and netmask conversions.
 
+use std::net::Ipv4Addr;
+
 /// Input parameters for subnet calculation.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct SubnetInput {
@@ -39,6 +41,28 @@ pub enum SubnetError {
 /// TODO: Implement subnet calculation using standard library IP types or pure Rust bitwise math.
 pub fn calculate(_input: &SubnetInput) -> Result<SubnetOutput, SubnetError> {
     todo!("calculate subnet details from input")
+}
+
+/// Parses an IPv4 address from string.
+fn parse_ipv4_address(input: &str) -> Result<Ipv4Addr, SubnetError> {
+    input
+        .trim()
+        .parse::<Ipv4Addr>()
+        .map_err(|_| SubnetError::InvalidIp)
+}
+
+/// Parses a prefix (CIDR value) from string.
+fn parse_prefix(input: &str) -> Result<u8, SubnetError> {
+    input
+        .trim()
+        .parse::<u8>()
+        .ok()
+        .filter(|p| *p <= 32)
+        .ok_or(SubnetError::InvalidPrefix)
+}
+
+fn split_input(input: &SubnetInput) -> Result<(Ipv4Addr, u8), SubnetError> {
+    todo!()
 }
 
 #[cfg(test)]
