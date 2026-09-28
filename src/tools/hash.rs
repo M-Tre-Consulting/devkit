@@ -6,6 +6,10 @@
 //! Provides cryptographic and checksum hashing digests across multiple
 //! algorithms: MD5, SHA-1, SHA-256, SHA-512, BLAKE2b, and BLAKE3.
 
+use hex::ToHex;
+use sha1::{Digest, Sha1};
+use sha2::{Sha256, Sha512};
+
 /// Supported hashing algorithms.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum HashAlgorithm {
@@ -68,7 +72,35 @@ pub enum HashError {
 ///
 /// TODO: Implement hash digest computation when cryptography crate is added.
 pub fn calculate(_input: &HashInput) -> Result<HashOutput, HashError> {
+    if _input.input_text.is_empty() {
+        return Err(HashError::EmptyInput);
+    }
+
     todo!("calculate cryptographic hash digests")
+}
+
+/// Calculates the MD5 hash and returns a lowercase hex string.
+fn calculate_md5(input_text: &String) -> String {
+    let digest = md5::compute(input_text.as_bytes());
+    digest.encode_hex()
+}
+
+/// Calculates the SHA1 hash and returns a lowercase hex string.
+fn calculate_sha1(input_text: &String) -> String {
+    let digest = Sha1::digest(input_text.as_bytes());
+    digest.encode_hex()
+}
+
+/// Calculates the SHA256 hash and returns a lowercase hex string.
+fn calculate_sha256(input_text: &String) -> String {
+    let digest = Sha256::digest(input_text.as_bytes());
+    digest.encode_hex()
+}
+
+/// Calculates the SHA512 hash and returns a lowercase hex string.
+fn calculate_sha512(input_text: &String) -> String {
+    let digest = Sha512::digest(input_text.as_bytes());
+    digest.encode_hex()
 }
 
 #[cfg(test)]
