@@ -6,8 +6,9 @@
 //! Provides cryptographic and checksum hashing digests across multiple
 //! algorithms: MD5, SHA-1, SHA-256, SHA-512, BLAKE2b, and BLAKE3.
 
+use base64::engine::general_purpose::STANDARD;
+use base64::Engine;
 use blake2::Blake2b512;
-use hex::ToHex;
 use sha1::{Digest, Sha1};
 use sha2::{Sha256, Sha512};
 
@@ -77,43 +78,52 @@ pub fn calculate(_input: &HashInput) -> Result<HashOutput, HashError> {
         return Err(HashError::EmptyInput);
     }
 
-    todo!("calculate cryptographic hash digests")
+    let bytes = match _input.algorithm {
+        HashAlgorithm::Md5 => calculate_md5(&_input.input_text),
+        HashAlgorithm::Sha1 => calculate_sha1(&_input.input_text),
+        HashAlgorithm::Sha256 => calculate_sha256(&_input.input_text),
+        HashAlgorithm::Sha512 => calculate_sha512(&_input.input_text),
+        HashAlgorithm::Blake2b => calculate_blake2b(&_input.input_text),
+        HashAlgorithm::Blake3 => calculate_blake3(&_input.input_text),
+    };
+
+    let hex_digest = hex::encode(&bytes);
+    let base64_digest = STANDARD.encode(&bytes);
+
+    Ok(HashOutput {
+        hex_digest,
+        base64_digest,
+    })
 }
 
 /// Calculates the MD5 hash and returns a lowercase hex string.
-fn calculate_md5(input_text: &String) -> String {
-    let digest = md5::compute(input_text.as_bytes());
-    digest.encode_hex()
+fn calculate_md5(input_text: &String) -> Vec<u8> {
+    md5::compute(input_text.as_bytes()).to_vec()
 }
 
 /// Calculates the SHA1 hash and returns a lowercase hex string.
-fn calculate_sha1(input_text: &String) -> String {
-    let digest = Sha1::digest(input_text.as_bytes());
-    digest.encode_hex()
+fn calculate_sha1(input_text: &String) -> Vec<u8> {
+    Sha1::digest(input_text.as_bytes()).to_vec()
 }
 
 /// Calculates the SHA256 hash and returns a lowercase hex string.
-fn calculate_sha256(input_text: &String) -> String {
-    let digest = Sha256::digest(input_text.as_bytes());
-    digest.encode_hex()
+fn calculate_sha256(input_text: &String) -> Vec<u8> {
+    Sha256::digest(input_text.as_bytes()).to_vec()
 }
 
 /// Calculates the SHA512 hash and returns a lowercase hex string.
-fn calculate_sha512(input_text: &String) -> String {
-    let digest = Sha512::digest(input_text.as_bytes());
-    digest.encode_hex()
+fn calculate_sha512(input_text: &String) -> Vec<u8> {
+    Sha512::digest(input_text.as_bytes()).to_vec()
 }
 
 /// Calculates the BLAKE2B hash and returns a lowercase hex string.
-fn calculate_blake2b(input_text: &String) -> String {
-    let digest = Blake2b512::digest(input_text.as_bytes());
-    digest.encode_hex()
+fn calculate_blake2b(input_text: &String) -> Vec<u8> {
+    Blake2b512::digest(input_text.as_bytes()).to_vec()
 }
 
 /// Calculates the BLAKE3 hash and returns a lowercase hex string.
-fn calculate_blake3(input_text: &String) -> String {
-    let digest = blake3::hash(input_text.as_bytes());
-    digest.to_hex().as_str().to_string()
+fn calculate_blake3(input_text: &String) -> Vec<u8> {
+    blake3::hash(input_text.as_bytes()).as_bytes().to_vec()
 }
 
 #[cfg(test)]
