@@ -41,8 +41,8 @@ export component AppWindow inherits Window {
     in-out property <length> status_bar_inset: 24px;
     in-out property <length> nav_bar_inset: 16px;
     property <length> pill_bottom_margin: 24px;
-    property <length> keyboard_height: root.virtual-keyboard-size.height;
-    property <bool> keyboard_open: root.keyboard_height > 20px;
+    in-out property <length> keyboard_height: root.virtual-keyboard-size.height;
+    in-out property <bool> keyboard_open: root.keyboard_height > 20px;
     in-out property <[bool]> tool_favorites: [false, false, false, false, false, false, false, false, false, false, false, false, false, false, false];
     in-out property <[int]> recent_tools: [];
     in-out property <bool> modal_open: false;
@@ -98,7 +98,7 @@ export component AppWindow inherits Window {
     forward-focus: back_focus;
     back_focus := FocusScope {
         width: 100%;
-        height: parent.height - root.keyboard_height;
+        height: parent.height - (root.keyboard_open ? root.keyboard_height : 0px);
 
         key-pressed(event) => {
             if event.text == Key.Back || event.text == Key.Escape {
@@ -304,6 +304,10 @@ export component AppWindow inherits Window {
             }
 
             if root.displayed_tool == 3 : Base64Screen {
+                status_bar_inset: root.status_bar_inset;
+                nav_bar_inset: root.nav_bar_inset;
+                keyboard_open: root.keyboard_open;
+                keyboard_height: root.keyboard_height;
                 base64-back => { root.back(); }
                 base64-convert => {
                     let res = root.base64-convert(self.input_text, self.mode == 0, self.variant == 1, self.use_padding);

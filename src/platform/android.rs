@@ -12,10 +12,22 @@ use std::sync::atomic::{AtomicU32, Ordering};
 
 static STATUS_BAR_INSET: AtomicU32 = AtomicU32::new(0);
 static NAVIGATION_BAR_INSET: AtomicU32 = AtomicU32::new(0);
+static KEYBOARD_INSET: AtomicU32 = AtomicU32::new(0);
 #[cfg(target_os = "android")]
 static VM_PTR: AtomicPtr<std::ffi::c_void> = AtomicPtr::new(std::ptr::null_mut());
 #[cfg(target_os = "android")]
 static ACTIVITY_PTR: AtomicPtr<std::ffi::c_void> = AtomicPtr::new(std::ptr::null_mut());
+
+/// Set the cached keyboard inset.
+pub fn set_keyboard_inset(inset: f32) {
+    KEYBOARD_INSET.store(inset.to_bits(), Ordering::SeqCst);
+}
+
+/// Get the system keyboard inset in logical pixels (dp).
+pub fn get_keyboard_inset() -> f32 {
+    let bits = KEYBOARD_INSET.load(Ordering::SeqCst);
+    f32::from_bits(bits)
+}
 
 /// Set the cached status bar inset.
 pub fn set_status_bar_inset(inset: f32) {
@@ -318,6 +330,151 @@ pub fn configure_window_soft_input_mode(app: &slint::android::AndroidApp) {
         let _ = env.exception_clear();
     }
 }
+
+/// Query the Android system keyboard (IME) inset height in logical pixels (dp) via JNI.
+#[cfg(target_os = "android")]
+pub fn query_keyboard_inset() -> f32 {
+    let vm_ptr = VM_PTR.load(Ordering::SeqCst);
+    let activity_ptr = ACTIVITY_PTR.load(Ordering::SeqCst);
+    if vm_ptr.is_null() || activity_ptr.is_null() {
+        return get_keyboard_inset();
+    }
+
+    unsafe {
+        let vm = match jni::JavaVM::from_raw(vm_ptr as *mut _) {
+            Ok(v) => v,
+            Err(_) => return get_keyboard_inset(),
+        };
+        let mut env = match vm.attach_current_thread() {
+            Ok(e) => e,
+            Err(_) => return get_keyboard_inset(),
+        };
+
+        let activity = jni::objects::JObject::from_raw(activity_ptr as _);
+
+        let window = match env.call_method(&activity, "getWindow", "()Landroid/view/Window;", &[]) {
+            Ok(w) => match w.l() {
+                Ok(obj) => obj,
+                Err(_) => {
+                    let _ = env.exception_clear();
+                    return get_keyboard_inset();
+                }
+            },
+            Err(_) => {
+                let _ = env.exception_clear();
+                return get_keyboard_inset();
+            }
+        };
+
+        let decor_view = match env.call_method(&window, "getDecorView", "()Landroid/view/View;", &[]) {
+            Ok(d) => match d.l() {
+                Ok(obj) => obj,
+                Err(_) => {
+                    let _ = env.exception_clear();
+                    return get_keyboard_inset();
+                }
+            },
+            Err(_) => {
+                let _ = env.exception_clear();
+                return get_keyboard_inset();
+            }
+        };
+
+        let insets = match env.call_method(&decor_view, "getRootWindowInsets", "()Landroid/view/WindowInsets;", &[]) {
+            Ok(i) => match i.l() {
+                Ok(obj) => obj,
+                Err(_) => {
+                    let _ = env.exception_clear();
+                    return get_keyboard_inset();
+                }
+            },
+            Err(_) => {
+                let _ = env.exception_clear();
+                return get_keyboard_inset();
+            }
+        };
+
+        if insets.as_raw().is_null() {
+            return get_keyboard_inset();
+        }
+
+        let mut ime_bottom_px = 0;
+
+        // WindowInsets.Type.ime() = 8 (API 30+)
+        if let Ok(ime_insets) = env.call_method(&insets, "getInsets", "(I)Landroid/graphics/Insets;", &[8i32.into()]) {
+            if let Ok(ime_obj) = ime_insets.l() {
+                if !ime_obj.as_raw().is_null() {
+                    if let Ok(bottom_val) = env.get_field(&ime_obj, "bottom", "I") {
+                        ime_bottom_px = bottom_val.i().unwrap_or(0);
+                    }
+                }
+            }
+        }
+        let _ = env.exception_clear();
+
+        // Fallback for API < 30: compare getSystemWindowInsetBottom with navigation bar inset
+        if ime_bottom_px <= 0 {
+            if let Ok(bottom_val) = env.call_method(&insets, "getSystemWindowInsetBottom", "()I", &[]) {
+                let total_bottom = bottom_val.i().unwrap_or(0);
+                let nav_px = (get_navigation_bar_inset() * 2.625) as i32;
+                if total_bottom > nav_px + 50 {
+                    ime_bottom_px = total_bottom - nav_px;
+                }
+            }
+            let _ = env.exception_clear();
+        }
+
+        let resources = match env.call_method(&activity, "getResources", "()Landroid/content/res/Resources;", &[]) {
+            Ok(r) => match r.l() {
+                Ok(obj) => obj,
+                Err(_) => {
+                    let _ = env.exception_clear();
+                    return 0.0;
+                }
+            },
+            Err(_) => {
+                let _ = env.exception_clear();
+                return 0.0;
+            }
+        };
+
+        let metrics = match env.call_method(&resources, "getDisplayMetrics", "()Landroid/util/DisplayMetrics;", &[]) {
+            Ok(m) => match m.l() {
+                Ok(obj) => obj,
+                Err(_) => {
+                    let _ = env.exception_clear();
+                    return ime_bottom_px as f32;
+                }
+            },
+            Err(_) => {
+                let _ = env.exception_clear();
+                return ime_bottom_px as f32;
+            }
+        };
+
+        let density = match env.get_field(&metrics, "density", "F") {
+            Ok(d) => d.f().unwrap_or(1.0),
+            Err(_) => {
+                let _ = env.exception_clear();
+                1.0
+            }
+        };
+
+        let dp = if density > 0.0 && ime_bottom_px > 0 {
+            (ime_bottom_px as f32) / density
+        } else {
+            0.0
+        };
+        set_keyboard_inset(dp);
+        dp
+    }
+}
+
+#[cfg(not(target_os = "android"))]
+pub fn query_keyboard_inset() -> f32 {
+    get_keyboard_inset()
+}
+
 
 /// Get the Android system accent color (Material You / Monet dynamic theming).
 pub fn get_system_accent_color() -> Option<(u8, u8, u8)> {

@@ -14,10 +14,11 @@ name = "devkit"
 path = "src/main.rs"
 
 [dependencies]
-slint = { version = "1.18", features = ["backend-android-activity-06"] }
+slint = { version = "1.18" }
 base64 = "0.23"
 
 [target.'cfg(target_os = "android")'.dependencies]
+slint = { version = "1.18", features = ["backend-android-activity-06"] }
 jni = "0.21"
 
 [build-dependencies]
@@ -44,4 +45,3 @@ window_soft_input_mode = "adjustResize"
 
 [package.metadata.android.application.activity]
 window_soft_input_mode = "adjustResize"
-

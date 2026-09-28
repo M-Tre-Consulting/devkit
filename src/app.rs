@@ -8,6 +8,23 @@ use slint::{ComponentHandle, ModelRc, VecModel};
 use slint::Global;
 use crate::navigation::{AppMode, NavigationState};
 
+pub fn setup_keyboard_observer(ui: &crate::AppWindow) -> slint::Timer {
+    let kb_timer = slint::Timer::default();
+    let ui_weak = ui.as_weak();
+    let mut last_kb: f32 = 0.0;
+    kb_timer.start(slint::TimerMode::Repeated, std::time::Duration::from_millis(32), move || {
+        let kb = crate::platform::android::query_keyboard_inset();
+        if (kb - last_kb).abs() > 0.5 {
+            last_kb = kb;
+            if let Some(ui) = ui_weak.upgrade() {
+                ui.set_keyboard_height(kb);
+                ui.set_keyboard_open(kb > 20.0);
+            }
+        }
+    });
+    kb_timer
+}
+
 pub fn run() -> Result<(), slint::PlatformError> {
     let ui = crate::AppWindow::new()?;
     let status_inset = crate::platform::android::get_status_bar_inset();
@@ -15,6 +32,7 @@ pub fn run() -> Result<(), slint::PlatformError> {
     ui.set_status_bar_inset(status_inset);
     ui.set_nav_bar_inset(nav_inset);
     setup_app_state(&ui);
+    let _kb_timer = setup_keyboard_observer(&ui);
     let high_rr = crate::storage::load_high_refresh_rate();
     let _ = std::panic::catch_unwind(|| {
         crate::platform::android::apply_refresh_rate_setting(high_rr);
@@ -295,5 +313,6 @@ pub fn android_main(android_app: slint::android::AndroidApp) {
     let _ = std::panic::catch_unwind(|| {
         crate::platform::android::apply_refresh_rate_setting(high_rr);
     });
+    let _kb_timer = setup_keyboard_observer(&ui);
     ui.run().unwrap();
 }

@@ -12,6 +12,8 @@ import { AppIcons } from "../components/app-icons.slint";
 export component Base64Screen inherits VerticalLayout {
     in property <length> status_bar_inset: 24px;
     in property <length> nav_bar_inset: 16px;
+    in property <bool> keyboard_open: false;
+    in property <length> keyboard_height: 0px;
     callback base64-back();
     callback base64-convert();
     callback base64-clear();
@@ -49,7 +51,7 @@ export component Base64Screen inherits VerticalLayout {
             padding_left: MaterialStyleMetrics.padding_16;
             padding_right: MaterialStyleMetrics.padding_16;
             padding_top: MaterialStyleMetrics.padding_16;
-            padding_bottom: 96px + root.nav_bar_inset;
+            padding_bottom: root.keyboard_open ? MaterialStyleMetrics.padding_16 : (96px + root.nav_bar_inset);
             spacing: MaterialStyleMetrics.spacing_16;
             alignment: start;
 
