@@ -37,7 +37,17 @@ export component Base64Screen inherits VerticalLayout {
         back => { root.base64-back(); }
     }
 
-    ScrollView {
+    property <length> auto_scroll_offset: (root.keyboard_open && input_area.has_focus) ? min(max(0px, input_area.y + input_area.height + 16px - scroll_view.visible_height), input_area.y - 16px) : 0px;
+    animate auto_scroll_offset {
+        duration: 200ms;
+        easing: cubic-bezier(0.05, 0.7, 0.1, 1.0);
+    }
+
+    changed auto_scroll_offset => {
+        scroll_view.viewport_y = -root.auto_scroll_offset;
+    }
+
+    scroll_view := ScrollView {
         vertical-stretch: 1;
         opacity: root.is_entered ? 1.0 : 0.0;
 
@@ -220,7 +230,7 @@ export component Base64Screen inherits VerticalLayout {
             }
 
             // Input Text
-            ToolTextArea {
+            input_area := ToolTextArea {
                 label: root.mode == 0 ? "INPUT TEXT" : "ENCODED BASE64 INPUT";
                 placeholder_text: root.mode == 0 ? "Text to encode..." : "Base64 to decode...";
                 text <=> root.input_text;

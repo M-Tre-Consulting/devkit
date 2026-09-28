@@ -14,8 +14,11 @@ export component ToolTextArea inherits VerticalLayout {
     in property <length> min_box_height: 160px;
     in property <length> max_box_height: 240px;
     in property <bool> has_copy: false;
+    out property <bool> has_focus: input.has_focus;
     callback copy(string);
     callback edited(string);
+
+    forward-focus: input;
 
     spacing: MaterialStyleMetrics.spacing_6;
 
@@ -80,6 +83,7 @@ export component ToolTextArea inherits VerticalLayout {
                     enabled: root.enabled;
                     single_line: false;
                     wrap: word-wrap;
+                    vertical-stretch: 1;
                     font_size: root.is_code ? 13px : 15px;
                     font_family: root.is_code ? "monospace" : "";
                     color: root.enabled ? MaterialPalette.on_surface : MaterialPalette.on_surface_variant;
