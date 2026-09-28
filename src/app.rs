@@ -68,7 +68,18 @@ pub fn setup_tool_handlers(ui: &crate::AppWindow) {
     // 2. Hash Calculator
     ui.on_hash_calculate(move |text, algo| {
         crate::platform::android::haptic_tap();
-        let _ = crate::tools::handlers::handle_hash(&text, algo);
+        match crate::tools::handlers::handle_hash(&text, algo) {
+            Ok(output) => crate::HashResult {
+                hex_digest: output.hex_digest.into(),
+                base64_digest: output.base64_digest.into(),
+                error_message: "".into(),
+            },
+            Err(err) => crate::HashResult {
+                hex_digest: "".into(),
+                base64_digest: "".into(),
+                error_message: err.into(),
+            },
+        }
     });
 
     // 3. Base64

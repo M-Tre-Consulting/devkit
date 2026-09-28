@@ -30,6 +30,12 @@ export struct Base64Result {
     error_message: string,
 }
 
+export struct HashResult {
+    hex_digest: string,
+    base64_digest: string,
+    error_message: string,
+}
+
 export component AppWindow inherits Window {
     title: "DevKit";
     min_width: 360px;
@@ -63,7 +69,7 @@ export component AppWindow inherits Window {
 
     // Tool execution callbacks
     callback subnet-calculate(string);
-    callback hash-calculate(string, int);
+    callback hash-calculate(string, int) -> HashResult;
     callback base64-convert(string, bool, bool, bool) -> Base64Result;
     callback uuid-generate(int, int, bool, bool);
     callback timestamp-convert(string, string);
@@ -313,7 +319,12 @@ export component AppWindow inherits Window {
                 status_bar_inset: root.status_bar_inset;
                 nav_bar_inset: root.nav_bar_inset;
                 hash-back => { root.back(); }
-                hash-calculate => { root.hash-calculate(self.input_text, self.selected_algorithm); }
+                hash-calculate => {
+                    let res = root.hash-calculate(self.input_text, self.selected_algorithm);
+                    self.hex_digest = res.hex_digest;
+                    self.base64_digest = res.base64_digest;
+                    self.error_message = res.error_message;
+                }
                 hash-copy(val) => { root.copy_text(val); }
             }
 
