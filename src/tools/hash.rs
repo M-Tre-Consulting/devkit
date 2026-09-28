@@ -6,6 +6,7 @@
 //! Provides cryptographic and checksum hashing digests across multiple
 //! algorithms: MD5, SHA-1, SHA-256, SHA-512, BLAKE2b, and BLAKE3.
 
+use blake2::Blake2b512;
 use hex::ToHex;
 use sha1::{Digest, Sha1};
 use sha2::{Sha256, Sha512};
@@ -100,6 +101,12 @@ fn calculate_sha256(input_text: &String) -> String {
 /// Calculates the SHA512 hash and returns a lowercase hex string.
 fn calculate_sha512(input_text: &String) -> String {
     let digest = Sha512::digest(input_text.as_bytes());
+    digest.encode_hex()
+}
+
+/// Calculates the BLAKE2B hash and returns a lowercase hex string.
+fn calculate_blake2b(input_text: &String) -> String {
+    let digest = Blake2b512::digest(input_text.as_bytes());
     digest.encode_hex()
 }
 
