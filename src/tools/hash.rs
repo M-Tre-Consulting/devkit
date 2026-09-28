@@ -110,6 +110,12 @@ fn calculate_blake2b(input_text: &String) -> String {
     digest.encode_hex()
 }
 
+/// Calculates the BLAKE3 hash and returns a lowercase hex string.
+fn calculate_blake3(input_text: &String) -> String {
+    let digest = blake3::hash(input_text.as_bytes());
+    digest.to_hex().as_str().to_string()
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
