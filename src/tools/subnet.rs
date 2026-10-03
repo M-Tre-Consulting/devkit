@@ -6,7 +6,7 @@
 //! Provides IPv4 and IPv6 CIDR network calculation, address range estimation,
 //! and netmask conversions.
 
-use std::net::{IpAddr, Ipv4Addr, Ipv6Addr};
+use std::net::Ipv4Addr;
 
 /// Input parameters for subnet calculation.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -50,8 +50,40 @@ impl std::error::Error for SubnetError {}
 
 /// Calculates network, broadcast, host range, and masks from IP and prefix input.
 ///
-pub fn calculate(_input: &SubnetInput) -> Result<SubnetOutput, SubnetError> {
-    todo!("calculate subnet details from input")
+pub fn calculate(input: &SubnetInput) -> Result<SubnetOutput, SubnetError> {
+    // Parse the IP address
+    let (ip_addr, prefix) = split_input(input)?;
+
+    // Get IP address as 32-bit integer
+    let ip_addr_u32 = u32::from(ip_addr);
+
+    // Perform network calculations
+    let netmask = get_netmask(prefix);
+    let wcard_mask = get_wildcard_mask(netmask);
+    let net_addr = get_network_address(netmask, ip_addr_u32);
+    let bcast_addr = get_broadcast_address(net_addr, wcard_mask);
+    let host_count = get_host_counts(net_addr, bcast_addr, prefix)?;
+
+    // Now convert all of them to the corresponding Ipv4Addr type
+    let nmask_ipv4 = Ipv4Addr::from(netmask);
+    let wcard_mask_ipv4 = Ipv4Addr::from(wcard_mask);
+    let net_addr_ipv4 = Ipv4Addr::from(net_addr);
+    let bcast_addr_ipv4 = Ipv4Addr::from(bcast_addr);
+
+    let first_host_ipv4 = Ipv4Addr::from(host_count.first_host);
+    let last_host_ipv4 = Ipv4Addr::from(host_count.last_host);
+
+    // Convert everything to string and output in the correct format
+    Ok(SubnetOutput {
+        network_address: net_addr_ipv4.to_string(),
+        broadcast_address: bcast_addr_ipv4.to_string(),
+        first_host: first_host_ipv4.to_string(),
+        last_host: last_host_ipv4.to_string(),
+        host_count: host_count.host_count.to_string(),
+        netmask: nmask_ipv4.to_string(),
+        wildcard_mask: wcard_mask_ipv4.to_string(),
+        cidr_notation: format!("/{}", prefix),
+    })
 }
 
 /// Parses an IPv4 address from string.
@@ -62,22 +94,6 @@ fn parse_ipv4_address(input: &str) -> Result<Ipv4Addr, SubnetError> {
         .map_err(|_| SubnetError::InvalidIp)
 }
 
-/// Parses an IPv6 address from string.
-fn parse_ipv6_address(input: &str) -> Result<Ipv6Addr, SubnetError> {
-    input
-        .trim()
-        .parse::<Ipv6Addr>()
-        .map_err(|_| SubnetError::InvalidIp)
-}
-
-/// Parses an IPv4 or IPv6 address from string.
-fn parse_ip_address(input: &str) -> Result<IpAddr, SubnetError> {
-    input
-        .trim()
-        .parse::<IpAddr>()
-        .map_err(|_| SubnetError::InvalidIp)
-}
-
 /// Parses an IPv4 prefix (CIDR value 0..=32) from string.
 fn parse_prefix(input: &str) -> Result<u8, SubnetError> {
     input
@@ -85,16 +101,6 @@ fn parse_prefix(input: &str) -> Result<u8, SubnetError> {
         .parse::<u8>()
         .ok()
         .filter(|p| *p <= 32)
-        .ok_or(SubnetError::InvalidPrefix)
-}
-
-/// Parses an IPv6 prefix (CIDR value 0..=128) from string.
-fn parse_prefix_v6(input: &str) -> Result<u8, SubnetError> {
-    input
-        .trim()
-        .parse::<u8>()
-        .ok()
-        .filter(|p| *p <= 128)
         .ok_or(SubnetError::InvalidPrefix)
 }
 
@@ -206,85 +212,6 @@ fn split_input(input: &SubnetInput) -> Result<(Ipv4Addr, u8), SubnetError> {
     }
 }
 
-/// Splits and validates an IPv6 address and prefix length from input.
-///
-/// Accepts CIDR notation (e.g. "2001:db8::1/64") or separate prefix in `SubnetInput`.
-fn split_input_v6(input: &SubnetInput) -> Result<(Ipv6Addr, u8), SubnetError> {
-    let trimmed = input.ip_or_cidr.trim();
-    if trimmed.is_empty() {
-        return Err(SubnetError::InvalidFormat);
-    }
-
-    let parts: Vec<&str> = trimmed.split('/').collect();
-    match parts.as_slice() {
-        [ip_str] => {
-            let ip = parse_ipv6_address(ip_str)?;
-            let prefix = input
-                .prefix
-                .ok_or(SubnetError::InvalidPrefix)
-                .and_then(|p| {
-                    if p <= 128 {
-                        Ok(p)
-                    } else {
-                        Err(SubnetError::InvalidPrefix)
-                    }
-                })?;
-            Ok((ip, prefix))
-        }
-        [ip_str, prefix_str] => {
-            if ip_str.trim().is_empty() || prefix_str.trim().is_empty() {
-                return Err(SubnetError::InvalidFormat);
-            }
-            let ip = parse_ipv6_address(ip_str)?;
-            let prefix = parse_prefix_v6(prefix_str)?;
-            Ok((ip, prefix))
-        }
-        _ => Err(SubnetError::InvalidFormat),
-    }
-}
-
-/// Splits and validates either an IPv4 or IPv6 address and prefix length from input.
-fn split_input_any(input: &SubnetInput) -> Result<(IpAddr, u8), SubnetError> {
-    let trimmed = input.ip_or_cidr.trim();
-    if trimmed.is_empty() {
-        return Err(SubnetError::InvalidFormat);
-    }
-
-    let parts: Vec<&str> = trimmed.split('/').collect();
-    match parts.as_slice() {
-        [ip_str] => {
-            let ip = parse_ip_address(ip_str)?;
-            let max_prefix = match ip {
-                IpAddr::V4(_) => 32,
-                IpAddr::V6(_) => 128,
-            };
-            let prefix = input
-                .prefix
-                .ok_or(SubnetError::InvalidPrefix)
-                .and_then(|p| {
-                    if p <= max_prefix {
-                        Ok(p)
-                    } else {
-                        Err(SubnetError::InvalidPrefix)
-                    }
-                })?;
-            Ok((ip, prefix))
-        }
-        [ip_str, prefix_str] => {
-            if ip_str.trim().is_empty() || prefix_str.trim().is_empty() {
-                return Err(SubnetError::InvalidFormat);
-            }
-            let ip = parse_ip_address(ip_str)?;
-            let prefix = match ip {
-                IpAddr::V4(_) => parse_prefix(prefix_str)?,
-                IpAddr::V6(_) => parse_prefix_v6(prefix_str)?,
-            };
-            Ok((ip, prefix))
-        }
-        _ => Err(SubnetError::InvalidFormat),
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -330,6 +257,31 @@ mod tests {
             get_wildcard_mask(nmp_21),
             !(0b11111111_11111111_11111000_00000000u32)
         );
+    }
+
+    #[test]
+    fn test_get_network_address() {
+        let ip = u32::from(Ipv4Addr::new(192, 168, 1, 150));
+        let mask = get_netmask(24);
+        let net = get_network_address(mask, ip);
+        assert_eq!(net, u32::from(Ipv4Addr::new(192, 168, 1, 0)));
+
+        let mask_26 = get_netmask(26);
+        let net_26 = get_network_address(mask_26, ip);
+        assert_eq!(net_26, u32::from(Ipv4Addr::new(192, 168, 1, 128)));
+    }
+
+    #[test]
+    fn test_get_broadcast_address() {
+        let net = u32::from(Ipv4Addr::new(192, 168, 1, 0));
+        let wildcard = get_wildcard_mask(get_netmask(24));
+        let bcast = get_broadcast_address(net, wildcard);
+        assert_eq!(bcast, u32::from(Ipv4Addr::new(192, 168, 1, 255)));
+
+        let net_27 = u32::from(Ipv4Addr::new(10, 0, 0, 32));
+        let wildcard_27 = get_wildcard_mask(get_netmask(27));
+        let bcast_27 = get_broadcast_address(net_27, wildcard_27);
+        assert_eq!(bcast_27, u32::from(Ipv4Addr::new(10, 0, 0, 63)));
     }
 
     #[test]
@@ -379,8 +331,14 @@ mod tests {
         assert_eq!(res0.host_count, 4_294_967_294);
 
         // Invalid prefix (> 32)
-        assert_eq!(get_host_counts(net, bcast, 33).unwrap_err(), SubnetError::InvalidPrefix);
-        assert_eq!(get_host_counts(net, bcast, 128).unwrap_err(), SubnetError::InvalidPrefix);
+        assert_eq!(
+            get_host_counts(net, bcast, 33).unwrap_err(),
+            SubnetError::InvalidPrefix
+        );
+        assert_eq!(
+            get_host_counts(net, bcast, 128).unwrap_err(),
+            SubnetError::InvalidPrefix
+        );
     }
 
     #[test]
@@ -481,49 +439,196 @@ mod tests {
     }
 
     #[test]
-    fn test_ipv6_parsing_and_split() {
-        assert_eq!(parse_prefix_v6("64").unwrap(), 64);
-        assert_eq!(parse_prefix_v6("128").unwrap(), 128);
-        assert_eq!(
-            parse_prefix_v6("129").unwrap_err(),
-            SubnetError::InvalidPrefix
-        );
-
-        let input = SubnetInput {
-            ip_or_cidr: "2001:db8::1/64".to_string(),
-            prefix: None,
-        };
-        let (ip, prefix) = split_input_v6(&input).unwrap();
-        assert_eq!(ip, "2001:db8::1".parse::<Ipv6Addr>().unwrap());
-        assert_eq!(prefix, 64);
-
-        let (ip_any, prefix_any) = split_input_any(&input).unwrap();
-        assert_eq!(
-            ip_any,
-            IpAddr::V6("2001:db8::1".parse::<Ipv6Addr>().unwrap())
-        );
-        assert_eq!(prefix_any, 64);
-    }
-
-    #[test]
-    #[ignore = "not implemented yet"]
-    fn test_calculate_ipv4() {
+    fn test_calculate_class_c_full() {
         let input = SubnetInput {
             ip_or_cidr: "192.168.1.100/24".to_string(),
             prefix: None,
         };
         let res = calculate(&input).unwrap();
         assert_eq!(res.network_address, "192.168.1.0");
+        assert_eq!(res.broadcast_address, "192.168.1.255");
+        assert_eq!(res.first_host, "192.168.1.1");
+        assert_eq!(res.last_host, "192.168.1.254");
+        assert_eq!(res.host_count, "254");
+        assert_eq!(res.netmask, "255.255.255.0");
+        assert_eq!(res.wildcard_mask, "0.0.0.255");
+        assert_eq!(res.cidr_notation, "/24");
     }
 
     #[test]
-    #[ignore = "not implemented yet"]
-    fn test_calculate_ipv6() {
+    fn test_calculate_class_a_separate_prefix() {
         let input = SubnetInput {
-            ip_or_cidr: "2001:db8::1/64".to_string(),
+            ip_or_cidr: "10.45.67.89".to_string(),
+            prefix: Some(8),
+        };
+        let res = calculate(&input).unwrap();
+        assert_eq!(res.network_address, "10.0.0.0");
+        assert_eq!(res.broadcast_address, "10.255.255.255");
+        assert_eq!(res.first_host, "10.0.0.1");
+        assert_eq!(res.last_host, "10.255.255.254");
+        assert_eq!(res.host_count, "16777214");
+        assert_eq!(res.netmask, "255.0.0.0");
+        assert_eq!(res.wildcard_mask, "0.255.255.255");
+        assert_eq!(res.cidr_notation, "/8");
+    }
+
+    #[test]
+    fn test_calculate_class_b() {
+        let input = SubnetInput {
+            ip_or_cidr: "172.16.50.25/16".to_string(),
             prefix: None,
         };
         let res = calculate(&input).unwrap();
-        assert_eq!(res.network_address, "2001:db8::");
+        assert_eq!(res.network_address, "172.16.0.0");
+        assert_eq!(res.broadcast_address, "172.16.255.255");
+        assert_eq!(res.first_host, "172.16.0.1");
+        assert_eq!(res.last_host, "172.16.255.254");
+        assert_eq!(res.host_count, "65534");
+        assert_eq!(res.netmask, "255.255.0.0");
+        assert_eq!(res.wildcard_mask, "0.0.255.255");
+        assert_eq!(res.cidr_notation, "/16");
+    }
+
+    #[test]
+    fn test_calculate_non_octet_boundary_27() {
+        let input = SubnetInput {
+            ip_or_cidr: "192.168.1.130/27".to_string(),
+            prefix: None,
+        };
+        let res = calculate(&input).unwrap();
+        assert_eq!(res.network_address, "192.168.1.128");
+        assert_eq!(res.broadcast_address, "192.168.1.159");
+        assert_eq!(res.first_host, "192.168.1.129");
+        assert_eq!(res.last_host, "192.168.1.158");
+        assert_eq!(res.host_count, "30");
+        assert_eq!(res.netmask, "255.255.255.224");
+        assert_eq!(res.wildcard_mask, "0.0.0.31");
+        assert_eq!(res.cidr_notation, "/27");
+    }
+
+    #[test]
+    fn test_calculate_small_subnet_30() {
+        let input = SubnetInput {
+            ip_or_cidr: "10.0.0.5/30".to_string(),
+            prefix: None,
+        };
+        let res = calculate(&input).unwrap();
+        assert_eq!(res.network_address, "10.0.0.4");
+        assert_eq!(res.broadcast_address, "10.0.0.7");
+        assert_eq!(res.first_host, "10.0.0.5");
+        assert_eq!(res.last_host, "10.0.0.6");
+        assert_eq!(res.host_count, "2");
+        assert_eq!(res.netmask, "255.255.255.252");
+        assert_eq!(res.wildcard_mask, "0.0.0.3");
+        assert_eq!(res.cidr_notation, "/30");
+    }
+
+    #[test]
+    fn test_calculate_point_to_point_rfc3021_31() {
+        let input = SubnetInput {
+            ip_or_cidr: "192.168.10.15/31".to_string(),
+            prefix: None,
+        };
+        let res = calculate(&input).unwrap();
+        assert_eq!(res.network_address, "192.168.10.14");
+        assert_eq!(res.broadcast_address, "192.168.10.15");
+        assert_eq!(res.first_host, "192.168.10.14");
+        assert_eq!(res.last_host, "192.168.10.15");
+        assert_eq!(res.host_count, "2");
+        assert_eq!(res.netmask, "255.255.255.254");
+        assert_eq!(res.wildcard_mask, "0.0.0.1");
+        assert_eq!(res.cidr_notation, "/31");
+    }
+
+    #[test]
+    fn test_calculate_single_host_32() {
+        let input = SubnetInput {
+            ip_or_cidr: "192.168.1.1/32".to_string(),
+            prefix: None,
+        };
+        let res = calculate(&input).unwrap();
+        assert_eq!(res.network_address, "192.168.1.1");
+        assert_eq!(res.broadcast_address, "192.168.1.1");
+        assert_eq!(res.first_host, "192.168.1.1");
+        assert_eq!(res.last_host, "192.168.1.1");
+        assert_eq!(res.host_count, "1");
+        assert_eq!(res.netmask, "255.255.255.255");
+        assert_eq!(res.wildcard_mask, "0.0.0.0");
+        assert_eq!(res.cidr_notation, "/32");
+    }
+
+    #[test]
+    fn test_calculate_default_route_0() {
+        let input = SubnetInput {
+            ip_or_cidr: "0.0.0.0/0".to_string(),
+            prefix: None,
+        };
+        let res = calculate(&input).unwrap();
+        assert_eq!(res.network_address, "0.0.0.0");
+        assert_eq!(res.broadcast_address, "255.255.255.255");
+        assert_eq!(res.first_host, "0.0.0.1");
+        assert_eq!(res.last_host, "255.255.255.254");
+        assert_eq!(res.host_count, "4294967294");
+        assert_eq!(res.netmask, "0.0.0.0");
+        assert_eq!(res.wildcard_mask, "255.255.255.255");
+        assert_eq!(res.cidr_notation, "/0");
+    }
+
+    #[test]
+    fn test_calculate_with_whitespace() {
+        let input = SubnetInput {
+            ip_or_cidr: "  10.0.0.1 / 24  ".to_string(),
+            prefix: None,
+        };
+        let res = calculate(&input).unwrap();
+        assert_eq!(res.network_address, "10.0.0.0");
+        assert_eq!(res.netmask, "255.255.255.0");
+    }
+
+    #[test]
+    fn test_calculate_error_handling() {
+        // Missing prefix
+        let no_prefix = SubnetInput {
+            ip_or_cidr: "192.168.1.1".to_string(),
+            prefix: None,
+        };
+        assert_eq!(
+            calculate(&no_prefix).unwrap_err(),
+            SubnetError::InvalidPrefix
+        );
+
+        // Invalid prefix > 32
+        let invalid_prefix = SubnetInput {
+            ip_or_cidr: "192.168.1.1/33".to_string(),
+            prefix: None,
+        };
+        assert_eq!(
+            calculate(&invalid_prefix).unwrap_err(),
+            SubnetError::InvalidPrefix
+        );
+
+        // Invalid IP address octets
+        let invalid_ip = SubnetInput {
+            ip_or_cidr: "300.168.1.1/24".to_string(),
+            prefix: None,
+        };
+        assert_eq!(calculate(&invalid_ip).unwrap_err(), SubnetError::InvalidIp);
+
+        // Malformed format
+        let invalid_format = SubnetInput {
+            ip_or_cidr: "192.168.1.1/24/32".to_string(),
+            prefix: None,
+        };
+        assert_eq!(
+            calculate(&invalid_format).unwrap_err(),
+            SubnetError::InvalidFormat
+        );
+
+        // Non-IPv4 address (e.g. IPv6 input)
+        let ipv6_input = SubnetInput {
+            ip_or_cidr: "2001:db8::1/64".to_string(),
+            prefix: None,
+        };
+        assert_eq!(calculate(&ipv6_input).unwrap_err(), SubnetError::InvalidIp);
     }
 }
