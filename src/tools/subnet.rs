@@ -56,7 +56,7 @@ pub fn calculate(_input: &SubnetInput) -> Result<SubnetOutput, SubnetError> {
 }
 
 /// Parses an IPv4 address from string.
-pub fn parse_ipv4_address(input: &str) -> Result<Ipv4Addr, SubnetError> {
+fn parse_ipv4_address(input: &str) -> Result<Ipv4Addr, SubnetError> {
     input
         .trim()
         .parse::<Ipv4Addr>()
@@ -64,7 +64,7 @@ pub fn parse_ipv4_address(input: &str) -> Result<Ipv4Addr, SubnetError> {
 }
 
 /// Parses an IPv6 address from string.
-pub fn parse_ipv6_address(input: &str) -> Result<Ipv6Addr, SubnetError> {
+fn parse_ipv6_address(input: &str) -> Result<Ipv6Addr, SubnetError> {
     input
         .trim()
         .parse::<Ipv6Addr>()
@@ -72,7 +72,7 @@ pub fn parse_ipv6_address(input: &str) -> Result<Ipv6Addr, SubnetError> {
 }
 
 /// Parses an IPv4 or IPv6 address from string.
-pub fn parse_ip_address(input: &str) -> Result<IpAddr, SubnetError> {
+fn parse_ip_address(input: &str) -> Result<IpAddr, SubnetError> {
     input
         .trim()
         .parse::<IpAddr>()
@@ -80,7 +80,7 @@ pub fn parse_ip_address(input: &str) -> Result<IpAddr, SubnetError> {
 }
 
 /// Parses an IPv4 prefix (CIDR value 0..=32) from string.
-pub fn parse_prefix(input: &str) -> Result<u8, SubnetError> {
+fn parse_prefix(input: &str) -> Result<u8, SubnetError> {
     input
         .trim()
         .parse::<u8>()
@@ -90,7 +90,7 @@ pub fn parse_prefix(input: &str) -> Result<u8, SubnetError> {
 }
 
 /// Parses an IPv6 prefix (CIDR value 0..=128) from string.
-pub fn parse_prefix_v6(input: &str) -> Result<u8, SubnetError> {
+fn parse_prefix_v6(input: &str) -> Result<u8, SubnetError> {
     input
         .trim()
         .parse::<u8>()
@@ -102,7 +102,7 @@ pub fn parse_prefix_v6(input: &str) -> Result<u8, SubnetError> {
 /// Splits and validates an IPv4 address and prefix length from input.
 ///
 /// Accepts CIDR notation (e.g. "192.168.1.1/24") or separate prefix in `SubnetInput`.
-pub fn split_input(input: &SubnetInput) -> Result<(Ipv4Addr, u8), SubnetError> {
+fn split_input(input: &SubnetInput) -> Result<(Ipv4Addr, u8), SubnetError> {
     let trimmed = input.ip_or_cidr.trim();
     if trimmed.is_empty() {
         return Err(SubnetError::InvalidFormat);
@@ -115,7 +115,13 @@ pub fn split_input(input: &SubnetInput) -> Result<(Ipv4Addr, u8), SubnetError> {
             let prefix = input
                 .prefix
                 .ok_or(SubnetError::InvalidPrefix)
-                .and_then(|p| if p <= 32 { Ok(p) } else { Err(SubnetError::InvalidPrefix) })?;
+                .and_then(|p| {
+                    if p <= 32 {
+                        Ok(p)
+                    } else {
+                        Err(SubnetError::InvalidPrefix)
+                    }
+                })?;
             Ok((ip, prefix))
         }
         [ip_str, prefix_str] => {
@@ -133,7 +139,7 @@ pub fn split_input(input: &SubnetInput) -> Result<(Ipv4Addr, u8), SubnetError> {
 /// Splits and validates an IPv6 address and prefix length from input.
 ///
 /// Accepts CIDR notation (e.g. "2001:db8::1/64") or separate prefix in `SubnetInput`.
-pub fn split_input_v6(input: &SubnetInput) -> Result<(Ipv6Addr, u8), SubnetError> {
+fn split_input_v6(input: &SubnetInput) -> Result<(Ipv6Addr, u8), SubnetError> {
     let trimmed = input.ip_or_cidr.trim();
     if trimmed.is_empty() {
         return Err(SubnetError::InvalidFormat);
@@ -146,7 +152,13 @@ pub fn split_input_v6(input: &SubnetInput) -> Result<(Ipv6Addr, u8), SubnetError
             let prefix = input
                 .prefix
                 .ok_or(SubnetError::InvalidPrefix)
-                .and_then(|p| if p <= 128 { Ok(p) } else { Err(SubnetError::InvalidPrefix) })?;
+                .and_then(|p| {
+                    if p <= 128 {
+                        Ok(p)
+                    } else {
+                        Err(SubnetError::InvalidPrefix)
+                    }
+                })?;
             Ok((ip, prefix))
         }
         [ip_str, prefix_str] => {
@@ -162,7 +174,7 @@ pub fn split_input_v6(input: &SubnetInput) -> Result<(Ipv6Addr, u8), SubnetError
 }
 
 /// Splits and validates either an IPv4 or IPv6 address and prefix length from input.
-pub fn split_input_any(input: &SubnetInput) -> Result<(IpAddr, u8), SubnetError> {
+fn split_input_any(input: &SubnetInput) -> Result<(IpAddr, u8), SubnetError> {
     let trimmed = input.ip_or_cidr.trim();
     if trimmed.is_empty() {
         return Err(SubnetError::InvalidFormat);
@@ -179,7 +191,13 @@ pub fn split_input_any(input: &SubnetInput) -> Result<(IpAddr, u8), SubnetError>
             let prefix = input
                 .prefix
                 .ok_or(SubnetError::InvalidPrefix)
-                .and_then(|p| if p <= max_prefix { Ok(p) } else { Err(SubnetError::InvalidPrefix) })?;
+                .and_then(|p| {
+                    if p <= max_prefix {
+                        Ok(p)
+                    } else {
+                        Err(SubnetError::InvalidPrefix)
+                    }
+                })?;
             Ok((ip, prefix))
         }
         [ip_str, prefix_str] => {
@@ -300,14 +318,8 @@ mod tests {
 
     #[test]
     fn test_ipv6_parsing_and_split() {
-        assert_eq!(
-            parse_prefix_v6("64").unwrap(),
-            64
-        );
-        assert_eq!(
-            parse_prefix_v6("128").unwrap(),
-            128
-        );
+        assert_eq!(parse_prefix_v6("64").unwrap(), 64);
+        assert_eq!(parse_prefix_v6("128").unwrap(), 128);
         assert_eq!(
             parse_prefix_v6("129").unwrap_err(),
             SubnetError::InvalidPrefix
@@ -322,7 +334,10 @@ mod tests {
         assert_eq!(prefix, 64);
 
         let (ip_any, prefix_any) = split_input_any(&input).unwrap();
-        assert_eq!(ip_any, IpAddr::V6("2001:db8::1".parse::<Ipv6Addr>().unwrap()));
+        assert_eq!(
+            ip_any,
+            IpAddr::V6("2001:db8::1".parse::<Ipv6Addr>().unwrap())
+        );
         assert_eq!(prefix_any, 64);
     }
 
