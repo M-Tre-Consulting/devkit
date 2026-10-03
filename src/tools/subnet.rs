@@ -99,6 +99,40 @@ fn parse_prefix_v6(input: &str) -> Result<u8, SubnetError> {
         .ok_or(SubnetError::InvalidPrefix)
 }
 
+/// Returns the bitmask version of the netmask calculated from the input prefix value.
+///
+/// Accepts prefix as a u8 integer value.
+fn get_netmask(prefix: u8) -> u32 {
+    if prefix == 0 {
+        return 0;
+    }
+
+    !0u32 << (32 - prefix)
+}
+
+/// Returns the wildcard mask, which is the inverse of the netmask.
+///
+/// Accepts the netmask as u32 integer value.
+fn get_wildcard_mask(netmask: u32) -> u32 {
+    !netmask
+}
+
+/// Calculates and returns the network address by bitwise ANDing IP and
+/// netmask values.
+///
+/// Accepts netmask and IP address as u32 integer values.
+fn get_network_address(netmask: u32, ip_value: u32) -> u32 {
+    netmask & ip_value
+}
+
+/// Calculates and returns the broadcast address by bitwise ORing the
+/// network address and the corresponding wildcard mask.
+///
+/// Accepts network address and wildcard mask as u32 integer values.
+fn get_broadcast_address(net_address: u32, wildcard_mask: u32) -> u32 {
+    net_address | wildcard_mask
+}
+
 /// Splits and validates an IPv4 address and prefix length from input.
 ///
 /// Accepts CIDR notation (e.g. "192.168.1.1/24") or separate prefix in `SubnetInput`.
@@ -218,6 +252,11 @@ fn split_input_any(input: &SubnetInput) -> Result<(IpAddr, u8), SubnetError> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn test_get_netmask() {
+        assert_eq!(get_netmask(8), 0b11111111_00000000_00000000_00000000u32);
+    }
 
     #[test]
     fn test_parse_ipv4_address() {
