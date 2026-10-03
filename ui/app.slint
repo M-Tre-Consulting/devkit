@@ -25,6 +25,18 @@ import { PillNavBar } from "./components/pill-nav-bar.slint";
 import { AppIcons } from "./components/app-icons.slint";
 export { MaterialWindowAdapter } from "@material";
 
+export struct SubnetResult {
+    network_address: string,
+    broadcast_address: string,
+    first_host: string,
+    last_host: string,
+    host_count: string,
+    netmask: string,
+    wildcard_mask: string,
+    cidr_notation: string,
+    error_message: string,
+}
+
 export struct Base64Result {
     output_text: string,
     error_message: string,
@@ -33,6 +45,87 @@ export struct Base64Result {
 export struct HashResult {
     hex_digest: string,
     base64_digest: string,
+    error_message: string,
+}
+
+export struct UuidResult {
+    uuids: [string],
+    bulk_uuids: string,
+    error_message: string,
+}
+
+export struct TimestampResult {
+    unix_seconds: string,
+    unix_millis: string,
+    iso_8601: string,
+    rfc_2822: string,
+    human_readable: string,
+    error_message: string,
+}
+
+export struct RegexResult {
+    match_summary: string,
+    matches_list: [string],
+    error_message: string,
+}
+
+export struct JsonYamlResult {
+    converted_text: string,
+    error_message: string,
+}
+
+export struct CronResult {
+    description: string,
+    next_runs: [string],
+    error_message: string,
+}
+
+export struct GzipResult {
+    result_data: string,
+    original_size: string,
+    processed_size: string,
+    ratio: string,
+    error_message: string,
+}
+
+export struct FormatterResult {
+    formatted_code: string,
+    error_message: string,
+}
+
+export struct ChmodResult {
+    octal_output: string,
+    symbolic_output: string,
+    command_output: string,
+    error_message: string,
+}
+
+export struct ColorResult {
+    hex_output: string,
+    rgb_output: string,
+    hsl_output: string,
+    hsv_output: string,
+    cmyk_output: string,
+    error_message: string,
+}
+
+export struct ContrastCheckResult {
+    ratio_text: string,
+    aa_normal_pass: bool,
+    aa_large_pass: bool,
+    aaa_normal_pass: bool,
+    aaa_large_pass: bool,
+    ui_components_pass: bool,
+    error_message: string,
+}
+
+export struct JwtResult {
+    header_json: string,
+    payload_json: string,
+    signature_output: string,
+    algorithm: string,
+    expiration_status: string,
+    expiration_time: string,
     error_message: string,
 }
 
@@ -68,20 +161,20 @@ export component AppWindow inherits Window {
     callback copy_text(string);
 
     // Tool execution callbacks
-    callback subnet-calculate(string);
+    callback subnet-calculate(string) -> SubnetResult;
     callback hash-calculate(string, int) -> HashResult;
     callback base64-convert(string, bool, bool, bool) -> Base64Result;
-    callback uuid-generate(int, int, bool, bool);
-    callback timestamp-convert(string, string);
-    callback regex-test(string, string, bool, bool, bool);
-    callback json-yaml-convert(string, bool, int);
-    callback cron-parse(string);
-    callback gzip-compress(string, bool);
-    callback format-format(string, int, int);
-    callback chmod-apply(bool, bool, bool, bool, bool, bool, bool, bool, bool);
-    callback color-convert(string, int);
-    callback contrast-check(string, string);
-    callback jwt-decode(string);
+    callback uuid-generate(int, int, bool, bool) -> UuidResult;
+    callback timestamp-convert(string, string) -> TimestampResult;
+    callback regex-test(string, string, bool, bool, bool) -> RegexResult;
+    callback json-yaml-convert(string, bool, int) -> JsonYamlResult;
+    callback cron-parse(string) -> CronResult;
+    callback gzip-compress(string, bool) -> GzipResult;
+    callback format-format(string, int, int) -> FormatterResult;
+    callback chmod-apply(bool, bool, bool, bool, bool, bool, bool, bool, bool) -> ChmodResult;
+    callback color-convert(string, int) -> ColorResult;
+    callback contrast-check(string, string) -> ContrastCheckResult;
+    callback jwt-decode(string) -> JwtResult;
 
     property <int> last_tool: 1;
     changed active_tool => {
@@ -307,7 +400,18 @@ export component AppWindow inherits Window {
                 status_bar_inset: root.status_bar_inset;
                 nav_bar_inset: root.nav_bar_inset;
                 subnet-back => { root.back(); }
-                subnet-calculate => { root.subnet-calculate(self.ip_input); }
+                subnet-calculate => {
+                    let res = root.subnet-calculate(self.ip_input);
+                    self.network_address = res.network_address;
+                    self.broadcast_address = res.broadcast_address;
+                    self.first_host = res.first_host;
+                    self.last_host = res.last_host;
+                    self.host_count = res.host_count;
+                    self.netmask = res.netmask;
+                    self.wildcard_mask = res.wildcard_mask;
+                    self.cidr_notation = res.cidr_notation;
+                    self.error_message = res.error_message;
+                }
                 subnet-copy(val) => { root.copy_text(val); }
             }
 
@@ -354,7 +458,12 @@ export component AppWindow inherits Window {
                 status_bar_inset: root.status_bar_inset;
                 nav_bar_inset: root.nav_bar_inset;
                 uuid-back => { root.back(); }
-                uuid-generate => { root.uuid-generate(self.version, self.count, self.uppercase, self.hyphens); }
+                uuid-generate => {
+                    let res = root.uuid-generate(self.version, self.count, self.uppercase, self.hyphens);
+                    self.uuids = res.uuids;
+                    self.bulk_uuids = res.bulk_uuids;
+                    self.error_message = res.error_message;
+                }
                 uuid-copy-item(val) => { root.copy_text(val); }
                 uuid-copy-all => { root.copy_text(self.bulk_uuids); }
             }
@@ -367,7 +476,15 @@ export component AppWindow inherits Window {
                 status_bar_inset: root.status_bar_inset;
                 nav_bar_inset: root.nav_bar_inset;
                 timestamp-back => { root.back(); }
-                timestamp-convert => { root.timestamp-convert(self.input_value, self.timezone == 0 ? "UTC" : "Local"); }
+                timestamp-convert => {
+                    let res = root.timestamp-convert(self.input_value, self.timezone == 0 ? "UTC" : "Local");
+                    self.unix_seconds = res.unix_seconds;
+                    self.unix_millis = res.unix_millis;
+                    self.iso_8601 = res.iso_8601;
+                    self.rfc_2822 = res.rfc_2822;
+                    self.human_readable = res.human_readable;
+                    self.error_message = res.error_message;
+                }
                 timestamp-copy(val) => { root.copy_text(val); }
             }
 
@@ -379,7 +496,12 @@ export component AppWindow inherits Window {
                 status_bar_inset: root.status_bar_inset;
                 nav_bar_inset: root.nav_bar_inset;
                 regex-back => { root.back(); }
-                regex-test => { root.regex-test(self.pattern, self.test_string, self.case_insensitive, self.multiline, self.dot_matches_newline); }
+                regex-test => {
+                    let res = root.regex-test(self.pattern, self.test_string, self.case_insensitive, self.multiline, self.dot_matches_newline);
+                    self.match_summary = res.match_summary;
+                    self.matches_list = res.matches_list;
+                    self.error_message = res.error_message;
+                }
                 regex-copy-match(val) => { root.copy_text(val); }
             }
 
@@ -391,7 +513,11 @@ export component AppWindow inherits Window {
                 status_bar_inset: root.status_bar_inset;
                 nav_bar_inset: root.nav_bar_inset;
                 json-yaml-back => { root.back(); }
-                json-yaml-convert => { root.json-yaml-convert(self.source_text, self.direction == 0, self.indent_size); }
+                json-yaml-convert => {
+                    let res = root.json-yaml-convert(self.source_text, self.direction == 0, self.indent_size);
+                    self.converted_text = res.converted_text;
+                    self.error_message = res.error_message;
+                }
                 json-yaml-copy(val) => { root.copy_text(val); }
             }
 
@@ -403,7 +529,12 @@ export component AppWindow inherits Window {
                 status_bar_inset: root.status_bar_inset;
                 nav_bar_inset: root.nav_bar_inset;
                 cron-back => { root.back(); }
-                cron-parse => { root.cron-parse(self.expression); }
+                cron-parse => {
+                    let res = root.cron-parse(self.expression);
+                    self.description = res.description;
+                    self.next_runs = res.next_runs;
+                    self.error_message = res.error_message;
+                }
                 cron-copy(val) => { root.copy_text(val); }
             }
 
@@ -415,8 +546,22 @@ export component AppWindow inherits Window {
                 status_bar_inset: root.status_bar_inset;
                 nav_bar_inset: root.nav_bar_inset;
                 gzip-back => { root.back(); }
-                gzip-compress => { root.gzip-compress(self.input_data, true); }
-                gzip-decompress => { root.gzip-compress(self.input_data, false); }
+                gzip-compress => {
+                    let res = root.gzip-compress(self.input_data, true);
+                    self.result_data = res.result_data;
+                    self.original_size = res.original_size;
+                    self.processed_size = res.processed_size;
+                    self.ratio = res.ratio;
+                    self.error_message = res.error_message;
+                }
+                gzip-decompress => {
+                    let res = root.gzip-compress(self.input_data, false);
+                    self.result_data = res.result_data;
+                    self.original_size = res.original_size;
+                    self.processed_size = res.processed_size;
+                    self.ratio = res.ratio;
+                    self.error_message = res.error_message;
+                }
                 gzip-copy(val) => { root.copy_text(val); }
             }
 
@@ -428,7 +573,11 @@ export component AppWindow inherits Window {
                 status_bar_inset: root.status_bar_inset;
                 nav_bar_inset: root.nav_bar_inset;
                 format-back => { root.back(); }
-                format-format => { root.format-format(self.source_code, self.selected_lang, self.indent_size); }
+                format-format => {
+                    let res = root.format-format(self.source_code, self.selected_lang, self.indent_size);
+                    self.formatted_code = res.formatted_code;
+                    self.error_message = res.error_message;
+                }
                 format-copy(val) => { root.copy_text(val); }
             }
 
@@ -440,11 +589,15 @@ export component AppWindow inherits Window {
                 nav_bar_inset: root.nav_bar_inset;
                 chmod-back => { root.back(); }
                 chmod-apply => {
-                    root.chmod-apply(
+                    let res = root.chmod-apply(
                         self.owner_r, self.owner_w, self.owner_x,
                         self.group_r, self.group_w, self.group_x,
                         self.other_r, self.other_w, self.other_x,
                     );
+                    self.octal_output = res.octal_output;
+                    self.symbolic_output = res.symbolic_output;
+                    self.command_output = res.command_output;
+                    self.error_message = res.error_message;
                 }
                 chmod-copy(val) => { root.copy_text(val); }
             }
@@ -456,7 +609,15 @@ export component AppWindow inherits Window {
                 height: 100%;
                 nav_bar_inset: root.nav_bar_inset;
                 color-back => { root.back(); }
-                color-convert => { root.color-convert(self.color_input, self.selected_format); }
+                color-convert => {
+                    let res = root.color-convert(self.color_input, self.selected_format);
+                    self.hex_output = res.hex_output;
+                    self.rgb_output = res.rgb_output;
+                    self.hsl_output = res.hsl_output;
+                    self.hsv_output = res.hsv_output;
+                    self.cmyk_output = res.cmyk_output;
+                    self.error_message = res.error_message;
+                }
                 color-copy(val) => { root.copy_text(val); }
             }
 
@@ -467,7 +628,16 @@ export component AppWindow inherits Window {
                 height: 100%;
                 nav_bar_inset: root.nav_bar_inset;
                 contrast-back => { root.back(); }
-                contrast-check => { root.contrast-check(self.fg_color_text, self.bg_color_text); }
+                contrast-check => {
+                    let res = root.contrast-check(self.fg_color_text, self.bg_color_text);
+                    self.ratio_text = res.ratio_text;
+                    self.aa_normal_pass = res.aa_normal_pass;
+                    self.aa_large_pass = res.aa_large_pass;
+                    self.aaa_normal_pass = res.aaa_normal_pass;
+                    self.aaa_large_pass = res.aaa_large_pass;
+                    self.ui_components_pass = res.ui_components_pass;
+                    self.error_message = res.error_message;
+                }
                 contrast-copy(val) => { root.copy_text(val); }
             }
 
@@ -478,7 +648,16 @@ export component AppWindow inherits Window {
                 height: 100%;
                 nav_bar_inset: root.nav_bar_inset;
                 jwt-back => { root.back(); }
-                jwt-decode => { root.jwt-decode(self.token_input); }
+                jwt-decode => {
+                    let res = root.jwt-decode(self.token_input);
+                    self.header_json = res.header_json;
+                    self.payload_json = res.payload_json;
+                    self.signature_output = res.signature_output;
+                    self.algorithm = res.algorithm;
+                    self.expiration_status = res.expiration_status;
+                    self.expiration_time = res.expiration_time;
+                    self.error_message = res.error_message;
+                }
                 jwt-copy(val) => { root.copy_text(val); }
                 jwt-copy-header(val) => { root.copy_text(val); }
                 jwt-copy-payload(val) => { root.copy_text(val); }

@@ -62,7 +62,30 @@ pub fn setup_tool_handlers(ui: &crate::AppWindow) {
     // 1. Subnet Calculator
     ui.on_subnet_calculate(move |ip| {
         crate::platform::android::haptic_tap();
-        let _ = crate::tools::handlers::handle_subnet(&ip);
+        match crate::tools::handlers::handle_subnet(&ip) {
+            Ok(out) => crate::SubnetResult {
+                network_address: out.network_address.into(),
+                broadcast_address: out.broadcast_address.into(),
+                first_host: out.first_host.into(),
+                last_host: out.last_host.into(),
+                host_count: out.host_count.into(),
+                netmask: out.netmask.into(),
+                wildcard_mask: out.wildcard_mask.into(),
+                cidr_notation: out.cidr_notation.into(),
+                error_message: "".into(),
+            },
+            Err(err) => crate::SubnetResult {
+                network_address: "".into(),
+                broadcast_address: "".into(),
+                first_host: "".into(),
+                last_host: "".into(),
+                host_count: "".into(),
+                netmask: "".into(),
+                wildcard_mask: "".into(),
+                cidr_notation: "".into(),
+                error_message: err.into(),
+            },
+        }
     });
 
     // 2. Hash Calculator
@@ -100,67 +123,242 @@ pub fn setup_tool_handlers(ui: &crate::AppWindow) {
     // 4. UUID Generator
     ui.on_uuid_generate(move |ver, count, upper, hyphens| {
         crate::platform::android::haptic_tap();
-        let _ = crate::tools::handlers::handle_uuid(ver, count as usize, upper, hyphens);
+        match crate::tools::handlers::handle_uuid(ver, count as usize, upper, hyphens) {
+            Ok(out) => {
+                let bulk = out.uuids.join("\n");
+                let shared_uuids: Vec<slint::SharedString> =
+                    out.uuids.into_iter().map(slint::SharedString::from).collect();
+                crate::UuidResult {
+                    uuids: ModelRc::new(VecModel::from(shared_uuids)),
+                    bulk_uuids: bulk.into(),
+                    error_message: "".into(),
+                }
+            }
+            Err(err) => crate::UuidResult {
+                uuids: ModelRc::new(VecModel::from(Vec::new())),
+                bulk_uuids: "".into(),
+                error_message: err.into(),
+            },
+        }
     });
 
     // 5. Timestamp Converter
     ui.on_timestamp_convert(move |ts, tz| {
         crate::platform::android::haptic_tap();
-        let _ = crate::tools::handlers::handle_timestamp(&ts, &tz);
+        match crate::tools::handlers::handle_timestamp(&ts, &tz) {
+            Ok(out) => crate::TimestampResult {
+                unix_seconds: out.unix_seconds.into(),
+                unix_millis: out.unix_millis.into(),
+                iso_8601: out.iso_8601.into(),
+                rfc_2822: out.rfc_2822.into(),
+                human_readable: out.human_readable.into(),
+                error_message: "".into(),
+            },
+            Err(err) => crate::TimestampResult {
+                unix_seconds: "".into(),
+                unix_millis: "".into(),
+                iso_8601: "".into(),
+                rfc_2822: "".into(),
+                human_readable: "".into(),
+                error_message: err.into(),
+            },
+        }
     });
 
     // 6. Regex Tester
     ui.on_regex_test(move |pat, text, ci, ml, dot| {
         crate::platform::android::haptic_tap();
-        let _ = crate::tools::handlers::handle_regex(&pat, &text, ci, ml, dot);
+        match crate::tools::handlers::handle_regex(&pat, &text, ci, ml, dot) {
+            Ok(out) => {
+                let summary = if out.total_matches == 1 {
+                    "1 match found".to_string()
+                } else {
+                    format!("{} matches found", out.total_matches)
+                };
+                let matches_formatted: Vec<slint::SharedString> = out
+                    .matches
+                    .into_iter()
+                    .map(|m| format!("Match {}: '{}' [{}..{}]", m.index, m.text, m.start, m.end).into())
+                    .collect();
+                crate::RegexResult {
+                    match_summary: summary.into(),
+                    matches_list: ModelRc::new(VecModel::from(matches_formatted)),
+                    error_message: "".into(),
+                }
+            }
+            Err(err) => crate::RegexResult {
+                match_summary: "".into(),
+                matches_list: ModelRc::new(VecModel::from(Vec::new())),
+                error_message: err.into(),
+            },
+        }
     });
 
     // 7. JSON ↔ YAML Converter
     ui.on_json_yaml_convert(move |src, is_j2y, ind| {
         crate::platform::android::haptic_tap();
-        let _ = crate::tools::handlers::handle_json_yaml(&src, is_j2y, ind as usize);
+        match crate::tools::handlers::handle_json_yaml(&src, is_j2y, ind as usize) {
+            Ok(out) => crate::JsonYamlResult {
+                converted_text: out.converted_text.into(),
+                error_message: "".into(),
+            },
+            Err(err) => crate::JsonYamlResult {
+                converted_text: "".into(),
+                error_message: err.into(),
+            },
+        }
     });
 
     // 8. CRON Parser
     ui.on_cron_parse(move |expr| {
         crate::platform::android::haptic_tap();
-        let _ = crate::tools::handlers::handle_cron(&expr);
+        match crate::tools::handlers::handle_cron(&expr) {
+            Ok(out) => {
+                let runs: Vec<slint::SharedString> = out
+                    .next_run_times
+                    .into_iter()
+                    .map(slint::SharedString::from)
+                    .collect();
+                crate::CronResult {
+                    description: out.description.into(),
+                    next_runs: ModelRc::new(VecModel::from(runs)),
+                    error_message: "".into(),
+                }
+            }
+            Err(err) => crate::CronResult {
+                description: "".into(),
+                next_runs: ModelRc::new(VecModel::from(Vec::new())),
+                error_message: err.into(),
+            },
+        }
     });
 
     // 9. GZip Compressor
     ui.on_gzip_compress(move |data, is_comp| {
         crate::platform::android::haptic_tap();
-        let _ = crate::tools::handlers::handle_gzip(&data, is_comp);
+        match crate::tools::handlers::handle_gzip(&data, is_comp) {
+            Ok(out) => crate::GzipResult {
+                result_data: out.result_data.into(),
+                original_size: format!("{} bytes", out.original_size).into(),
+                processed_size: format!("{} bytes", out.processed_size).into(),
+                ratio: format!("{:.1}% reduction", out.ratio_percentage).into(),
+                error_message: "".into(),
+            },
+            Err(err) => crate::GzipResult {
+                result_data: "".into(),
+                original_size: "".into(),
+                processed_size: "".into(),
+                ratio: "".into(),
+                error_message: err.into(),
+            },
+        }
     });
 
     // 10. Code Formatter
     ui.on_format_format(move |src, lang, ind| {
         crate::platform::android::haptic_tap();
-        let _ = crate::tools::handlers::handle_formatter(&src, lang, ind as u8);
+        match crate::tools::handlers::handle_formatter(&src, lang, ind as u8) {
+            Ok(out) => crate::FormatterResult {
+                formatted_code: out.formatted_code.into(),
+                error_message: "".into(),
+            },
+            Err(err) => crate::FormatterResult {
+                formatted_code: "".into(),
+                error_message: err.into(),
+            },
+        }
     });
 
     // 11. Chmod Calculator
     ui.on_chmod_apply(move |or, ow, ox, gr, gw, gx, tr, tw, tx| {
         crate::platform::android::haptic_tap();
-        let _ = crate::tools::handlers::handle_chmod(or, ow, ox, gr, gw, gx, tr, tw, tx);
+        match crate::tools::handlers::handle_chmod(or, ow, ox, gr, gw, gx, tr, tw, tx) {
+            Ok(out) => crate::ChmodResult {
+                octal_output: out.octal.into(),
+                symbolic_output: out.symbolic.into(),
+                command_output: out.command.into(),
+                error_message: "".into(),
+            },
+            Err(err) => crate::ChmodResult {
+                octal_output: "".into(),
+                symbolic_output: "".into(),
+                command_output: "".into(),
+                error_message: err.into(),
+            },
+        }
     });
 
     // 12. Color Converter
     ui.on_color_convert(move |val, fmt| {
         crate::platform::android::haptic_tap();
-        let _ = crate::tools::handlers::handle_color(&val, fmt);
+        match crate::tools::handlers::handle_color(&val, fmt) {
+            Ok(out) => crate::ColorResult {
+                hex_output: out.hex.into(),
+                rgb_output: out.rgb.into(),
+                hsl_output: out.hsl.into(),
+                hsv_output: out.hsv.into(),
+                cmyk_output: out.cmyk.into(),
+                error_message: "".into(),
+            },
+            Err(err) => crate::ColorResult {
+                hex_output: "".into(),
+                rgb_output: "".into(),
+                hsl_output: "".into(),
+                hsv_output: "".into(),
+                cmyk_output: "".into(),
+                error_message: err.into(),
+            },
+        }
     });
 
     // 13. Contrast Checker
     ui.on_contrast_check(move |fg, bg| {
         crate::platform::android::haptic_tap();
-        let _ = crate::tools::handlers::handle_contrast(&fg, &bg);
+        match crate::tools::handlers::handle_contrast(&fg, &bg) {
+            Ok(out) => crate::ContrastCheckResult {
+                ratio_text: out.ratio_display.into(),
+                aa_normal_pass: out.aa_normal,
+                aa_large_pass: out.aa_large,
+                aaa_normal_pass: out.aaa_normal,
+                aaa_large_pass: out.aaa_large,
+                ui_components_pass: out.ui_components,
+                error_message: "".into(),
+            },
+            Err(err) => crate::ContrastCheckResult {
+                ratio_text: "".into(),
+                aa_normal_pass: false,
+                aa_large_pass: false,
+                aaa_normal_pass: false,
+                aaa_large_pass: false,
+                ui_components_pass: false,
+                error_message: err.into(),
+            },
+        }
     });
 
     // 14. JWT Decoder
     ui.on_jwt_decode(move |token| {
         crate::platform::android::haptic_tap();
-        let _ = crate::tools::handlers::handle_jwt(&token);
+        match crate::tools::handlers::handle_jwt(&token) {
+            Ok(out) => crate::JwtResult {
+                header_json: out.header_json.into(),
+                payload_json: out.payload_json.into(),
+                signature_output: out.signature.into(),
+                algorithm: out.algorithm.into(),
+                expiration_status: out.expiration_status.as_str().into(),
+                expiration_time: out.expiration_time.into(),
+                error_message: "".into(),
+            },
+            Err(err) => crate::JwtResult {
+                header_json: "".into(),
+                payload_json: "".into(),
+                signature_output: "".into(),
+                algorithm: "".into(),
+                expiration_status: "".into(),
+                expiration_time: "".into(),
+                error_message: err.into(),
+            },
+        }
     });
 
     // Clipboard copy action

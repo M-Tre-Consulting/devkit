@@ -257,7 +257,15 @@ export component ContrastScreen inherits VerticalLayout {
                 text: "Swap Colors";
                 icon: AppIcons.swap;
                 height: 40px;
-                clicked => { root.contrast-swap-colors(); }
+                clicked => {
+                    let tmp_t = root.fg_color_text;
+                    root.fg_color_text = root.bg_color_text;
+                    root.bg_color_text = tmp_t;
+                    let tmp_c = root.fg_color;
+                    root.fg_color = root.bg_color;
+                    root.bg_color = tmp_c;
+                    root.contrast-swap-colors();
+                }
             }
 
             // Live Preview Card
