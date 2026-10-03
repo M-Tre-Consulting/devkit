@@ -270,6 +270,33 @@ mod tests {
     }
 
     #[test]
+    fn test_get_wildcard_mask() {
+        // Empty netmask
+        let empty_mask = get_netmask(0u8);
+        assert_eq!(get_wildcard_mask(empty_mask), !0u32);
+
+        // Standard netmasks
+        let class_a = get_netmask(8u8);
+        assert_eq!(
+            get_wildcard_mask(class_a),
+            !(0b11111111_00000000_00000000_00000000u32)
+        );
+
+        let class_b = get_netmask(16u8);
+        assert_eq!(
+            get_wildcard_mask(class_b),
+            !(0b11111111_11111111_00000000_00000000u32)
+        );
+
+        // Non-standard netmasks
+        let nmp_21 = get_netmask(21);
+        assert_eq!(
+            get_wildcard_mask(nmp_21),
+            !(0b11111111_11111111_11111000_00000000u32)
+        );
+    }
+
+    #[test]
     fn test_parse_ipv4_address() {
         assert_eq!(
             parse_ipv4_address("192.168.1.1").unwrap(),
