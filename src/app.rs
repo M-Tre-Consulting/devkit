@@ -433,6 +433,7 @@ pub fn setup_app_state(ui: &crate::AppWindow) {
 
     let ui_handle = ui.as_weak();
     ui.on_high_refresh_rate_changed(move |enabled| {
+        crate::platform::android::haptic_tap();
         crate::storage::save_high_refresh_rate(enabled);
         if let Some(ui) = ui_handle.upgrade() {
             ui.set_high_refresh_rate_enabled(enabled);
