@@ -134,8 +134,8 @@ export component ScrollView {
     property <length> prev_content_y: 0px;
 
     property <length> prev_dy: 0px;
-    property <duration> overscroll_duration: 350ms;
-    property <easing> overscroll_easing: cubic-bezier(0.34, 1.56, 0.64, 1);
+    property <duration> overscroll_duration: 380ms;
+    property <easing> overscroll_easing: cubic-bezier(0.05, 0.7, 0.1, 1.0);
     property <bool> is_bouncing: false;
 
     animate overscroll_y {
@@ -144,11 +144,11 @@ export component ScrollView {
     }
 
     spring_timer := Timer {
-        interval: 90ms;
+        interval: 100ms;
         running: false;
         triggered => {
-            root.overscroll_duration = 320ms;
-            root.overscroll_easing = cubic-bezier(0.34, 1.56, 0.64, 1);
+            root.overscroll_duration = 380ms;
+            root.overscroll_easing = cubic-bezier(0.05, 0.7, 0.1, 1.0);
             root.overscroll_y = 0px;
             self.running = false;
             root.is_bouncing = false;
@@ -160,10 +160,10 @@ export component ScrollView {
             return;
         }
         root.is_bouncing = true;
-        root.overscroll_duration = 90ms;
+        root.overscroll_duration = 100ms;
         root.overscroll_easing = ease-out;
         root.overscroll_y = target_overshoot;
-        spring_timer.interval = 90ms;
+        spring_timer.interval = 100ms;
         spring_timer.running = true;
     }
 
@@ -184,7 +184,7 @@ export component ScrollView {
         if self.content_y >= -1px && (dy > 1.0px || last_dy > 1.0px) {
             let vel = max(dy, last_dy);
             root.prev_dy = 0px;
-            root.trigger_bounce(min(54px, vel * 1.8));
+            root.trigger_bounce(min(16px, vel * 0.8));
         }
         // Bottom boundary arrival:
         // dy < 0 means moving downward towards -max_s.
@@ -192,7 +192,7 @@ export component ScrollView {
         else if self.content_y <= -max_s + 1px && (dy < -1.0px || last_dy < -1.0px) {
             let vel = min(dy, last_dy);
             root.prev_dy = 0px;
-            root.trigger_bounce(max(-54px, vel * 1.8));
+            root.trigger_bounce(max(-16px, vel * 0.8));
         }
     }
 
@@ -232,13 +232,13 @@ export component ScrollView {
             let dy = self.content_y - root.prev_content_y;
 
             if self.content_y >= 0px && dy > 0.5px {
-                root.trigger_bounce(min(48px, dy * 2.0));
+                root.trigger_bounce(min(16px, dy * 0.8));
             } else if max_s > 0px && self.content_y <= -max_s && dy < -0.5px {
-                root.trigger_bounce(max(-48px, dy * 2.0));
+                root.trigger_bounce(max(-16px, dy * 0.8));
             } else if self.content_y >= 0px && !root.is_bouncing {
-                root.trigger_bounce(20px);
+                root.trigger_bounce(12px);
             } else if max_s > 0px && self.content_y <= -max_s && !root.is_bouncing {
-                root.trigger_bounce(-20px);
+                root.trigger_bounce(-12px);
             }
             root.scrolled();
         }
