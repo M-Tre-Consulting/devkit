@@ -128,13 +128,11 @@ export component SettingsScreen inherits VerticalLayout {
             }
 
             // Section 2: Display
-            SectionHeader {
+            if root.high_refresh_rate_supported : SectionHeader {
                 title: "DISPLAY";
-                visible: root.high_refresh_rate_supported;
             }
 
-            Rectangle {
-                visible: root.high_refresh_rate_supported;
+            if root.high_refresh_rate_supported : Rectangle {
                 border_radius: MaterialStyleMetrics.border_radius_16;
                 background: MaterialPalette.surface_container;
                 border_width: 1px;
