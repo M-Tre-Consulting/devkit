@@ -17,10 +17,10 @@ export component ToolActionButton inherits HorizontalLayout {
         horizontal-stretch: 1;
         height: 48px;
 
-        property <float> btn_scale: action_touch.pressed ? 0.96 : 1.0;
+        property <float> btn_scale: action_touch.pressed ? 0.98 : 1.0;
         animate btn_scale {
-            duration: action_touch.pressed ? 100ms : 220ms;
-            easing: cubic-bezier(0.34, 1.56, 0.64, 1);
+            duration: action_touch.pressed ? 80ms : 180ms;
+            easing: cubic-bezier(0.2, 0, 0, 1);
         }
 
         action_box := Rectangle {
@@ -61,10 +61,10 @@ export component ToolActionButton inherits HorizontalLayout {
         width: 48px;
         height: 48px;
 
-        property <float> clear_scale: clear_touch.pressed ? 0.96 : 1.0;
+        property <float> clear_scale: clear_touch.pressed ? 0.98 : 1.0;
         animate clear_scale {
-            duration: clear_touch.pressed ? 100ms : 220ms;
-            easing: cubic-bezier(0.34, 1.56, 0.64, 1);
+            duration: clear_touch.pressed ? 80ms : 180ms;
+            easing: cubic-bezier(0.2, 0, 0, 1);
         }
 
         clear_box := Rectangle {
