@@ -96,7 +96,12 @@ pub fn query_status_bar_inset(app: &slint::android::AndroidApp) -> f32 {
 
         let activity = jni::objects::JObject::from_raw(activity_ptr as _);
 
-        let resources = match env.call_method(&activity, "getResources", "()Landroid/content/res/Resources;", &[]) {
+        let resources = match env.call_method(
+            &activity,
+            "getResources",
+            "()Landroid/content/res/Resources;",
+            &[],
+        ) {
             Ok(r) => match r.l() {
                 Ok(obj) => obj,
                 Err(_) => return 24.0,
@@ -121,7 +126,11 @@ pub fn query_status_bar_inset(app: &slint::android::AndroidApp) -> f32 {
             &resources,
             "getIdentifier",
             "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)I",
-            &[(&res_name).into(), (&def_type).into(), (&def_package).into()],
+            &[
+                (&res_name).into(),
+                (&def_type).into(),
+                (&def_package).into(),
+            ],
         ) {
             Ok(v) => v.i().unwrap_or(0),
             Err(_) => 0,
@@ -131,12 +140,22 @@ pub fn query_status_bar_inset(app: &slint::android::AndroidApp) -> f32 {
             return 24.0;
         }
 
-        let px = match env.call_method(&resources, "getDimensionPixelSize", "(I)I", &[id_val.into()]) {
+        let px = match env.call_method(
+            &resources,
+            "getDimensionPixelSize",
+            "(I)I",
+            &[id_val.into()],
+        ) {
             Ok(v) => v.i().unwrap_or(0),
             Err(_) => return 24.0,
         };
 
-        let metrics = match env.call_method(&resources, "getDisplayMetrics", "()Landroid/util/DisplayMetrics;", &[]) {
+        let metrics = match env.call_method(
+            &resources,
+            "getDisplayMetrics",
+            "()Landroid/util/DisplayMetrics;",
+            &[],
+        ) {
             Ok(m) => match m.l() {
                 Ok(obj) => obj,
                 Err(_) => return px as f32,
@@ -181,16 +200,38 @@ pub fn query_navigation_bar_inset(app: &slint::android::AndroidApp) -> f32 {
         let mut inset_px = 0;
 
         // Attempt 1: Modern Android 11+ (API 30+) WindowMetrics API
-        if let Ok(wm) = env.call_method(&activity, "getWindowManager", "()Landroid/view/WindowManager;", &[]) {
+        if let Ok(wm) = env.call_method(
+            &activity,
+            "getWindowManager",
+            "()Landroid/view/WindowManager;",
+            &[],
+        ) {
             if let Ok(wm_obj) = wm.l() {
-                if let Ok(metrics) = env.call_method(&wm_obj, "getCurrentWindowMetrics", "()Landroid/view/WindowMetrics;", &[]) {
+                if let Ok(metrics) = env.call_method(
+                    &wm_obj,
+                    "getCurrentWindowMetrics",
+                    "()Landroid/view/WindowMetrics;",
+                    &[],
+                ) {
                     if let Ok(metrics_obj) = metrics.l() {
-                        if let Ok(window_insets) = env.call_method(&metrics_obj, "getWindowInsets", "()Landroid/view/WindowInsets;", &[]) {
+                        if let Ok(window_insets) = env.call_method(
+                            &metrics_obj,
+                            "getWindowInsets",
+                            "()Landroid/view/WindowInsets;",
+                            &[],
+                        ) {
                             if let Ok(winsets_obj) = window_insets.l() {
                                 // 2 = WindowInsets.Type.navigationBars()
-                                if let Ok(insets) = env.call_method(&winsets_obj, "getInsets", "(I)Landroid/graphics/Insets;", &[2i32.into()]) {
+                                if let Ok(insets) = env.call_method(
+                                    &winsets_obj,
+                                    "getInsets",
+                                    "(I)Landroid/graphics/Insets;",
+                                    &[2i32.into()],
+                                ) {
                                     if let Ok(insets_obj) = insets.l() {
-                                        if let Ok(bottom_val) = env.get_field(&insets_obj, "bottom", "I") {
+                                        if let Ok(bottom_val) =
+                                            env.get_field(&insets_obj, "bottom", "I")
+                                        {
                                             inset_px = bottom_val.i().unwrap_or(0);
                                         }
                                     }
@@ -205,14 +246,28 @@ pub fn query_navigation_bar_inset(app: &slint::android::AndroidApp) -> f32 {
 
         // Attempt 2: Query WindowInsets from DecorView (API 20+)
         if inset_px <= 0 {
-            if let Ok(window) = env.call_method(&activity, "getWindow", "()Landroid/view/Window;", &[]) {
+            if let Ok(window) =
+                env.call_method(&activity, "getWindow", "()Landroid/view/Window;", &[])
+            {
                 if let Ok(window_obj) = window.l() {
-                    if let Ok(decor_view) = env.call_method(&window_obj, "getDecorView", "()Landroid/view/View;", &[]) {
+                    if let Ok(decor_view) =
+                        env.call_method(&window_obj, "getDecorView", "()Landroid/view/View;", &[])
+                    {
                         if let Ok(decor_obj) = decor_view.l() {
-                            if let Ok(insets) = env.call_method(&decor_obj, "getRootWindowInsets", "()Landroid/view/WindowInsets;", &[]) {
+                            if let Ok(insets) = env.call_method(
+                                &decor_obj,
+                                "getRootWindowInsets",
+                                "()Landroid/view/WindowInsets;",
+                                &[],
+                            ) {
                                 if let Ok(insets_obj) = insets.l() {
                                     if !insets_obj.as_raw().is_null() {
-                                        if let Ok(b) = env.call_method(&insets_obj, "getSystemWindowInsetBottom", "()I", &[]) {
+                                        if let Ok(b) = env.call_method(
+                                            &insets_obj,
+                                            "getSystemWindowInsetBottom",
+                                            "()I",
+                                            &[],
+                                        ) {
                                             inset_px = b.i().unwrap_or(0);
                                         }
                                     }
@@ -225,7 +280,12 @@ pub fn query_navigation_bar_inset(app: &slint::android::AndroidApp) -> f32 {
             let _ = env.exception_clear();
         }
 
-        let resources = match env.call_method(&activity, "getResources", "()Landroid/content/res/Resources;", &[]) {
+        let resources = match env.call_method(
+            &activity,
+            "getResources",
+            "()Landroid/content/res/Resources;",
+            &[],
+        ) {
             Ok(r) => match r.l() {
                 Ok(obj) => obj,
                 Err(_) => {
@@ -258,14 +318,23 @@ pub fn query_navigation_bar_inset(app: &slint::android::AndroidApp) -> f32 {
                 &resources,
                 "getIdentifier",
                 "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)I",
-                &[(&res_name).into(), (&def_type).into(), (&def_package).into()],
+                &[
+                    (&res_name).into(),
+                    (&def_type).into(),
+                    (&def_package).into(),
+                ],
             ) {
                 Ok(v) => v.i().unwrap_or(0),
                 Err(_) => 0,
             };
 
             if id_val > 0 {
-                inset_px = match env.call_method(&resources, "getDimensionPixelSize", "(I)I", &[id_val.into()]) {
+                inset_px = match env.call_method(
+                    &resources,
+                    "getDimensionPixelSize",
+                    "(I)I",
+                    &[id_val.into()],
+                ) {
                     Ok(v) => v.i().unwrap_or(0),
                     Err(_) => 0,
                 };
@@ -277,7 +346,12 @@ pub fn query_navigation_bar_inset(app: &slint::android::AndroidApp) -> f32 {
             return 16.0;
         }
 
-        let metrics = match env.call_method(&resources, "getDisplayMetrics", "()Landroid/util/DisplayMetrics;", &[]) {
+        let metrics = match env.call_method(
+            &resources,
+            "getDisplayMetrics",
+            "()Landroid/util/DisplayMetrics;",
+            &[],
+        ) {
             Ok(m) => match m.l() {
                 Ok(obj) => obj,
                 Err(_) => return inset_px as f32,
@@ -321,7 +395,8 @@ pub fn configure_window_soft_input_mode(app: &slint::android::AndroidApp) {
         };
 
         let activity = jni::objects::JObject::from_raw(activity_ptr as _);
-        if let Ok(window) = env.call_method(&activity, "getWindow", "()Landroid/view/Window;", &[]) {
+        if let Ok(window) = env.call_method(&activity, "getWindow", "()Landroid/view/Window;", &[])
+        {
             if let Ok(window_obj) = window.l() {
                 // WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE = 0x10 (16)
                 let _ = env.call_method(&window_obj, "setSoftInputMode", "(I)V", &[16i32.into()]);
@@ -366,21 +441,27 @@ pub fn query_keyboard_inset() -> f32 {
             }
         };
 
-        let decor_view = match env.call_method(&window, "getDecorView", "()Landroid/view/View;", &[]) {
-            Ok(d) => match d.l() {
-                Ok(obj) => obj,
+        let decor_view =
+            match env.call_method(&window, "getDecorView", "()Landroid/view/View;", &[]) {
+                Ok(d) => match d.l() {
+                    Ok(obj) => obj,
+                    Err(_) => {
+                        let _ = env.exception_clear();
+                        return get_keyboard_inset();
+                    }
+                },
                 Err(_) => {
                     let _ = env.exception_clear();
                     return get_keyboard_inset();
                 }
-            },
-            Err(_) => {
-                let _ = env.exception_clear();
-                return get_keyboard_inset();
-            }
-        };
+            };
 
-        let insets = match env.call_method(&decor_view, "getRootWindowInsets", "()Landroid/view/WindowInsets;", &[]) {
+        let insets = match env.call_method(
+            &decor_view,
+            "getRootWindowInsets",
+            "()Landroid/view/WindowInsets;",
+            &[],
+        ) {
             Ok(i) => match i.l() {
                 Ok(obj) => obj,
                 Err(_) => {
@@ -401,7 +482,12 @@ pub fn query_keyboard_inset() -> f32 {
         let mut ime_bottom_px = 0;
 
         // WindowInsets.Type.ime() = 8 (API 30+)
-        if let Ok(ime_insets) = env.call_method(&insets, "getInsets", "(I)Landroid/graphics/Insets;", &[8i32.into()]) {
+        if let Ok(ime_insets) = env.call_method(
+            &insets,
+            "getInsets",
+            "(I)Landroid/graphics/Insets;",
+            &[8i32.into()],
+        ) {
             if let Ok(ime_obj) = ime_insets.l() {
                 if !ime_obj.as_raw().is_null() {
                     if let Ok(bottom_val) = env.get_field(&ime_obj, "bottom", "I") {
@@ -414,7 +500,9 @@ pub fn query_keyboard_inset() -> f32 {
 
         // Fallback for API < 30: compare getSystemWindowInsetBottom with navigation bar inset
         if ime_bottom_px <= 0 {
-            if let Ok(bottom_val) = env.call_method(&insets, "getSystemWindowInsetBottom", "()I", &[]) {
+            if let Ok(bottom_val) =
+                env.call_method(&insets, "getSystemWindowInsetBottom", "()I", &[])
+            {
                 let total_bottom = bottom_val.i().unwrap_or(0);
                 let nav_px = (get_navigation_bar_inset() * 2.625) as i32;
                 if total_bottom > nav_px + 50 {
@@ -424,7 +512,12 @@ pub fn query_keyboard_inset() -> f32 {
             let _ = env.exception_clear();
         }
 
-        let resources = match env.call_method(&activity, "getResources", "()Landroid/content/res/Resources;", &[]) {
+        let resources = match env.call_method(
+            &activity,
+            "getResources",
+            "()Landroid/content/res/Resources;",
+            &[],
+        ) {
             Ok(r) => match r.l() {
                 Ok(obj) => obj,
                 Err(_) => {
@@ -438,7 +531,12 @@ pub fn query_keyboard_inset() -> f32 {
             }
         };
 
-        let metrics = match env.call_method(&resources, "getDisplayMetrics", "()Landroid/util/DisplayMetrics;", &[]) {
+        let metrics = match env.call_method(
+            &resources,
+            "getDisplayMetrics",
+            "()Landroid/util/DisplayMetrics;",
+            &[],
+        ) {
             Ok(m) => match m.l() {
                 Ok(obj) => obj,
                 Err(_) => {
@@ -475,7 +573,6 @@ pub fn query_keyboard_inset() -> f32 {
     get_keyboard_inset()
 }
 
-
 /// Get the Android system accent color (Material You / Monet dynamic theming).
 pub fn get_system_accent_color() -> Option<(u8, u8, u8)> {
     None
@@ -488,18 +585,190 @@ pub fn get_font_scale() -> f32 {
 
 /// Request the display's maximum supported refresh rate (e.g., 90 Hz or 120 Hz).
 ///
-/// Intended behavior when the JNI bridge is implemented:
-/// - Query the display's supported modes.
-/// - Pick the mode with the highest refresh rate.
-/// - Call Window.setFrameRate() or set preferredDisplayModeId on API 30+.
-/// - Fall back gracefully on older Android versions.
-/// - Do nothing if enabled is false.
+/// On Android, queries Display.getSupportedModes() via JNI, selects the mode with the highest
+/// refresh rate, and sets WindowManager.LayoutParams.preferredDisplayModeId on the window.
+/// When `enabled` is false, resets preferredDisplayModeId to 0 (default system mode).
+#[cfg(target_os = "android")]
 pub fn apply_refresh_rate_setting(enabled: bool) {
-    if !enabled {
+    let vm_ptr = VM_PTR.load(Ordering::SeqCst);
+    let activity_ptr = ACTIVITY_PTR.load(Ordering::SeqCst);
+    if vm_ptr.is_null() || activity_ptr.is_null() {
         return;
     }
-    todo!("Query the display's supported modes, pick the mode with the highest refresh rate, call Window.setFrameRate() or set preferredDisplayModeId on API 30+, and fall back gracefully on older Android versions")
+
+    unsafe {
+        let vm = match jni::JavaVM::from_raw(vm_ptr as *mut _) {
+            Ok(v) => v,
+            Err(_) => return,
+        };
+        let mut env = match vm.attach_current_thread() {
+            Ok(e) => e,
+            Err(_) => return,
+        };
+
+        let activity = jni::objects::JObject::from_raw(activity_ptr as _);
+
+        // 1. Obtain android.view.Window
+        let window = match env.call_method(&activity, "getWindow", "()Landroid/view/Window;", &[]) {
+            Ok(r) => match r.l() {
+                Ok(w) => w,
+                Err(_) => {
+                    let _ = env.exception_clear();
+                    return;
+                }
+            },
+            Err(_) => {
+                let _ = env.exception_clear();
+                return;
+            }
+        };
+
+        // 2. Obtain WindowManager.LayoutParams from window.getAttributes()
+        let layout_params = match env.call_method(
+            &window,
+            "getAttributes",
+            "()Landroid/view/WindowManager$LayoutParams;",
+            &[],
+        ) {
+            Ok(r) => match r.l() {
+                Ok(p) => p,
+                Err(_) => {
+                    let _ = env.exception_clear();
+                    return;
+                }
+            },
+            Err(_) => {
+                let _ = env.exception_clear();
+                return;
+            }
+        };
+
+        // 3. If disabling, reset preferredDisplayModeId to 0 (default system switching)
+        if !enabled {
+            let _ = env.set_field(&layout_params, "preferredDisplayModeId", "I", 0i32.into());
+            let _ = env.call_method(
+                &window,
+                "setAttributes",
+                "(Landroid/view/WindowManager$LayoutParams;)V",
+                &[(&layout_params).into()],
+            );
+            // On API 31+, also clear frame rate if set (0.0 resets)
+            let _ = env.call_method(&window, "setFrameRate", "(FI)V", &[0.0f32.into(), 0i32.into()]);
+            let _ = env.exception_clear();
+            return;
+        }
+
+        // 4. Obtain android.view.WindowManager and default android.view.Display
+        let window_manager = match env.call_method(
+            &activity,
+            "getWindowManager",
+            "()Landroid/view/WindowManager;",
+            &[],
+        ) {
+            Ok(r) => match r.l() {
+                Ok(wm) => wm,
+                Err(_) => {
+                    let _ = env.exception_clear();
+                    return;
+                }
+            },
+            Err(_) => {
+                let _ = env.exception_clear();
+                return;
+            }
+        };
+
+        let display = match env.call_method(
+            &window_manager,
+            "getDefaultDisplay",
+            "()Landroid/view/Display;",
+            &[],
+        ) {
+            Ok(r) => match r.l() {
+                Ok(d) => d,
+                Err(_) => {
+                    let _ = env.exception_clear();
+                    return;
+                }
+            },
+            Err(_) => {
+                let _ = env.exception_clear();
+                return;
+            }
+        };
+
+        // 5. Query supported modes: Display.getSupportedModes() -> Display.Mode[]
+        let modes_val = match env.call_method(
+            &display,
+            "getSupportedModes",
+            "()[Landroid/view/Display$Mode;",
+            &[],
+        ) {
+            Ok(r) => match r.l() {
+                Ok(arr) => arr,
+                Err(_) => {
+                    let _ = env.exception_clear();
+                    return;
+                }
+            },
+            Err(_) => {
+                let _ = env.exception_clear();
+                return;
+            }
+        };
+
+        let modes_array = jni::objects::JObjectArray::from_raw(modes_val.as_raw());
+        let count = env.get_array_length(&modes_array).unwrap_or(0);
+
+        let mut best_mode_id = 0i32;
+        let mut max_refresh_rate = 0.0f32;
+
+        // 6. Iterate through Display.Mode objects to find the highest refresh rate
+        for i in 0..count {
+            if let Ok(mode) = env.get_object_array_element(&modes_array, i) {
+                let rate = env
+                    .call_method(&mode, "getRefreshRate", "()F", &[])
+                    .and_then(|r| r.f())
+                    .unwrap_or(0.0);
+
+                let id = env
+                    .call_method(&mode, "getModeId", "()I", &[])
+                    .and_then(|r| r.i())
+                    .unwrap_or(0);
+
+                if rate > max_refresh_rate {
+                    max_refresh_rate = rate;
+                    best_mode_id = id;
+                }
+            }
+        }
+
+        // 7. Apply the highest mode to the window
+        if best_mode_id > 0 {
+            let _ = env.set_field(&layout_params, "preferredDisplayModeId", "I", best_mode_id.into());
+            let _ = env.call_method(
+                &window,
+                "setAttributes",
+                "(Landroid/view/WindowManager$LayoutParams;)V",
+                &[(&layout_params).into()],
+            );
+
+            // API 31+ optional optimization (WINDOW_FRAME_RATE_COMPATIBILITY_DEFAULT = 0)
+            let _ = env.call_method(
+                &window,
+                "setFrameRate",
+                "(FI)V",
+                &[max_refresh_rate.into(), 0i32.into()],
+            );
+        }
+
+        let _ = env.exception_clear();
+    }
 }
+
+/// Fallback for non-Android platforms.
+#[cfg(not(target_os = "android"))]
+pub fn apply_refresh_rate_setting(_enabled: bool) {}
 
 /// Perform a subtle haptic tap (KEYBOARD_TAP) via JNI on Android.
 ///
@@ -523,13 +792,21 @@ pub fn haptic_tap() {
         };
 
         let activity = jni::objects::JObject::from_raw(activity_ptr as _);
-        if let Ok(window) = env.call_method(&activity, "getWindow", "()Landroid/view/Window;", &[]) {
+        if let Ok(window) = env.call_method(&activity, "getWindow", "()Landroid/view/Window;", &[])
+        {
             if let Ok(window_obj) = window.l() {
-                if let Ok(decor) = env.call_method(&window_obj, "getDecorView", "()Landroid/view/View;", &[]) {
+                if let Ok(decor) =
+                    env.call_method(&window_obj, "getDecorView", "()Landroid/view/View;", &[])
+                {
                     if let Ok(decor_obj) = decor.l() {
                         // HapticFeedbackConstants.KEYBOARD_TAP = 3
                         // Automatically checks and respects system haptic feedback settings
-                        let _ = env.call_method(&decor_obj, "performHapticFeedback", "(I)Z", &[3i32.into()]);
+                        let _ = env.call_method(
+                            &decor_obj,
+                            "performHapticFeedback",
+                            "(I)Z",
+                            &[3i32.into()],
+                        );
                     }
                 }
             }
@@ -541,4 +818,3 @@ pub fn haptic_tap() {
 /// Fallback for non-Android targets.
 #[cfg(not(target_os = "android"))]
 pub fn haptic_tap() {}
-
