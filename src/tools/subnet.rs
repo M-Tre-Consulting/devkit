@@ -50,7 +50,6 @@ impl std::error::Error for SubnetError {}
 
 /// Calculates network, broadcast, host range, and masks from IP and prefix input.
 ///
-/// TODO: Implement subnet calculation using standard library IP types or pure Rust bitwise math.
 pub fn calculate(_input: &SubnetInput) -> Result<SubnetOutput, SubnetError> {
     todo!("calculate subnet details from input")
 }
@@ -131,6 +130,43 @@ fn get_network_address(netmask: u32, ip_value: u32) -> u32 {
 /// Accepts network address and wildcard mask as u32 integer values.
 fn get_broadcast_address(net_address: u32, wildcard_mask: u32) -> u32 {
     net_address | wildcard_mask
+}
+
+/// Contains the result of the host counts calculation
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+struct HostCount {
+    first_host: u32,
+    last_host: u32,
+    bcast_addr: u32,
+    host_count: u32,
+}
+
+/// Calculates and returns the host count and other useful parameters starting from
+/// network address, broadcast address and prefix value.
+///
+/// Accepts network address as u32, broadcast address as u32 and prefix as u8.
+fn get_host_counts(net_addr: u32, bcast_addr: u32, prefix: u8) -> Result<HostCount, SubnetError> {
+    match prefix {
+        0..=30 => Ok(HostCount {
+            first_host: net_addr + 1,
+            last_host: bcast_addr - 1,
+            bcast_addr: bcast_addr,
+            host_count: ((1u64 << (32 - prefix)) - 2) as u32,
+        }),
+        31 => Ok(HostCount {
+            first_host: net_addr,
+            last_host: bcast_addr,
+            bcast_addr: bcast_addr,
+            host_count: 2,
+        }),
+        32 => Ok(HostCount {
+            first_host: net_addr,
+            last_host: net_addr,
+            bcast_addr: net_addr,
+            host_count: 1,
+        }),
+        _ => Err(SubnetError::InvalidPrefix),
+    }
 }
 
 /// Splits and validates an IPv4 address and prefix length from input.
@@ -294,6 +330,57 @@ mod tests {
             get_wildcard_mask(nmp_21),
             !(0b11111111_11111111_11111000_00000000u32)
         );
+    }
+
+    #[test]
+    fn test_get_host_counts() {
+        // Standard /24 subnet (192.168.1.0/24)
+        let net = u32::from(Ipv4Addr::new(192, 168, 1, 0));
+        let bcast = u32::from(Ipv4Addr::new(192, 168, 1, 255));
+        let res = get_host_counts(net, bcast, 24).unwrap();
+        assert_eq!(res.first_host, u32::from(Ipv4Addr::new(192, 168, 1, 1)));
+        assert_eq!(res.last_host, u32::from(Ipv4Addr::new(192, 168, 1, 254)));
+        assert_eq!(res.bcast_addr, bcast);
+        assert_eq!(res.host_count, 254);
+
+        // Standard /30 subnet (10.0.0.4/30) - 2 usable hosts
+        let net30 = u32::from(Ipv4Addr::new(10, 0, 0, 4));
+        let bcast30 = u32::from(Ipv4Addr::new(10, 0, 0, 7));
+        let res30 = get_host_counts(net30, bcast30, 30).unwrap();
+        assert_eq!(res30.first_host, u32::from(Ipv4Addr::new(10, 0, 0, 5)));
+        assert_eq!(res30.last_host, u32::from(Ipv4Addr::new(10, 0, 0, 6)));
+        assert_eq!(res30.bcast_addr, bcast30);
+        assert_eq!(res30.host_count, 2);
+
+        // RFC 3021 Point-to-Point /31 subnet (172.16.0.2/31) - both endpoints are hosts
+        let net31 = u32::from(Ipv4Addr::new(172, 16, 0, 2));
+        let bcast31 = u32::from(Ipv4Addr::new(172, 16, 0, 3));
+        let res31 = get_host_counts(net31, bcast31, 31).unwrap();
+        assert_eq!(res31.first_host, net31);
+        assert_eq!(res31.last_host, bcast31);
+        assert_eq!(res31.bcast_addr, bcast31);
+        assert_eq!(res31.host_count, 2);
+
+        // Single host /32 (10.10.10.10/32)
+        let host32 = u32::from(Ipv4Addr::new(10, 10, 10, 10));
+        let res32 = get_host_counts(host32, host32, 32).unwrap();
+        assert_eq!(res32.first_host, host32);
+        assert_eq!(res32.last_host, host32);
+        assert_eq!(res32.bcast_addr, host32);
+        assert_eq!(res32.host_count, 1);
+
+        // Default route /0 (0.0.0.0/0) - full IPv4 space without shift overflow
+        let net0 = 0u32;
+        let bcast0 = u32::MAX;
+        let res0 = get_host_counts(net0, bcast0, 0).unwrap();
+        assert_eq!(res0.first_host, 1);
+        assert_eq!(res0.last_host, u32::MAX - 1);
+        assert_eq!(res0.bcast_addr, u32::MAX);
+        assert_eq!(res0.host_count, 4_294_967_294);
+
+        // Invalid prefix (> 32)
+        assert_eq!(get_host_counts(net, bcast, 33).unwrap_err(), SubnetError::InvalidPrefix);
+        assert_eq!(get_host_counts(net, bcast, 128).unwrap_err(), SubnetError::InvalidPrefix);
     }
 
     #[test]
