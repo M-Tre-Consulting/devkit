@@ -13,6 +13,7 @@ export component SettingsScreen inherits VerticalLayout {
     in property <length> pill_bottom_margin: 28px;
     property <length> bottom_clearance: root.pill_height + root.pill_bottom_margin + root.nav_bar_inset + 24px;
     in-out property <bool> high_refresh_rate_enabled: false;
+    in-out property <bool> high_refresh_rate_supported: false;
     callback settings-high-refresh-rate-changed(bool);
     callback settings-clear-recents();
     callback settings-clear-favorites();
@@ -129,9 +130,11 @@ export component SettingsScreen inherits VerticalLayout {
             // Section 2: Display
             SectionHeader {
                 title: "DISPLAY";
+                visible: root.high_refresh_rate_supported;
             }
 
             Rectangle {
+                visible: root.high_refresh_rate_supported;
                 border_radius: MaterialStyleMetrics.border_radius_16;
                 background: MaterialPalette.surface_container;
                 border_width: 1px;

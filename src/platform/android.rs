@@ -601,6 +601,115 @@ pub fn apply_refresh_rate_setting(enabled: bool) {
     todo!("Query Display.getSupportedModes(), check SDK_INT >= 30, use seamless frame rate switching strategy, and gracefully handle unsupported displays")
 }
 
+/// Query whether the device display hardware supports high refresh rates (>= 90 Hz).
+///
+/// On Android, queries Display.getSupportedModes() via JNI and checks if any available
+/// mode supports a refresh rate >= 89.0 Hz.
+/// Returns false on 60 Hz devices, on non-Android platforms, or if JNI query fails.
+#[cfg(target_os = "android")]
+pub fn is_high_refresh_rate_supported() -> bool {
+    let vm_ptr = VM_PTR.load(Ordering::SeqCst);
+    let activity_ptr = ACTIVITY_PTR.load(Ordering::SeqCst);
+    if vm_ptr.is_null() || activity_ptr.is_null() {
+        return false;
+    }
+
+    unsafe {
+        let vm = match jni::JavaVM::from_raw(vm_ptr as *mut _) {
+            Ok(v) => v,
+            Err(_) => return false,
+        };
+        let mut env = match vm.attach_current_thread() {
+            Ok(e) => e,
+            Err(_) => return false,
+        };
+
+        let activity = jni::objects::JObject::from_raw(activity_ptr as _);
+        let window_manager = match env.call_method(
+            &activity,
+            "getWindowManager",
+            "()Landroid/view/WindowManager;",
+            &[],
+        ) {
+            Ok(r) => match r.l() {
+                Ok(wm) => wm,
+                Err(_) => {
+                    let _ = env.exception_clear();
+                    return false;
+                }
+            },
+            Err(_) => {
+                let _ = env.exception_clear();
+                return false;
+            }
+        };
+
+        let display = match env.call_method(
+            &window_manager,
+            "getDefaultDisplay",
+            "()Landroid/view/Display;",
+            &[],
+        ) {
+            Ok(r) => match r.l() {
+                Ok(d) => d,
+                Err(_) => {
+                    let _ = env.exception_clear();
+                    return false;
+                }
+            },
+            Err(_) => {
+                let _ = env.exception_clear();
+                return false;
+            }
+        };
+
+        let modes_val = match env.call_method(
+            &display,
+            "getSupportedModes",
+            "()[Landroid/view/Display$Mode;",
+            &[],
+        ) {
+            Ok(r) => match r.l() {
+                Ok(arr) => arr,
+                Err(_) => {
+                    let _ = env.exception_clear();
+                    return false;
+                }
+            },
+            Err(_) => {
+                let _ = env.exception_clear();
+                return false;
+            }
+        };
+
+        let modes_array = jni::objects::JObjectArray::from_raw(modes_val.as_raw());
+        let count = env.get_array_length(&modes_array).unwrap_or(0);
+        let mut max_rate = 0.0f32;
+
+        for i in 0..count {
+            if let Ok(mode) = env.get_object_array_element(&modes_array, i) {
+                let rate = env
+                    .call_method(&mode, "getRefreshRate", "()F", &[])
+                    .and_then(|r| r.f())
+                    .unwrap_or(0.0);
+                if rate > max_rate {
+                    max_rate = rate;
+                }
+            }
+        }
+        let _ = env.exception_clear();
+
+        // Only supported if at least 90Hz (89.0 to account for ~89.9Hz modes)
+        max_rate >= 89.0
+    }
+}
+
+/// Fallback for non-Android platforms.
+#[cfg(not(target_os = "android"))]
+pub fn is_high_refresh_rate_supported() -> bool {
+    false
+}
+
 /// Perform a subtle haptic tap (KEYBOARD_TAP) via JNI on Android.
 ///
 /// Respects the user's system haptic feedback setting (Settings.System.HAPTIC_FEEDBACK_ENABLED).

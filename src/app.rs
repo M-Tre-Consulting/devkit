@@ -54,6 +54,8 @@ pub fn update_recents(ui: &crate::AppWindow) {
 }
 
 pub fn update_high_refresh_rate(ui: &crate::AppWindow) {
+    let supported = crate::platform::android::is_high_refresh_rate_supported();
+    ui.set_high_refresh_rate_supported(supported);
     let enabled = crate::storage::load_high_refresh_rate();
     ui.set_high_refresh_rate_enabled(enabled);
 }
