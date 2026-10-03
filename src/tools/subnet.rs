@@ -255,7 +255,18 @@ mod tests {
 
     #[test]
     fn test_get_netmask() {
+        // Empty netmask
+        assert_eq!(get_netmask(0), 0);
+
+        // Standard netmasks
         assert_eq!(get_netmask(8), 0b11111111_00000000_00000000_00000000u32);
+        assert_eq!(get_netmask(16), 0b11111111_11111111_00000000_00000000u32);
+        assert_eq!(get_netmask(24), 0b11111111_11111111_11111111_00000000u32);
+
+        // Non-standard netmasks
+        assert_eq!(get_netmask(22), 0b11111111_11111111_11111100_00000000u32);
+        assert_eq!(get_netmask(21), 0b11111111_11111111_11111000_00000000u32);
+        assert_eq!(get_netmask(14), 0b11111111_11111100_00000000_00000000u32);
     }
 
     #[test]
