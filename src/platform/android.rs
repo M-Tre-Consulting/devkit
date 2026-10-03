@@ -585,190 +585,21 @@ pub fn get_font_scale() -> f32 {
 
 /// Request the display's maximum supported refresh rate (e.g., 90 Hz or 120 Hz).
 ///
-/// On Android, queries Display.getSupportedModes() via JNI, selects the mode with the highest
-/// refresh rate, and sets WindowManager.LayoutParams.preferredDisplayModeId on the window.
-/// When `enabled` is false, resets preferredDisplayModeId to 0 (default system mode).
-#[cfg(target_os = "android")]
+/// Intended behavior when the JNI bridge is implemented:
+/// - Guard API level: Verify Build.VERSION.SDK_INT >= Build.VERSION_CODES.R (API 30+) before calling setFrameRate().
+/// - Validate display modes: Query Display.getSupportedModes() to find the actual maximum supported refresh rate before requesting it.
+/// - Seamless transition: When requesting a higher refresh rate, use the strategy that avoids visual interruptions.
+///   Passing CHANGE_FRAME_RATE_ALWAYS can cause a black screen or flicker on some devices.
+///   Use Surface.CHANGE_FRAME_RATE_ONLY_IF_SEAMLESS (or ANATIVEWINDOW_CHANGE_FRAME_RATE_ONLY_IF_SEAMLESS in native code) to avoid flicker.
+/// - Graceful failure: If the device does not support the requested rate or the system overrides it (e.g., battery saver),
+///   catch any exceptions and silently revert to the default behavior.
+/// - Do nothing if enabled is false.
 pub fn apply_refresh_rate_setting(enabled: bool) {
-    let vm_ptr = VM_PTR.load(Ordering::SeqCst);
-    let activity_ptr = ACTIVITY_PTR.load(Ordering::SeqCst);
-    if vm_ptr.is_null() || activity_ptr.is_null() {
+    if !enabled {
         return;
     }
-
-    unsafe {
-        let vm = match jni::JavaVM::from_raw(vm_ptr as *mut _) {
-            Ok(v) => v,
-            Err(_) => return,
-        };
-        let mut env = match vm.attach_current_thread() {
-            Ok(e) => e,
-            Err(_) => return,
-        };
-
-        let activity = jni::objects::JObject::from_raw(activity_ptr as _);
-
-        // 1. Obtain android.view.Window
-        let window = match env.call_method(&activity, "getWindow", "()Landroid/view/Window;", &[]) {
-            Ok(r) => match r.l() {
-                Ok(w) => w,
-                Err(_) => {
-                    let _ = env.exception_clear();
-                    return;
-                }
-            },
-            Err(_) => {
-                let _ = env.exception_clear();
-                return;
-            }
-        };
-
-        // 2. Obtain WindowManager.LayoutParams from window.getAttributes()
-        let layout_params = match env.call_method(
-            &window,
-            "getAttributes",
-            "()Landroid/view/WindowManager$LayoutParams;",
-            &[],
-        ) {
-            Ok(r) => match r.l() {
-                Ok(p) => p,
-                Err(_) => {
-                    let _ = env.exception_clear();
-                    return;
-                }
-            },
-            Err(_) => {
-                let _ = env.exception_clear();
-                return;
-            }
-        };
-
-        // 3. If disabling, reset preferredDisplayModeId to 0 (default system switching)
-        if !enabled {
-            let _ = env.set_field(&layout_params, "preferredDisplayModeId", "I", 0i32.into());
-            let _ = env.call_method(
-                &window,
-                "setAttributes",
-                "(Landroid/view/WindowManager$LayoutParams;)V",
-                &[(&layout_params).into()],
-            );
-            // On API 31+, also clear frame rate if set (0.0 resets)
-            let _ = env.call_method(&window, "setFrameRate", "(FI)V", &[0.0f32.into(), 0i32.into()]);
-            let _ = env.exception_clear();
-            return;
-        }
-
-        // 4. Obtain android.view.WindowManager and default android.view.Display
-        let window_manager = match env.call_method(
-            &activity,
-            "getWindowManager",
-            "()Landroid/view/WindowManager;",
-            &[],
-        ) {
-            Ok(r) => match r.l() {
-                Ok(wm) => wm,
-                Err(_) => {
-                    let _ = env.exception_clear();
-                    return;
-                }
-            },
-            Err(_) => {
-                let _ = env.exception_clear();
-                return;
-            }
-        };
-
-        let display = match env.call_method(
-            &window_manager,
-            "getDefaultDisplay",
-            "()Landroid/view/Display;",
-            &[],
-        ) {
-            Ok(r) => match r.l() {
-                Ok(d) => d,
-                Err(_) => {
-                    let _ = env.exception_clear();
-                    return;
-                }
-            },
-            Err(_) => {
-                let _ = env.exception_clear();
-                return;
-            }
-        };
-
-        // 5. Query supported modes: Display.getSupportedModes() -> Display.Mode[]
-        let modes_val = match env.call_method(
-            &display,
-            "getSupportedModes",
-            "()[Landroid/view/Display$Mode;",
-            &[],
-        ) {
-            Ok(r) => match r.l() {
-                Ok(arr) => arr,
-                Err(_) => {
-                    let _ = env.exception_clear();
-                    return;
-                }
-            },
-            Err(_) => {
-                let _ = env.exception_clear();
-                return;
-            }
-        };
-
-        let modes_array = jni::objects::JObjectArray::from_raw(modes_val.as_raw());
-        let count = env.get_array_length(&modes_array).unwrap_or(0);
-
-        let mut best_mode_id = 0i32;
-        let mut max_refresh_rate = 0.0f32;
-
-        // 6. Iterate through Display.Mode objects to find the highest refresh rate
-        for i in 0..count {
-            if let Ok(mode) = env.get_object_array_element(&modes_array, i) {
-                let rate = env
-                    .call_method(&mode, "getRefreshRate", "()F", &[])
-                    .and_then(|r| r.f())
-                    .unwrap_or(0.0);
-
-                let id = env
-                    .call_method(&mode, "getModeId", "()I", &[])
-                    .and_then(|r| r.i())
-                    .unwrap_or(0);
-
-                if rate > max_refresh_rate {
-                    max_refresh_rate = rate;
-                    best_mode_id = id;
-                }
-            }
-        }
-
-        // 7. Apply the highest mode to the window
-        if best_mode_id > 0 {
-            let _ = env.set_field(&layout_params, "preferredDisplayModeId", "I", best_mode_id.into());
-            let _ = env.call_method(
-                &window,
-                "setAttributes",
-                "(Landroid/view/WindowManager$LayoutParams;)V",
-                &[(&layout_params).into()],
-            );
-
-            // API 31+ optional optimization (WINDOW_FRAME_RATE_COMPATIBILITY_DEFAULT = 0)
-            let _ = env.call_method(
-                &window,
-                "setFrameRate",
-                "(FI)V",
-                &[max_refresh_rate.into(), 0i32.into()],
-            );
-        }
-
-        let _ = env.exception_clear();
-    }
+    todo!("Query Display.getSupportedModes(), check SDK_INT >= 30, use seamless frame rate switching strategy, and gracefully handle unsupported displays")
 }
-
-/// Fallback for non-Android platforms.
-#[cfg(not(target_os = "android"))]
-pub fn apply_refresh_rate_setting(_enabled: bool) {}
 
 /// Perform a subtle haptic tap (KEYBOARD_TAP) via JNI on Android.
 ///
