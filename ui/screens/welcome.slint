@@ -147,11 +147,14 @@ export component WelcomeScreen inherits Rectangle {
 
                             VerticalLayout {
                                 alignment: center;
-                                Icon {
-                                    source: AppIcons.wrench;
-                                    colorize: MaterialPalette.primary;
-                                    width: 48px;
-                                    height: 48px;
+                                HorizontalLayout {
+                                    alignment: center;
+                                    Icon {
+                                        source: AppIcons.wrench;
+                                        colorize: MaterialPalette.primary;
+                                        width: 48px;
+                                        height: 48px;
+                                    }
                                 }
                             }
                         }
@@ -239,9 +242,13 @@ export component WelcomeScreen inherits Rectangle {
                                     height: 44px;
                                     border_radius: 14px;
                                     background: MaterialPalette.primary_container;
-                                    VerticalLayout {
-                                        alignment: center;
-                                        Icon { source: AppIcons.lan; colorize: MaterialPalette.on_primary_container; width: 24px; height: 24px; }
+                                    Icon {
+                                        x: (parent.width - self.width) / 2;
+                                        y: (parent.height - self.height) / 2;
+                                        source: AppIcons.lan;
+                                        colorize: MaterialPalette.on_primary_container;
+                                        width: 24px;
+                                        height: 24px;
                                     }
                                 }
 
@@ -250,9 +257,13 @@ export component WelcomeScreen inherits Rectangle {
                                     height: 44px;
                                     border_radius: 14px;
                                     background: MaterialPalette.secondary_container;
-                                    VerticalLayout {
-                                        alignment: center;
-                                        Icon { source: AppIcons.fingerprint; colorize: MaterialPalette.on_secondary_container; width: 24px; height: 24px; }
+                                    Icon {
+                                        x: (parent.width - self.width) / 2;
+                                        y: (parent.height - self.height) / 2;
+                                        source: AppIcons.fingerprint;
+                                        colorize: MaterialPalette.on_secondary_container;
+                                        width: 24px;
+                                        height: 24px;
                                     }
                                 }
 
@@ -261,9 +272,13 @@ export component WelcomeScreen inherits Rectangle {
                                     height: 44px;
                                     border_radius: 14px;
                                     background: MaterialPalette.tertiary_container;
-                                    VerticalLayout {
-                                        alignment: center;
-                                        Icon { source: AppIcons.swap; colorize: MaterialPalette.on_tertiary_container; width: 24px; height: 24px; }
+                                    Icon {
+                                        x: (parent.width - self.width) / 2;
+                                        y: (parent.height - self.height) / 2;
+                                        source: AppIcons.swap;
+                                        colorize: MaterialPalette.on_tertiary_container;
+                                        width: 24px;
+                                        height: 24px;
                                     }
                                 }
                             }
@@ -278,9 +293,13 @@ export component WelcomeScreen inherits Rectangle {
                                     height: 44px;
                                     border_radius: 14px;
                                     background: MaterialPalette.secondary_container;
-                                    VerticalLayout {
-                                        alignment: center;
-                                        Icon { source: AppIcons.regex; colorize: MaterialPalette.on_secondary_container; width: 24px; height: 24px; }
+                                    Icon {
+                                        x: (parent.width - self.width) / 2;
+                                        y: (parent.height - self.height) / 2;
+                                        source: AppIcons.regex;
+                                        colorize: MaterialPalette.on_secondary_container;
+                                        width: 24px;
+                                        height: 24px;
                                     }
                                 }
 
@@ -289,9 +308,13 @@ export component WelcomeScreen inherits Rectangle {
                                     height: 44px;
                                     border_radius: 14px;
                                     background: MaterialPalette.primary_container;
-                                    VerticalLayout {
-                                        alignment: center;
-                                        Icon { source: AppIcons.lock; colorize: MaterialPalette.on_primary_container; width: 24px; height: 24px; }
+                                    Icon {
+                                        x: (parent.width - self.width) / 2;
+                                        y: (parent.height - self.height) / 2;
+                                        source: AppIcons.lock;
+                                        colorize: MaterialPalette.on_primary_container;
+                                        width: 24px;
+                                        height: 24px;
                                     }
                                 }
 
@@ -300,9 +323,13 @@ export component WelcomeScreen inherits Rectangle {
                                     height: 44px;
                                     border_radius: 14px;
                                     background: MaterialPalette.tertiary_container;
-                                    VerticalLayout {
-                                        alignment: center;
-                                        Icon { source: AppIcons.code; colorize: MaterialPalette.on_tertiary_container; width: 24px; height: 24px; }
+                                    Icon {
+                                        x: (parent.width - self.width) / 2;
+                                        y: (parent.height - self.height) / 2;
+                                        source: AppIcons.code;
+                                        colorize: MaterialPalette.on_tertiary_container;
+                                        width: 24px;
+                                        height: 24px;
                                     }
                                 }
                             }
@@ -544,11 +571,14 @@ export component WelcomeScreen inherits Rectangle {
 
                             VerticalLayout {
                                 alignment: center;
-                                Icon {
-                                    source: AppIcons.star;
-                                    colorize: MaterialPalette.primary;
-                                    width: 48px;
-                                    height: 48px;
+                                HorizontalLayout {
+                                    alignment: center;
+                                    Icon {
+                                        source: AppIcons.star;
+                                        colorize: MaterialPalette.primary;
+                                        width: 48px;
+                                        height: 48px;
+                                    }
                                 }
                             }
                         }
