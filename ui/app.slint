@@ -2,6 +2,7 @@
 // Copyright 2026 MTRE Consulting
 
 import { AboutScreen } from "screens/about.slint";
+import { WelcomeScreen } from "screens/welcome.slint";
 import { Icons, MaterialPalette, MaterialTypography, MaterialText, MaterialStyleMetrics } from "@material";
 import { HomeScreen } from "./screens/home.slint";
 import { RecentScreen } from "./screens/recent.slint";
@@ -732,6 +733,16 @@ export component AppWindow inherits Window {
                     root.switch_mode(index);
                 }
             }
+        }
+    }
+
+    // First-launch Welcome Screen
+    if root.welcome_open : WelcomeScreen {
+        status_bar_inset: root.status_bar_inset;
+        nav_bar_inset: root.nav_bar_inset;
+        current_page <=> root.welcome_page;
+        finish => {
+            root.dismiss_welcome();
         }
     }
 }

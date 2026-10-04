@@ -1,0 +1,306 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2026 MTRE Consulting
+
+import { Icons, MaterialPalette, MaterialStyleMetrics, MaterialTypography, MaterialText, StateLayerArea, Icon } from "@material";
+import { AppIcons } from "../components/app-icons.slint";
+
+export component WelcomeScreen inherits Rectangle {
+    in property <length> status_bar_inset: 24px;
+    in property <length> nav_bar_inset: 16px;
+    in-out property <int> current_page: 0;
+
+    callback finish();
+    callback next();
+    callback prev();
+
+    background: MaterialPalette.surface;
+    width: 100%;
+    height: 100%;
+
+    function go_next() {
+        if root.current_page < 3 {
+            root.current_page += 1;
+            root.next();
+        } else {
+            root.finish();
+        }
+    }
+
+    function go_back() {
+        if root.current_page > 0 {
+            root.current_page -= 1;
+            root.prev();
+        }
+    }
+
+    // Top action bar area (Skip button)
+    top_bar := Rectangle {
+        x: 0;
+        y: root.status_bar_inset;
+        width: 100%;
+        height: 56px;
+        z: 20;
+
+        // Skip button (visible on pages 0, 1, 2)
+        if root.current_page < 3 : Rectangle {
+            x: parent.width - self.width - 16px;
+            y: (parent.height - self.height) / 2;
+            width: 72px;
+            height: 36px;
+            border_radius: 18px;
+
+            StateLayerArea {
+                width: 100%;
+                height: 100%;
+                border_radius: parent.border_radius;
+                color: MaterialPalette.primary;
+
+                clicked => {
+                    root.finish();
+                }
+
+                HorizontalLayout {
+                    alignment: center;
+                    VerticalLayout {
+                        alignment: center;
+                        MaterialText {
+                            text: "Skip";
+                            style: MaterialTypography.label_large;
+                            color: MaterialPalette.primary;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // Page Content Container
+    page_viewport := Rectangle {
+        x: 0;
+        y: root.status_bar_inset + 56px;
+        width: 100%;
+        height: parent.height - (root.status_bar_inset + 56px) - (root.nav_bar_inset + 80px);
+        clip: true;
+
+        // Page 0: Welcome
+        page_0 := Rectangle {
+            x: (0 - root.current_page) * parent.width;
+            width: parent.width;
+            height: parent.height;
+            opacity: root.current_page == 0 ? 1.0 : 0.0;
+            visible: self.opacity > 0.01;
+
+            animate x {
+                duration: 320ms;
+                easing: cubic-bezier(0.2, 0, 0, 1);
+            }
+            animate opacity {
+                duration: 250ms;
+                easing: ease-in-out;
+            }
+        }
+
+        // Page 1: The Tools
+        page_1 := Rectangle {
+            x: (1 - root.current_page) * parent.width;
+            width: parent.width;
+            height: parent.height;
+            opacity: root.current_page == 1 ? 1.0 : 0.0;
+            visible: self.opacity > 0.01;
+
+            animate x {
+                duration: 320ms;
+                easing: cubic-bezier(0.2, 0, 0, 1);
+            }
+            animate opacity {
+                duration: 250ms;
+                easing: ease-in-out;
+            }
+        }
+
+        // Page 2: Expressive by Design
+        page_2 := Rectangle {
+            x: (2 - root.current_page) * parent.width;
+            width: parent.width;
+            height: parent.height;
+            opacity: root.current_page == 2 ? 1.0 : 0.0;
+            visible: self.opacity > 0.01;
+
+            animate x {
+                duration: 320ms;
+                easing: cubic-bezier(0.2, 0, 0, 1);
+            }
+            animate opacity {
+                duration: 250ms;
+                easing: ease-in-out;
+            }
+        }
+
+        // Page 3: Get Started
+        page_3 := Rectangle {
+            x: (3 - root.current_page) * parent.width;
+            width: parent.width;
+            height: parent.height;
+            opacity: root.current_page == 3 ? 1.0 : 0.0;
+            visible: self.opacity > 0.01;
+
+            animate x {
+                duration: 320ms;
+                easing: cubic-bezier(0.2, 0, 0, 1);
+            }
+            animate opacity {
+                duration: 250ms;
+                easing: ease-in-out;
+            }
+        }
+    }
+
+    // Bottom Navigation Bar Area
+    bottom_bar := Rectangle {
+        x: 0;
+        y: parent.height - self.height - root.nav_bar_inset;
+        width: 100%;
+        height: 80px;
+        z: 20;
+
+        HorizontalLayout {
+            padding_left: 24px;
+            padding_right: 24px;
+            alignment: space-between;
+            width: 100%;
+
+            // Left slot: Back Button (pages 1, 2, 3)
+            VerticalLayout {
+                alignment: center;
+                width: 80px;
+
+                if root.current_page > 0 : Rectangle {
+                    height: 40px;
+                    border_radius: 20px;
+
+                    StateLayerArea {
+                        width: 100%;
+                        height: 100%;
+                        border_radius: parent.border_radius;
+                        color: MaterialPalette.on_surface_variant;
+
+                        clicked => {
+                            root.go_back();
+                        }
+
+                        HorizontalLayout {
+                            alignment: center;
+                            VerticalLayout {
+                                alignment: center;
+                                MaterialText {
+                                    text: "Back";
+                                    style: MaterialTypography.label_large;
+                                    color: MaterialPalette.on_surface_variant;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Center slot: Page Indicator Dots
+            VerticalLayout {
+                alignment: center;
+
+                HorizontalLayout {
+                    spacing: 8px;
+                    alignment: center;
+
+                    // Dot 0
+                    Rectangle {
+                        width: root.current_page == 0 ? 24px : 8px;
+                        height: 8px;
+                        border_radius: 4px;
+                        background: root.current_page == 0 ? MaterialPalette.primary : MaterialPalette.on_surface_variant.with_alpha(30%);
+
+                        animate width, background {
+                            duration: 250ms;
+                            easing: cubic-bezier(0.2, 0, 0, 1);
+                        }
+                    }
+
+                    // Dot 1
+                    Rectangle {
+                        width: root.current_page == 1 ? 24px : 8px;
+                        height: 8px;
+                        border_radius: 4px;
+                        background: root.current_page == 1 ? MaterialPalette.primary : MaterialPalette.on_surface_variant.with_alpha(30%);
+
+                        animate width, background {
+                            duration: 250ms;
+                            easing: cubic-bezier(0.2, 0, 0, 1);
+                        }
+                    }
+
+                    // Dot 2
+                    Rectangle {
+                        width: root.current_page == 2 ? 24px : 8px;
+                        height: 8px;
+                        border_radius: 4px;
+                        background: root.current_page == 2 ? MaterialPalette.primary : MaterialPalette.on_surface_variant.with_alpha(30%);
+
+                        animate width, background {
+                            duration: 250ms;
+                            easing: cubic-bezier(0.2, 0, 0, 1);
+                        }
+                    }
+
+                    // Dot 3
+                    Rectangle {
+                        width: root.current_page == 3 ? 24px : 8px;
+                        height: 8px;
+                        border_radius: 4px;
+                        background: root.current_page == 3 ? MaterialPalette.primary : MaterialPalette.on_surface_variant.with_alpha(30%);
+
+                        animate width, background {
+                            duration: 250ms;
+                            easing: cubic-bezier(0.2, 0, 0, 1);
+                        }
+                    }
+                }
+            }
+
+            // Right slot: Next or Get Started Button
+            VerticalLayout {
+                alignment: center;
+                width: root.current_page == 3 ? 120px : 80px;
+
+                Rectangle {
+                    height: 40px;
+                    border_radius: 20px;
+                    background: MaterialPalette.primary;
+
+                    StateLayerArea {
+                        width: 100%;
+                        height: 100%;
+                        border_radius: parent.border_radius;
+                        color: MaterialPalette.on_primary;
+
+                        clicked => {
+                            root.go_next();
+                        }
+
+                        HorizontalLayout {
+                            alignment: center;
+                            padding_left: 16px;
+                            padding_right: 16px;
+                            VerticalLayout {
+                                alignment: center;
+                                MaterialText {
+                                    text: root.current_page == 3 ? "Get Started" : "Next";
+                                    style: MaterialTypography.label_large;
+                                    color: MaterialPalette.on_primary;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
