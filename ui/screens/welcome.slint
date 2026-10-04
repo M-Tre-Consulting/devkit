@@ -98,6 +98,93 @@ export component WelcomeScreen inherits Rectangle {
                 duration: 250ms;
                 easing: ease-in-out;
             }
+
+            VerticalLayout {
+                alignment: center;
+                spacing: MaterialStyleMetrics.spacing_16;
+                padding_left: 28px;
+                padding_right: 28px;
+
+                // MTRE Logo Lockup at the top of Page 1 ONLY
+                HorizontalLayout {
+                    alignment: center;
+                    spacing: 8px;
+
+                    Image {
+                        source: AppIcons.mtre_logo;
+                        width: 22px;
+                        height: 22px;
+                    }
+
+                    MaterialText {
+                        text: "MTRE Consulting";
+                        style: MaterialTypography.label_large;
+                        color: MaterialPalette.primary;
+                    }
+                }
+
+                // Primary Vector Illustration Container
+                HorizontalLayout {
+                    alignment: center;
+                    padding_top: 12px;
+                    padding_bottom: 12px;
+
+                    Rectangle {
+                        width: 120px;
+                        height: 120px;
+                        border_radius: 60px;
+                        background: MaterialPalette.primary_container;
+
+                        Rectangle {
+                            x: (parent.width - self.width) / 2;
+                            y: (parent.height - self.height) / 2;
+                            width: 96px;
+                            height: 96px;
+                            border_radius: 48px;
+                            background: MaterialPalette.surface;
+                            border_width: 2px;
+                            border_color: MaterialPalette.primary.with_alpha(30%);
+
+                            VerticalLayout {
+                                alignment: center;
+                                Icon {
+                                    source: AppIcons.wrench;
+                                    colorize: MaterialPalette.primary;
+                                    width: 48px;
+                                    height: 48px;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                VerticalLayout {
+                    spacing: 8px;
+                    alignment: center;
+
+                    MaterialText {
+                        text: "DevKit";
+                        style: MaterialTypography.headline_large;
+                        color: MaterialPalette.on_surface;
+                        horizontal_alignment: center;
+                    }
+
+                    MaterialText {
+                        text: "A developer toolbox in your pocket.";
+                        style: MaterialTypography.title_medium;
+                        color: MaterialPalette.primary;
+                        horizontal_alignment: center;
+                    }
+
+                    MaterialText {
+                        text: "All your essential everyday utilities—subnetting, hashing, encoding, regex, and tokens—crafted with 100% native Rust.";
+                        style: MaterialTypography.body_large;
+                        color: MaterialPalette.on_surface_variant;
+                        horizontal_alignment: center;
+                        wrap: word-wrap;
+                    }
+                }
+            }
         }
 
         // Page 1: The Tools
@@ -115,6 +202,140 @@ export component WelcomeScreen inherits Rectangle {
             animate opacity {
                 duration: 250ms;
                 easing: ease-in-out;
+            }
+
+            VerticalLayout {
+                alignment: center;
+                spacing: MaterialStyleMetrics.spacing_16;
+                padding_left: 28px;
+                padding_right: 28px;
+
+                // Composed Tools Icon Grid Collage
+                HorizontalLayout {
+                    alignment: center;
+                    padding_top: 8px;
+                    padding_bottom: 8px;
+
+                    Rectangle {
+                        width: 220px;
+                        height: 140px;
+                        border_radius: 24px;
+                        background: MaterialPalette.surface_container;
+                        border_width: 1px;
+                        border_color: MaterialPalette.outline_variant.with_alpha(20%);
+
+                        VerticalLayout {
+                            alignment: center;
+                            spacing: 12px;
+                            padding: 16px;
+
+                            // Row 1
+                            HorizontalLayout {
+                                alignment: center;
+                                spacing: 14px;
+
+                                Rectangle {
+                                    width: 44px;
+                                    height: 44px;
+                                    border_radius: 14px;
+                                    background: MaterialPalette.primary_container;
+                                    VerticalLayout {
+                                        alignment: center;
+                                        Icon { source: AppIcons.lan; colorize: MaterialPalette.on_primary_container; width: 24px; height: 24px; }
+                                    }
+                                }
+
+                                Rectangle {
+                                    width: 44px;
+                                    height: 44px;
+                                    border_radius: 14px;
+                                    background: MaterialPalette.secondary_container;
+                                    VerticalLayout {
+                                        alignment: center;
+                                        Icon { source: AppIcons.fingerprint; colorize: MaterialPalette.on_secondary_container; width: 24px; height: 24px; }
+                                    }
+                                }
+
+                                Rectangle {
+                                    width: 44px;
+                                    height: 44px;
+                                    border_radius: 14px;
+                                    background: MaterialPalette.tertiary_container;
+                                    VerticalLayout {
+                                        alignment: center;
+                                        Icon { source: AppIcons.swap; colorize: MaterialPalette.on_tertiary_container; width: 24px; height: 24px; }
+                                    }
+                                }
+                            }
+
+                            // Row 2
+                            HorizontalLayout {
+                                alignment: center;
+                                spacing: 14px;
+
+                                Rectangle {
+                                    width: 44px;
+                                    height: 44px;
+                                    border_radius: 14px;
+                                    background: MaterialPalette.secondary_container;
+                                    VerticalLayout {
+                                        alignment: center;
+                                        Icon { source: AppIcons.regex; colorize: MaterialPalette.on_secondary_container; width: 24px; height: 24px; }
+                                    }
+                                }
+
+                                Rectangle {
+                                    width: 44px;
+                                    height: 44px;
+                                    border_radius: 14px;
+                                    background: MaterialPalette.primary_container;
+                                    VerticalLayout {
+                                        alignment: center;
+                                        Icon { source: AppIcons.lock; colorize: MaterialPalette.on_primary_container; width: 24px; height: 24px; }
+                                    }
+                                }
+
+                                Rectangle {
+                                    width: 44px;
+                                    height: 44px;
+                                    border_radius: 14px;
+                                    background: MaterialPalette.tertiary_container;
+                                    VerticalLayout {
+                                        alignment: center;
+                                        Icon { source: AppIcons.code; colorize: MaterialPalette.on_tertiary_container; width: 24px; height: 24px; }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                VerticalLayout {
+                    spacing: 8px;
+                    alignment: center;
+
+                    MaterialText {
+                        text: "Essential Tools";
+                        style: MaterialTypography.headline_large;
+                        color: MaterialPalette.on_surface;
+                        horizontal_alignment: center;
+                    }
+
+                    MaterialText {
+                        text: "Subnet, Hash, Base64, Regex, JWT & more.";
+                        style: MaterialTypography.title_medium;
+                        color: MaterialPalette.primary;
+                        horizontal_alignment: center;
+                    }
+
+                    MaterialText {
+                        text: "A comprehensive offline suite for network engineers and software developers, always instantly available.";
+                        style: MaterialTypography.body_large;
+                        color: MaterialPalette.on_surface_variant;
+                        horizontal_alignment: center;
+                        wrap: word-wrap;
+                    }
+                }
             }
         }
 
@@ -134,6 +355,91 @@ export component WelcomeScreen inherits Rectangle {
                 duration: 250ms;
                 easing: ease-in-out;
             }
+
+            VerticalLayout {
+                alignment: center;
+                spacing: MaterialStyleMetrics.spacing_16;
+                padding_left: 28px;
+                padding_right: 28px;
+
+                // Expressive Motion Illustration Container
+                HorizontalLayout {
+                    alignment: center;
+                    padding_top: 12px;
+                    padding_bottom: 12px;
+
+                    Rectangle {
+                        width: 220px;
+                        height: 120px;
+                        border_radius: 28px;
+                        background: MaterialPalette.surface_container;
+                        border_width: 1px;
+                        border_color: MaterialPalette.outline_variant.with_alpha(20%);
+
+                        VerticalLayout {
+                            alignment: center;
+                            spacing: 12px;
+
+                            // Mock floating pill nav bar
+                            Rectangle {
+                                width: 170px;
+                                height: 46px;
+                                border_radius: 23px;
+                                background: MaterialPalette.surface_container_high;
+                                border_width: 1px;
+                                border_color: MaterialPalette.outline_variant.with_alpha(25%);
+
+                                HorizontalLayout {
+                                    alignment: center;
+                                    spacing: 14px;
+
+                                    Rectangle {
+                                        width: 32px;
+                                        height: 32px;
+                                        border_radius: 16px;
+                                        background: MaterialPalette.secondary_container;
+                                        VerticalLayout {
+                                            alignment: center;
+                                            Icon { source: AppIcons.home; colorize: MaterialPalette.on_secondary_container; width: 18px; height: 18px; }
+                                        }
+                                    }
+
+                                    Icon { source: AppIcons.history; colorize: MaterialPalette.on_surface_variant; width: 18px; height: 18px; }
+                                    Icon { source: AppIcons.star; colorize: MaterialPalette.on_surface_variant; width: 18px; height: 18px; }
+                                    Icon { source: AppIcons.settings; colorize: MaterialPalette.on_surface_variant; width: 18px; height: 18px; }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                VerticalLayout {
+                    spacing: 8px;
+                    alignment: center;
+
+                    MaterialText {
+                        text: "Expressive by Design";
+                        style: MaterialTypography.headline_large;
+                        color: MaterialPalette.on_surface;
+                        horizontal_alignment: center;
+                    }
+
+                    MaterialText {
+                        text: "Built with Rust and Slint. Designed to feel native.";
+                        style: MaterialTypography.title_medium;
+                        color: MaterialPalette.primary;
+                        horizontal_alignment: center;
+                    }
+
+                    MaterialText {
+                        text: "Fluid physics-based springs, dynamic color theming, and an edge-to-edge floating navigation pill.";
+                        style: MaterialTypography.body_large;
+                        color: MaterialPalette.on_surface_variant;
+                        horizontal_alignment: center;
+                        wrap: word-wrap;
+                    }
+                }
+            }
         }
 
         // Page 3: Get Started
@@ -151,6 +457,75 @@ export component WelcomeScreen inherits Rectangle {
             animate opacity {
                 duration: 250ms;
                 easing: ease-in-out;
+            }
+
+            VerticalLayout {
+                alignment: center;
+                spacing: MaterialStyleMetrics.spacing_16;
+                padding_left: 28px;
+                padding_right: 28px;
+
+                // Launch / Ready Vector Illustration
+                HorizontalLayout {
+                    alignment: center;
+                    padding_top: 12px;
+                    padding_bottom: 12px;
+
+                    Rectangle {
+                        width: 120px;
+                        height: 120px;
+                        border_radius: 60px;
+                        background: MaterialPalette.primary_container;
+
+                        Rectangle {
+                            x: (parent.width - self.width) / 2;
+                            y: (parent.height - self.height) / 2;
+                            width: 96px;
+                            height: 96px;
+                            border_radius: 48px;
+                            background: MaterialPalette.surface;
+                            border_width: 2px;
+                            border_color: MaterialPalette.primary.with_alpha(30%);
+
+                            VerticalLayout {
+                                alignment: center;
+                                Icon {
+                                    source: AppIcons.star;
+                                    colorize: MaterialPalette.primary;
+                                    width: 48px;
+                                    height: 48px;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                VerticalLayout {
+                    spacing: 8px;
+                    alignment: center;
+
+                    MaterialText {
+                        text: "Ready to Build";
+                        style: MaterialTypography.headline_large;
+                        color: MaterialPalette.on_surface;
+                        horizontal_alignment: center;
+                    }
+
+                    MaterialText {
+                        text: "Your daily developer companion.";
+                        style: MaterialTypography.title_medium;
+                        color: MaterialPalette.primary;
+                        horizontal_alignment: center;
+                    }
+
+                    MaterialText {
+                        text: "Completely private, ultra-fast, and built for modern Android. Tap below to explore your tools.";
+                        style: MaterialTypography.body_large;
+                        color: MaterialPalette.on_surface_variant;
+                        horizontal_alignment: center;
+                        wrap: word-wrap;
+                    }
+                }
             }
         }
     }
@@ -268,7 +643,7 @@ export component WelcomeScreen inherits Rectangle {
             // Right slot: Next or Get Started Button
             VerticalLayout {
                 alignment: center;
-                width: root.current_page == 3 ? 120px : 80px;
+                width: root.current_page == 3 ? 130px : 80px;
 
                 Rectangle {
                     height: 40px;
