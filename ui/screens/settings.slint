@@ -452,6 +452,43 @@ export component SettingsScreen inherits VerticalLayout {
                     }
                 }
             }
+
+            // MTRE Brand Footer
+            VerticalLayout {
+                spacing: MaterialStyleMetrics.spacing_8;
+                padding_top: MaterialStyleMetrics.padding_16;
+                padding_bottom: MaterialStyleMetrics.padding_8;
+                alignment: center;
+
+                HorizontalLayout {
+                    alignment: center;
+                    spacing: MaterialStyleMetrics.spacing_8;
+
+                    Image {
+                        source: AppIcons.mtre_logo;
+                        width: 18px;
+                        height: 18px;
+                        opacity: 0.75;
+                    }
+
+                    MaterialText {
+                        text: "Made by MTRE Consulting";
+                        style: MaterialTypography.label_medium;
+                        color: MaterialPalette.on_surface_variant;
+                        horizontal_alignment: center;
+                    }
+                }
+
+                HorizontalLayout {
+                    alignment: center;
+                    MaterialText {
+                        text: "https://mtre-consulting.it";
+                        style: MaterialTypography.body_small;
+                        color: MaterialPalette.on_surface_variant.with_alpha(70%);
+                        horizontal_alignment: center;
+                    }
+                }
+            }
         }
     }
 }
