@@ -21,7 +21,7 @@ export component SettingsScreen inherits VerticalLayout {
 
     // Local toggle state properties (stubbed for future engine wiring)
     property <bool> dark_theme_enabled: true;
-    property <bool> dynamic_color_enabled: true;
+    property <bool> dynamic_color_enabled <=> MaterialPalette.dynamic_color_enabled;
 
     // Status bar clearance
     Rectangle {

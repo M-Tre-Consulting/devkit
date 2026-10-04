@@ -7,6 +7,7 @@ import { MaterialPalette } from "../styling/material_palette.slint";
 export component MaterialText inherits Text {
     in property <TextStyle> style: MaterialTypography.body_medium;
 
+    font_family: MaterialTypography.font_family;
     font_size: root.style.font_size;
     font_weight: root.style.font_weight;
     color: MaterialPalette.on_background;
