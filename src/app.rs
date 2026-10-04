@@ -31,6 +31,8 @@ pub fn run() -> Result<(), slint::PlatformError> {
     let nav_inset = crate::platform::android::get_navigation_bar_inset();
     ui.set_status_bar_inset(status_inset);
     ui.set_nav_bar_inset(nav_inset);
+    let has_seen_welcome = crate::storage::load_has_seen_welcome();
+    ui.set_welcome_open(!has_seen_welcome);
     setup_app_state(&ui);
     let _kb_timer = setup_keyboard_observer(&ui);
     let high_rr = crate::storage::load_high_refresh_rate();
@@ -453,9 +455,26 @@ pub fn setup_app_state(ui: &crate::AppWindow) {
         }
     });
 
+    let ui_handle = ui.as_weak();
+    ui.on_dismiss_welcome(move || {
+        crate::storage::save_has_seen_welcome(true);
+        if let Some(ui) = ui_handle.upgrade() {
+            ui.set_welcome_open(false);
+        }
+    });
+
     let state_clone = nav_state.clone();
     let ui_handle = ui.as_weak();
     ui.on_back(move || {
+        if let Some(ui) = ui_handle.upgrade() {
+            if ui.get_welcome_open() {
+                let page = ui.get_welcome_page();
+                if page > 0 {
+                    ui.set_welcome_page(page - 1);
+                    return;
+                }
+            }
+        }
         let outcome = state_clone.borrow_mut().handle_back();
         if let Some(ui) = ui_handle.upgrade() {
             match outcome {
@@ -479,6 +498,17 @@ pub fn setup_app_state(ui: &crate::AppWindow) {
     let state_clone = nav_state.clone();
     let ui_handle = ui.as_weak();
     ui.on_handle_back(move || -> bool {
+        if let Some(ui) = ui_handle.upgrade() {
+            if ui.get_welcome_open() {
+                let page = ui.get_welcome_page();
+                if page > 0 {
+                    ui.set_welcome_page(page - 1);
+                    return true;
+                } else {
+                    return false;
+                }
+            }
+        }
         let outcome = state_clone.borrow_mut().handle_back();
         if let Some(ui) = ui_handle.upgrade() {
             match outcome {
@@ -519,6 +549,8 @@ pub fn android_main(android_app: slint::android::AndroidApp) {
     let ui = crate::AppWindow::new().unwrap();
     ui.set_status_bar_inset(status_inset);
     ui.set_nav_bar_inset(nav_inset);
+    let has_seen_welcome = crate::storage::load_has_seen_welcome();
+    ui.set_welcome_open(!has_seen_welcome);
     crate::MaterialWindowAdapter::get(&ui).set_disable_hover(true);
     setup_app_state(&ui);
     let high_rr = crate::storage::load_high_refresh_rate();

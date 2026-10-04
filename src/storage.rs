@@ -55,6 +55,32 @@ fn high_refresh_rate_file() -> PathBuf {
     get_storage_dir().join("high_refresh_rate.txt")
 }
 
+fn welcome_file() -> PathBuf {
+    get_storage_dir().join("welcome_seen.txt")
+}
+
+/// Load the first-launch welcome completion flag (defaults to false).
+pub fn load_has_seen_welcome() -> bool {
+    let path = welcome_file();
+    if let Ok(content) = fs::read_to_string(path) {
+        content.trim().eq_ignore_ascii_case("true") || content.trim() == "1"
+    } else {
+        false
+    }
+}
+
+/// Save the first-launch welcome completion flag.
+pub fn save_has_seen_welcome(seen: bool) {
+    let dir = get_storage_dir();
+    let _ = fs::create_dir_all(&dir);
+    let _ = fs::write(welcome_file(), if seen { "true" } else { "false" });
+}
+
+/// Reset the welcome flag so the welcome screen shows on next launch.
+pub fn reset_welcome() {
+    save_has_seen_welcome(false);
+}
+
 /// Load list of recent tool IDs (up to 5, most recent first).
 pub fn load_recents() -> Vec<i32> {
     let path = recents_file();
@@ -159,8 +185,11 @@ pub fn save_high_refresh_rate(enabled: bool) {
 mod tests {
     use super::*;
 
+    static TEST_LOCK: Mutex<()> = Mutex::new(());
+
     #[test]
     fn test_high_refresh_rate_persistence() {
+        let _guard = TEST_LOCK.lock().unwrap();
         let temp_dir = std::env::temp_dir().join(format!("devkit_test_{}", std::process::id()));
         init_storage_dir(temp_dir.clone());
 
@@ -175,6 +204,27 @@ mod tests {
         // Save false and verify
         save_high_refresh_rate(false);
         assert!(!load_high_refresh_rate());
+
+        let _ = fs::remove_dir_all(&temp_dir);
+    }
+
+    #[test]
+    fn test_welcome_seen_persistence() {
+        let _guard = TEST_LOCK.lock().unwrap();
+        let temp_dir = std::env::temp_dir().join(format!("devkit_welcome_test_{}", std::process::id()));
+        init_storage_dir(temp_dir.clone());
+
+        // Default should be false when file does not exist
+        let _ = fs::remove_file(welcome_file());
+        assert!(!load_has_seen_welcome());
+
+        // Save true and verify
+        save_has_seen_welcome(true);
+        assert!(load_has_seen_welcome());
+
+        // Reset and verify
+        reset_welcome();
+        assert!(!load_has_seen_welcome());
 
         let _ = fs::remove_dir_all(&temp_dir);
     }

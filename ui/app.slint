@@ -148,6 +148,8 @@ export component AppWindow inherits Window {
     in-out property <bool> about_open: false;
     in-out property <bool> high_refresh_rate_enabled: false;
     in-out property <bool> high_refresh_rate_supported: false;
+    in-out property <bool> welcome_open: false;
+    in-out property <int> welcome_page: 0;
 
     // Navigation and state callbacks
     callback switch_mode(int);
@@ -157,6 +159,7 @@ export component AppWindow inherits Window {
     callback clear_favorites();
     callback open_about();
     callback high_refresh_rate_changed(bool);
+    callback dismiss_welcome();
     callback back();
     callback handle_back() -> bool;
     callback copy_text(string);
@@ -213,7 +216,7 @@ export component AppWindow inherits Window {
 
         key-released(event) => {
             if event.text == Key.Back || event.text == Key.Escape {
-                if root.active_tool > 0 || root.current_mode != 0 || root.modal_open {
+                if root.active_tool > 0 || root.current_mode != 0 || root.modal_open || (root.welcome_open && root.welcome_page > 0) {
                     return accept;
                 }
             }
@@ -705,7 +708,7 @@ export component AppWindow inherits Window {
         width: 100%;
         height: 100%;
         padding_bottom: root.nav_bar_inset + root.pill_bottom_margin;
-        opacity: root.keyboard_open ? 0.0 : 1.0;
+        opacity: (root.keyboard_open || root.welcome_open) ? 0.0 : 1.0;
         visible: self.opacity > 0.01;
 
         animate opacity, y {
