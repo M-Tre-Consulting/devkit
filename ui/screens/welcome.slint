@@ -396,34 +396,38 @@ export component WelcomeScreen inherits Rectangle {
                                 padding_left: 6px;
                                 padding_right: 12px;
 
-                                // Active Home Item (Capsule with Icon + Label matching real pill)
-                                Rectangle {
-                                    height: 36px;
-                                    border_radius: 18px;
-                                    background: MaterialPalette.secondary_container;
+                                VerticalLayout {
+                                    alignment: center;
 
-                                    HorizontalLayout {
-                                        alignment: center;
-                                        spacing: 6px;
-                                        padding_left: 10px;
-                                        padding_right: 12px;
+                                    // Active Home Item (Capsule with Icon + Label matching real pill)
+                                    Rectangle {
+                                        height: 36px;
+                                        border_radius: 18px;
+                                        background: MaterialPalette.secondary_container;
 
-                                        VerticalLayout {
+                                        HorizontalLayout {
                                             alignment: center;
-                                            Icon {
-                                                source: AppIcons.home;
-                                                colorize: MaterialPalette.on_secondary_container;
-                                                width: 18px;
-                                                height: 18px;
+                                            spacing: 6px;
+                                            padding_left: 10px;
+                                            padding_right: 12px;
+
+                                            VerticalLayout {
+                                                alignment: center;
+                                                Icon {
+                                                    source: AppIcons.home;
+                                                    colorize: MaterialPalette.on_secondary_container;
+                                                    width: 18px;
+                                                    height: 18px;
+                                                }
                                             }
-                                        }
 
-                                        VerticalLayout {
-                                            alignment: center;
-                                            MaterialText {
-                                                text: "Home";
-                                                style: MaterialTypography.label_medium;
-                                                color: MaterialPalette.on_secondary_container;
+                                            VerticalLayout {
+                                                alignment: center;
+                                                MaterialText {
+                                                    text: "Home";
+                                                    style: MaterialTypography.label_medium;
+                                                    color: MaterialPalette.on_secondary_container;
+                                                }
                                             }
                                         }
                                     }
