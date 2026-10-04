@@ -1,13 +1,16 @@
-name: Release APK
+name: Release Android App (APK & AAB)
 
 # ==============================================================================
-# GitHub Actions CI/CD Workflow: DevKit Release APK
+# GitHub Actions CI/CD Workflow: DevKit Release APK & AAB
 #
 # Trigger:
-# - Tag push matching 'v*' (e.g. v0.1.0):
-#   - Builds signed release APK
-#   - Uploads APK as workflow artifact ('devkit-apk')
-#   - Creates a GitHub Release and attaches target/release/apk/devkit.apk
+# - Tag push matching 'v*' (e.g. v0.1.5):
+#   - Builds signed release APK (.apk) for direct sideloading and testing
+#   - Builds signed release Android App Bundle (.aab) for Google Play Store publication
+#   - Uploads APK & AAB as individual workflow artifacts ('devkit-apk', 'devkit-aab')
+#   - Creates a GitHub Release and attaches both target/release/apk/devkit.apk
+#     and target/release/bundle/devkit.aab
+# - Manual workflow_dispatch
 #
 # ==============================================================================
 # REQUIRED GITHUB REPOSITORY SECRETS
@@ -31,13 +34,14 @@ on:
   push:
     tags:
       - 'v*'
+  workflow_dispatch:
 
 permissions:
   contents: write
 
 jobs:
   build-release:
-    name: Build & Release APK
+    name: Build & Release Android App (APK & AAB)
     runs-on: ubuntu-latest
 
     steps:
@@ -81,7 +85,7 @@ jobs:
         uses: actions/checkout@v4
 
       # ------------------------------------------------------------------------
-      # Step 3: Setup Java 17 (required for apksigner and Android build tools)
+      # Step 3: Setup Java 17 (required for apksigner, jarsigner, and Android build tools)
       # ------------------------------------------------------------------------
       - name: Setup Java 17
         uses: actions/setup-java@v4
@@ -123,7 +127,7 @@ jobs:
             NDK_DIR="$ANDROID_ROOT/ndk/27.2.12479018"
           fi
 
-          # Add build-tools to PATH for apksigner and zipalign
+          # Add build-tools to PATH for apksigner, aapt2, and zipalign
           BUILD_TOOLS_DIR=$(find "$ANDROID_ROOT/build-tools" -maxdepth 1 -mindepth 1 -type d | sort -V | tail -n 1)
           if [ -n "$BUILD_TOOLS_DIR" ]; then
             export PATH="$BUILD_TOOLS_DIR:$PATH"
@@ -165,7 +169,26 @@ jobs:
         run: cargo install cargo-apk --version 0.10.0
 
       # ------------------------------------------------------------------------
-      # Step 8: Cache Rust build dependencies
+      # Step 8: Cache bundletool jar
+      # ------------------------------------------------------------------------
+      - name: Cache bundletool binary
+        id: cache-bundletool
+        uses: actions/cache@v4
+        with:
+          path: ~/.bundletool/bundletool.jar
+          key: ${{ runner.os }}-bundletool-1.18.3
+
+      # ------------------------------------------------------------------------
+      # Step 9: Download bundletool if not cached
+      # ------------------------------------------------------------------------
+      - name: Download bundletool
+        if: steps.cache-bundletool.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p ~/.bundletool
+          curl -sSL "https://github.com/google/bundletool/releases/download/1.18.3/bundletool-all-1.18.3.jar" -o ~/.bundletool/bundletool.jar
+
+      # ------------------------------------------------------------------------
+      # Step 10: Cache Rust build dependencies
       # ------------------------------------------------------------------------
       - name: Cache Rust build dependencies
         uses: Swatinem/rust-cache@v2
@@ -173,7 +196,7 @@ jobs:
           targets: aarch64-linux-android
 
       # ------------------------------------------------------------------------
-      # Step 9: Decode release keystore from GitHub Secret
+      # Step 11: Decode release keystore from GitHub Secret
       # ------------------------------------------------------------------------
       - name: Decode release keystore
         env:
@@ -183,7 +206,7 @@ jobs:
           echo "$KEYSTORE_BASE64" | base64 -d > /home/runner/.android/release.keystore
 
       # ------------------------------------------------------------------------
-      # Step 10: Build release APK
+      # Step 12: Build release APK
       # ------------------------------------------------------------------------
       - name: Build release APK
         env:
@@ -193,7 +216,7 @@ jobs:
           cargo apk build --target aarch64-linux-android --lib --release
 
       # ------------------------------------------------------------------------
-      # Step 11: Sign release APK with apksigner
+      # Step 13: Sign release APK with apksigner
       # ------------------------------------------------------------------------
       - name: Sign release APK
         env:
@@ -210,20 +233,50 @@ jobs:
           apksigner verify --verbose target/release/apk/devkit.apk
 
       # ------------------------------------------------------------------------
-      # Step 12: Verify release APK exists
+      # Step 14: Build release Android App Bundle (AAB) for Play Store
       # ------------------------------------------------------------------------
-      - name: Verify release APK exists
+      - name: Build release Android App Bundle (AAB)
+        run: |
+          chmod +x ./scripts/build-aab.sh
+          ./scripts/build-aab.sh target/release/apk/devkit.apk target/release/bundle/devkit.aab
+
+      # ------------------------------------------------------------------------
+      # Step 15: Sign release AAB with jarsigner (Play Store requirement)
+      # ------------------------------------------------------------------------
+      - name: Sign release AAB
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          jarsigner \
+            -keystore /home/runner/.android/release.keystore \
+            -storepass "$KEYSTORE_PASSWORD" \
+            -keypass "$KEY_PASSWORD" \
+            target/release/bundle/devkit.aab \
+            "$KEY_ALIAS"
+          jarsigner -verify -verbose target/release/bundle/devkit.aab
+
+      # ------------------------------------------------------------------------
+      # Step 16: Verify release APK & AAB exist
+      # ------------------------------------------------------------------------
+      - name: Verify release artifacts exist
         run: |
           if [ ! -f target/release/apk/devkit.apk ]; then
             echo "::error::Release APK not found at target/release/apk/devkit.apk"
             ls -la target/release/apk/ || true
             exit 1
           fi
-          echo "Verified release APK at target/release/apk/devkit.apk"
-          ls -lh target/release/apk/devkit.apk
+          if [ ! -f target/release/bundle/devkit.aab ]; then
+            echo "::error::Release AAB not found at target/release/bundle/devkit.aab"
+            ls -la target/release/bundle/ || true
+            exit 1
+          fi
+          echo "Verified release artifacts:"
+          ls -lh target/release/apk/devkit.apk target/release/bundle/devkit.aab
 
       # ------------------------------------------------------------------------
-      # Step 13: Upload APK as workflow artifact (always produced)
+      # Step 17: Upload APK as workflow artifact
       # ------------------------------------------------------------------------
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
@@ -233,17 +286,29 @@ jobs:
           if-no-files-found: error
 
       # ------------------------------------------------------------------------
-      # Step 14: Create GitHub Release on tag push (v*)
+      # Step 18: Upload AAB as workflow artifact
+      # ------------------------------------------------------------------------
+      - name: Upload AAB artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: devkit-aab
+          path: target/release/bundle/devkit.aab
+          if-no-files-found: error
+
+      # ------------------------------------------------------------------------
+      # Step 19: Create GitHub Release on tag push (v*)
       # ------------------------------------------------------------------------
       - name: Create GitHub Release
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
-          files: target/release/apk/devkit.apk
+          files: |
+            target/release/apk/devkit.apk
+            target/release/bundle/devkit.aab
           generate_release_notes: true
 
       # ------------------------------------------------------------------------
-      # Step 15: Defense-in-depth keystore cleanup (always runs)
+      # Step 20: Defense-in-depth keystore cleanup (always runs)
       # ------------------------------------------------------------------------
       - name: Cleanup keystore
         if: always()
