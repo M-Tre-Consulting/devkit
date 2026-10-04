@@ -58,21 +58,10 @@ export component AboutScreen inherits VerticalLayout {
 
                     HorizontalLayout {
                         alignment: center;
-                        Rectangle {
+                        Image {
+                            source: AppIcons.mtre_logo;
                             width: 64px;
                             height: 64px;
-                            border_radius: 32px;
-                            background: MaterialPalette.primary;
-
-                            VerticalLayout {
-                                alignment: center;
-                                Icon {
-                                    source: AppIcons.wrench;
-                                    colorize: MaterialPalette.on_primary;
-                                    width: 32px;
-                                    height: 32px;
-                                }
-                            }
                         }
                     }
 
@@ -89,7 +78,17 @@ export component AboutScreen inherits VerticalLayout {
                     HorizontalLayout {
                         alignment: center;
                         MaterialText {
-                            text: "Version 0.1.0";
+                            text: "MTRE Consulting";
+                            style: MaterialTypography.title_medium;
+                            color: MaterialPalette.primary;
+                            horizontal_alignment: center;
+                        }
+                    }
+
+                    HorizontalLayout {
+                        alignment: center;
+                        MaterialText {
+                            text: "Version 0.1.4";
                             style: MaterialTypography.label_medium;
                             color: MaterialPalette.on_surface_variant;
                             horizontal_alignment: center;
@@ -102,6 +101,16 @@ export component AboutScreen inherits VerticalLayout {
                             text: "A native Rust & Slint toolbox for Android";
                             style: MaterialTypography.body_small;
                             color: MaterialPalette.on_surface_variant;
+                            horizontal_alignment: center;
+                        }
+                    }
+
+                    HorizontalLayout {
+                        alignment: center;
+                        MaterialText {
+                            text: "https://mtre-consulting.it";
+                            style: MaterialTypography.body_small;
+                            color: MaterialPalette.primary;
                             horizontal_alignment: center;
                         }
                     }
