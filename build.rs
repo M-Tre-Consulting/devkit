@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2026 MTRE Consulting
+// Copyright 2026 M-Tre Consulting
 
 use std::collections::HashMap;
 use std::env;

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2026 MTRE Consulting
+// Copyright 2026 M-Tre Consulting
 
 import { Icons, MaterialPalette, MaterialStyleMetrics, MaterialTypography, MaterialText, StateLayerArea, Icon } from "@material";
 import { AppIcons } from "../components/app-icons.slint";
@@ -105,7 +105,7 @@ export component WelcomeScreen inherits Rectangle {
                 padding_left: 28px;
                 padding_right: 28px;
 
-                // MTRE Logo Lockup at the top of Page 1 ONLY
+                // M-Tre Logo Lockup at the top of Page 1 ONLY
                 HorizontalLayout {
                     alignment: center;
                     spacing: 8px;
@@ -117,7 +117,7 @@ export component WelcomeScreen inherits Rectangle {
                     }
 
                     MaterialText {
-                        text: "MTRE Consulting";
+                        text: "M-Tre Consulting";
                         style: MaterialTypography.label_large;
                         color: MaterialPalette.primary;
                     }
@@ -369,44 +369,95 @@ export component WelcomeScreen inherits Rectangle {
                     padding_bottom: 12px;
 
                     Rectangle {
-                        width: 220px;
-                        height: 120px;
+                        width: 260px;
+                        height: 110px;
                         border_radius: 28px;
                         background: MaterialPalette.surface_container;
                         border_width: 1px;
                         border_color: MaterialPalette.outline_variant.with_alpha(20%);
 
-                        VerticalLayout {
-                            alignment: center;
-                            spacing: 12px;
+                        // Mock floating pill nav bar - centered horizontally and vertically
+                        mock_pill := Rectangle {
+                            x: (parent.width - self.width) / 2;
+                            y: (parent.height - self.height) / 2;
+                            width: 216px;
+                            height: 48px;
+                            border_radius: 24px;
+                            background: MaterialPalette.surface_container_high;
+                            border_width: 1px;
+                            border_color: MaterialPalette.outline_variant.with_alpha(25%);
+                            drop_shadow_blur: 16px;
+                            drop_shadow_offset_y: 4px;
+                            drop_shadow_color: MaterialPalette.shadow_30;
 
-                            // Mock floating pill nav bar
-                            Rectangle {
-                                width: 170px;
-                                height: 46px;
-                                border_radius: 23px;
-                                background: MaterialPalette.surface_container_high;
-                                border_width: 1px;
-                                border_color: MaterialPalette.outline_variant.with_alpha(25%);
+                            HorizontalLayout {
+                                alignment: center;
+                                spacing: 10px;
+                                padding_left: 6px;
+                                padding_right: 12px;
 
-                                HorizontalLayout {
-                                    alignment: center;
-                                    spacing: 14px;
+                                // Active Home Item (Capsule with Icon + Label matching real pill)
+                                Rectangle {
+                                    height: 36px;
+                                    border_radius: 18px;
+                                    background: MaterialPalette.secondary_container;
 
-                                    Rectangle {
-                                        width: 32px;
-                                        height: 32px;
-                                        border_radius: 16px;
-                                        background: MaterialPalette.secondary_container;
+                                    HorizontalLayout {
+                                        alignment: center;
+                                        spacing: 6px;
+                                        padding_left: 10px;
+                                        padding_right: 12px;
+
                                         VerticalLayout {
                                             alignment: center;
-                                            Icon { source: AppIcons.home; colorize: MaterialPalette.on_secondary_container; width: 18px; height: 18px; }
+                                            Icon {
+                                                source: AppIcons.home;
+                                                colorize: MaterialPalette.on_secondary_container;
+                                                width: 18px;
+                                                height: 18px;
+                                            }
+                                        }
+
+                                        VerticalLayout {
+                                            alignment: center;
+                                            MaterialText {
+                                                text: "Home";
+                                                style: MaterialTypography.label_medium;
+                                                color: MaterialPalette.on_secondary_container;
+                                            }
                                         }
                                     }
+                                }
 
-                                    Icon { source: AppIcons.history; colorize: MaterialPalette.on_surface_variant; width: 18px; height: 18px; }
-                                    Icon { source: AppIcons.star; colorize: MaterialPalette.on_surface_variant; width: 18px; height: 18px; }
-                                    Icon { source: AppIcons.settings; colorize: MaterialPalette.on_surface_variant; width: 18px; height: 18px; }
+                                // Inactive icons centered vertically
+                                VerticalLayout {
+                                    alignment: center;
+                                    Icon {
+                                        source: AppIcons.history;
+                                        colorize: MaterialPalette.on_surface_variant;
+                                        width: 18px;
+                                        height: 18px;
+                                    }
+                                }
+
+                                VerticalLayout {
+                                    alignment: center;
+                                    Icon {
+                                        source: AppIcons.star;
+                                        colorize: MaterialPalette.on_surface_variant;
+                                        width: 18px;
+                                        height: 18px;
+                                    }
+                                }
+
+                                VerticalLayout {
+                                    alignment: center;
+                                    Icon {
+                                        source: AppIcons.settings;
+                                        colorize: MaterialPalette.on_surface_variant;
+                                        width: 18px;
+                                        height: 18px;
+                                    }
                                 }
                             }
                         }
@@ -538,140 +589,132 @@ export component WelcomeScreen inherits Rectangle {
         height: 80px;
         z: 20;
 
-        HorizontalLayout {
-            padding_left: 24px;
-            padding_right: 24px;
-            alignment: space-between;
-            width: 100%;
+        // Perfectly centered Page Indicator Dots (Pill indicator)
+        indicator_container := Rectangle {
+            x: (parent.width - self.width) / 2;
+            y: (parent.height - self.height) / 2;
+            width: 72px;
+            height: 8px;
 
-            // Left slot: Back Button (pages 1, 2, 3)
-            VerticalLayout {
+            HorizontalLayout {
+                spacing: 8px;
                 alignment: center;
-                width: 80px;
 
-                if root.current_page > 0 : Rectangle {
-                    height: 40px;
-                    border_radius: 20px;
+                // Dot 0
+                Rectangle {
+                    width: root.current_page == 0 ? 24px : 8px;
+                    height: 8px;
+                    border_radius: 4px;
+                    background: root.current_page == 0 ? MaterialPalette.primary : MaterialPalette.on_surface_variant.with_alpha(30%);
 
-                    StateLayerArea {
-                        width: 100%;
-                        height: 100%;
-                        border_radius: parent.border_radius;
-                        color: MaterialPalette.on_surface_variant;
+                    animate width, background {
+                        duration: 250ms;
+                        easing: cubic-bezier(0.2, 0, 0, 1);
+                    }
+                }
 
-                        clicked => {
-                            root.go_back();
-                        }
+                // Dot 1
+                Rectangle {
+                    width: root.current_page == 1 ? 24px : 8px;
+                    height: 8px;
+                    border_radius: 4px;
+                    background: root.current_page == 1 ? MaterialPalette.primary : MaterialPalette.on_surface_variant.with_alpha(30%);
 
-                        HorizontalLayout {
-                            alignment: center;
-                            VerticalLayout {
-                                alignment: center;
-                                MaterialText {
-                                    text: "Back";
-                                    style: MaterialTypography.label_large;
-                                    color: MaterialPalette.on_surface_variant;
-                                }
-                            }
-                        }
+                    animate width, background {
+                        duration: 250ms;
+                        easing: cubic-bezier(0.2, 0, 0, 1);
+                    }
+                }
+
+                // Dot 2
+                Rectangle {
+                    width: root.current_page == 2 ? 24px : 8px;
+                    height: 8px;
+                    border_radius: 4px;
+                    background: root.current_page == 2 ? MaterialPalette.primary : MaterialPalette.on_surface_variant.with_alpha(30%);
+
+                    animate width, background {
+                        duration: 250ms;
+                        easing: cubic-bezier(0.2, 0, 0, 1);
+                    }
+                }
+
+                // Dot 3
+                Rectangle {
+                    width: root.current_page == 3 ? 24px : 8px;
+                    height: 8px;
+                    border_radius: 4px;
+                    background: root.current_page == 3 ? MaterialPalette.primary : MaterialPalette.on_surface_variant.with_alpha(30%);
+
+                    animate width, background {
+                        duration: 250ms;
+                        easing: cubic-bezier(0.2, 0, 0, 1);
                     }
                 }
             }
+        }
 
-            // Center slot: Page Indicator Dots
-            VerticalLayout {
-                alignment: center;
+        // Left slot: Back Button (pages 1, 2, 3)
+        if root.current_page > 0 : back_btn := Rectangle {
+            x: 24px;
+            y: (parent.height - self.height) / 2;
+            width: 80px;
+            height: 40px;
+            border_radius: 20px;
+
+            StateLayerArea {
+                width: 100%;
+                height: 100%;
+                border_radius: parent.border_radius;
+                color: MaterialPalette.on_surface_variant;
+
+                clicked => {
+                    root.go_back();
+                }
 
                 HorizontalLayout {
-                    spacing: 8px;
                     alignment: center;
-
-                    // Dot 0
-                    Rectangle {
-                        width: root.current_page == 0 ? 24px : 8px;
-                        height: 8px;
-                        border_radius: 4px;
-                        background: root.current_page == 0 ? MaterialPalette.primary : MaterialPalette.on_surface_variant.with_alpha(30%);
-
-                        animate width, background {
-                            duration: 250ms;
-                            easing: cubic-bezier(0.2, 0, 0, 1);
-                        }
-                    }
-
-                    // Dot 1
-                    Rectangle {
-                        width: root.current_page == 1 ? 24px : 8px;
-                        height: 8px;
-                        border_radius: 4px;
-                        background: root.current_page == 1 ? MaterialPalette.primary : MaterialPalette.on_surface_variant.with_alpha(30%);
-
-                        animate width, background {
-                            duration: 250ms;
-                            easing: cubic-bezier(0.2, 0, 0, 1);
-                        }
-                    }
-
-                    // Dot 2
-                    Rectangle {
-                        width: root.current_page == 2 ? 24px : 8px;
-                        height: 8px;
-                        border_radius: 4px;
-                        background: root.current_page == 2 ? MaterialPalette.primary : MaterialPalette.on_surface_variant.with_alpha(30%);
-
-                        animate width, background {
-                            duration: 250ms;
-                            easing: cubic-bezier(0.2, 0, 0, 1);
-                        }
-                    }
-
-                    // Dot 3
-                    Rectangle {
-                        width: root.current_page == 3 ? 24px : 8px;
-                        height: 8px;
-                        border_radius: 4px;
-                        background: root.current_page == 3 ? MaterialPalette.primary : MaterialPalette.on_surface_variant.with_alpha(30%);
-
-                        animate width, background {
-                            duration: 250ms;
-                            easing: cubic-bezier(0.2, 0, 0, 1);
+                    VerticalLayout {
+                        alignment: center;
+                        MaterialText {
+                            text: "Back";
+                            style: MaterialTypography.label_large;
+                            color: MaterialPalette.on_surface_variant;
                         }
                     }
                 }
             }
+        }
 
-            // Right slot: Next or Get Started Button
-            VerticalLayout {
-                alignment: center;
-                width: root.current_page == 3 ? 130px : 80px;
+        // Right slot: Next or Get Started Button
+        next_btn := Rectangle {
+            x: parent.width - self.width - 24px;
+            y: (parent.height - self.height) / 2;
+            width: root.current_page == 3 ? 130px : 80px;
+            height: 40px;
+            border_radius: 20px;
+            background: MaterialPalette.primary;
 
-                Rectangle {
-                    height: 40px;
-                    border_radius: 20px;
-                    background: MaterialPalette.primary;
+            StateLayerArea {
+                width: 100%;
+                height: 100%;
+                border_radius: parent.border_radius;
+                color: MaterialPalette.on_primary;
 
-                    StateLayerArea {
-                        width: 100%;
-                        height: 100%;
-                        border_radius: parent.border_radius;
-                        color: MaterialPalette.on_primary;
+                clicked => {
+                    root.go_next();
+                }
 
-                        clicked => {
-                            root.go_next();
-                        }
-
-                        HorizontalLayout {
-                            alignment: center;
-                            padding_left: 16px;
-                            padding_right: 16px;
-                            VerticalLayout {
-                                alignment: center;
-                                MaterialText {
-                                    text: root.current_page == 3 ? "Get Started" : "Next";
-                                    style: MaterialTypography.label_large;
-                                    color: MaterialPalette.on_primary;
-                                }
-                            }
+                HorizontalLayout {
+                    alignment: center;
+                    padding_left: 16px;
+                    padding_right: 16px;
+                    VerticalLayout {
+                        alignment: center;
+                        MaterialText {
+                            text: root.current_page == 3 ? "Get Started" : "Next";
+                            style: MaterialTypography.label_large;
+                            color: MaterialPalette.on_primary;
                         }
                     }
                 }
