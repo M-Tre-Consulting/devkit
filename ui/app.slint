@@ -161,6 +161,7 @@ export component AppWindow inherits Window {
     callback open_about();
     callback high_refresh_rate_changed(bool);
     callback dismiss_welcome();
+    callback reset_welcome();
     callback back();
     callback handle_back() -> bool;
     callback copy_text(string);
@@ -372,6 +373,9 @@ export component AppWindow inherits Window {
                     }
                     settings-clear-favorites => {
                         root.clear_favorites();
+                    }
+                    settings-reset-welcome => {
+                        root.reset_welcome();
                     }
                     settings-open-about => {
                         root.open_about();

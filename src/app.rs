@@ -463,6 +463,15 @@ pub fn setup_app_state(ui: &crate::AppWindow) {
         }
     });
 
+    let ui_handle = ui.as_weak();
+    ui.on_reset_welcome(move || {
+        crate::platform::android::haptic_tap();
+        crate::storage::reset_welcome();
+        if let Some(ui) = ui_handle.upgrade() {
+            ui.set_welcome_page(0);
+        }
+    });
+
     let state_clone = nav_state.clone();
     let ui_handle = ui.as_weak();
     ui.on_back(move || {
