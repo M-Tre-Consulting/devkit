@@ -5,6 +5,9 @@
 //!
 //! Provides bidirectional conversion between JSON and YAML structured data.
 
+use serde::Serialize;
+use serde_json::{ser::PrettyFormatter, Value};
+
 /// Conversion direction for the translator.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum ConversionDirection {
@@ -38,18 +41,70 @@ pub enum JsonYamlError {
 /// Converts source text bidirectionally between JSON and YAML.
 ///
 /// TODO: Implement parsing and serialization logic when serde_json / serde_yaml are added.
-pub fn convert(_input: &JsonYamlInput) -> Result<JsonYamlOutput, JsonYamlError> {
-    todo!("convert between JSON and YAML")
+pub fn convert(input: &JsonYamlInput) -> Result<JsonYamlOutput, JsonYamlError> {
+    match input.direction {
+        ConversionDirection::YamlToJson => {
+            let result = convert_yaml_to_json(&input.source_text, input.indent_size)?;
+            Ok(JsonYamlOutput {
+                converted_text: result,
+            })
+        }
+        ConversionDirection::JsonToYaml => {
+            let result = convert_json_to_yaml(&input.source_text)?;
+            Ok(JsonYamlOutput {
+                converted_text: result,
+            })
+        }
+    }
 }
 
 /// Convenience helper to convert JSON string to YAML.
-pub fn convert_json_to_yaml(_input: &str) -> Result<String, JsonYamlError> {
-    todo!("convert JSON to YAML")
+///
+/// Accepts an input string and parses it into raw JSON deserialized data.
+/// If the deserialization succeeds, then the inverse process is triggered
+/// for YAML generation.
+fn convert_json_to_yaml(input: &str) -> Result<String, JsonYamlError> {
+    // Check if the input is empty and raise proper error
+    if input.trim().is_empty() {
+        return Err(JsonYamlError::EmptyInput);
+    }
+
+    // Parse the JSON with error handling
+    let parsed_json: Value =
+        serde_json::from_str(input).map_err(|e| JsonYamlError::InvalidJson(e.to_string()))?;
+
+    // Serialize into YAML
+    serde_yaml::to_string(&parsed_json).map_err(|e| JsonYamlError::InvalidYaml(e.to_string()))
 }
 
 /// Convenience helper to convert YAML string to JSON.
-pub fn convert_yaml_to_json(_input: &str) -> Result<String, JsonYamlError> {
-    todo!("convert YAML to JSON")
+///
+/// Accepts an input string and parses it into raw YAML deserialized data.
+/// If the deserialization succeeds, then the inverse process is triggered
+/// for JSON generation.
+fn convert_yaml_to_json(input: &str, indent_size: u8) -> Result<String, JsonYamlError> {
+    // Setup custom indent
+    let indent = " ".repeat(indent_size as usize);
+    let formatter = PrettyFormatter::with_indent(indent.as_bytes());
+
+    let mut buf = Vec::new();
+    let mut ser = serde_json::Serializer::with_formatter(&mut buf, formatter);
+
+    // Check for empty input
+    if input.trim().is_empty() {
+        return Err(JsonYamlError::EmptyInput);
+    }
+
+    // Parse YAML with error handling
+    let parsed_yaml: Value =
+        serde_yaml::from_str(input).map_err(|e| JsonYamlError::InvalidYaml(e.to_string()))?;
+
+    // Serialize into JSON
+    parsed_yaml
+        .serialize(&mut ser)
+        .map_err(|e| JsonYamlError::InvalidJson(e.to_string()))?;
+
+    String::from_utf8(buf).map_err(|e| JsonYamlError::InvalidJson(e.to_string()))
 }
 
 #[cfg(test)]
@@ -57,7 +112,6 @@ mod tests {
     use super::*;
 
     #[test]
-    #[ignore = "not implemented yet"]
     fn test_json_to_yaml() {
         let input = JsonYamlInput {
             source_text: r#"{"name": "DevKit"}"#.to_string(),
@@ -69,7 +123,6 @@ mod tests {
     }
 
     #[test]
-    #[ignore = "not implemented yet"]
     fn test_yaml_to_json() {
         let input = JsonYamlInput {
             source_text: "name: DevKit\n".to_string(),
