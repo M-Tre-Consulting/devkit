@@ -18,10 +18,10 @@ export component JsonYamlScreen inherits VerticalLayout {
     callback json-yaml-copy(string);
     callback json-yaml-swap-direction();
 
-    in-out property <string> source_text: "{\"name\": \"DevKit\", \"version\": \"0.1.5\"}";
+    in-out property <string> source_text: "{\"name\": \"DevKit\", \"version\": \"0.1.6\"}";
     in-out property <int> direction: 0; // 0=JSON->YAML, 1=YAML->JSON
     in-out property <int> indent_size: 2; // 2 or 4
-    in-out property <string> converted_text: "name: DevKit\nversion: 0.1.5";
+    in-out property <string> converted_text: "name: DevKit\nversion: 0.1.6";
     in-out property <string> error_message: "";
     in-out property <bool> is_loading: false;
 
