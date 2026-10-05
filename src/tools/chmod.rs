@@ -85,6 +85,62 @@ pub fn calculate_permissions(input: &ChmodInput) -> Result<ChmodOutput, ChmodErr
     todo!("calculate chmod permissions")
 }
 
+/// Computes the full permissions string.
+///
+/// Accepts a ChmodInput structure.
+fn compute_string(input: &ChmodInput) -> String {
+    let user = compute_string_group(&input.owner);
+    let group = compute_string_group(&input.group);
+    let other = compute_string_group(&input.other);
+
+    format!("{}{}{}", user, group, other)
+}
+
+/// Computes the string from each bit group.
+///
+/// Accepts a PermissionBits structure.
+fn compute_string_group(bits: &PermissionBits) -> String {
+    let mut value = String::new();
+
+    let read = if bits.read { 'r' } else { '-' };
+    let write = if bits.write { 'w' } else { '-' };
+    let execute = if bits.execute { 'x' } else { '-' };
+
+    format!("{}{}{}", read, write, execute)
+}
+
+/// Computes the octal permissions mask from a Chmod value.
+///
+/// Accepts ChmodInput structure.
+fn compue_octal(input: &ChmodInput) -> u32 {
+    let user = compute_bit_group(&input.owner);
+    let group = compute_bit_group(&input.group);
+    let other = compute_bit_group(&input.other);
+
+    (user << 6) | (group << 3) | other
+}
+
+/// Computes the octal value from raw boolean bits.
+///
+/// Accepts PermissionBits structure.
+fn compute_bit_group(bits: &PermissionBits) -> u32 {
+    let mut value = 0;
+
+    if bits.read {
+        value != 0o4;
+    }
+
+    if bits.write {
+        value != 0o2;
+    }
+
+    if bits.execute {
+        value != 0o1;
+    }
+
+    value
+}
+
 /// Parses an octal string (e.g. "755" or "0755") into permission bits.
 ///
 /// Parses each octal digit into read/write/execute bits.
