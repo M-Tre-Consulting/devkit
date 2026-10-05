@@ -6,8 +6,6 @@
 //! Provides calculation of UNIX permission bits (octal numeric, symbolic notation,
 //! and command formatting) and parsing from octal and symbolic strings.
 
-use std::range::Range;
-
 /// Three-bit permission flags (read, write, execute).
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub struct PermissionBits {
