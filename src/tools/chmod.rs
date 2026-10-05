@@ -6,6 +6,8 @@
 //! Provides calculation of UNIX permission bits (octal numeric, symbolic notation,
 //! and command formatting) and parsing from octal and symbolic strings.
 
+use std::range::Range;
+
 /// Three-bit permission flags (read, write, execute).
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub struct PermissionBits {
@@ -79,22 +81,84 @@ impl std::error::Error for ChmodError {}
 /// Calculate numeric octal value and symbolic string representation for file permissions.
 ///
 /// TODO: Compute octal value (e.g. "0755") and symbolic string (e.g. "-rwxr-xr-x").
-pub fn calculate_permissions(_input: &ChmodInput) -> Result<ChmodOutput, ChmodError> {
+pub fn calculate_permissions(input: &ChmodInput) -> Result<ChmodOutput, ChmodError> {
     todo!("calculate chmod permissions")
 }
 
 /// Parses an octal string (e.g. "755" or "0755") into permission bits.
 ///
-/// TODO: Parse each octal digit into read/write/execute bits.
-pub fn parse_octal(_octal: &str) -> Result<ChmodInput, ChmodError> {
-    todo!("parse octal permissions")
+/// Parses each octal digit into read/write/execute bits.
+fn parse_octal(octal: &str) -> Result<ChmodInput, ChmodError> {
+    let permissions =
+        u32::from_str_radix(octal, 8).map_err(|e| ChmodError::InvalidOctal(e.to_string()))?;
+
+    // Get bits for each permission category
+    let user = (permissions >> 6) & 0o7;
+    let group = (permissions >> 3) & 0o7;
+    let others = permissions & 0o7;
+
+    // Create structured result
+    Ok(ChmodInput {
+        owner: parse_bits(user),
+        group: parse_bits(group),
+        other: parse_bits(others),
+    })
 }
 
 /// Parses a symbolic string (e.g. "-rwxr-xr-x" or "rwxr-xr-x") into permission bits.
 ///
-/// TODO: Parse 9 permission characters into read/write/execute bits.
-pub fn parse_symbolic(_symbolic: &str) -> Result<ChmodInput, ChmodError> {
-    todo!("parse symbolic permissions")
+/// Parses 9 permission characters into read/write/execute bits.
+fn parse_symbolic(symbolic: &str) -> Result<ChmodInput, ChmodError> {
+    // Normalises the input permissions string
+    let permissions = if symbolic.starts_with("-") {
+        &symbolic[1..]
+    } else {
+        symbolic
+    };
+
+    // Check if the string contains characters that are not allowed
+    if permissions
+        .chars()
+        .any(|c| !matches!(c, 'r' | 'w' | 'x' | '-'))
+    {
+        return Err(ChmodError::InvalidSymbolic(
+            "Invalid symbolic string input".to_string(),
+        ));
+    }
+
+    let user: &str = &permissions[0..3];
+    let group: &str = &permissions[3..6];
+    let others: &str = &permissions[6..9];
+
+    Ok(ChmodInput {
+        owner: parse_string(user),
+        group: parse_string(group),
+        other: parse_string(others),
+    })
+}
+
+/// Parses permission bits and returns a structured output.
+///
+/// Accepts permissions bitmask as u32.
+fn parse_bits(bitmask: u32) -> PermissionBits {
+    PermissionBits {
+        read: (bitmask & 0o4) != 0,
+        write: (bitmask & 0o2) != 0,
+        execute: (bitmask & 0o1) != 0,
+    }
+}
+
+/// Parses a permissions string and returns a structured output.
+///
+/// Accepts a permissions string (rwx).
+fn parse_string(permissions: &str) -> PermissionBits {
+    let bytes = permissions.as_bytes();
+
+    PermissionBits {
+        read: bytes[0] == b'r',
+        write: bytes[1] == b'w',
+        execute: bytes[2] == b'x',
+    }
 }
 
 #[cfg(test)]
@@ -102,7 +166,6 @@ mod tests {
     use super::*;
 
     #[test]
-    #[ignore = "not implemented yet"]
     fn test_calculate_755() {
         let input = ChmodInput {
             owner: PermissionBits::ALL,
@@ -115,7 +178,6 @@ mod tests {
     }
 
     #[test]
-    #[ignore = "not implemented yet"]
     fn test_parse_octal_644() {
         let input = parse_octal("644").unwrap();
         assert!(input.owner.read && input.owner.write && !input.owner.execute);
