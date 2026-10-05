@@ -234,7 +234,7 @@ pub fn handle_formatter(
     }
 }
 
-/// Handler for Chmod Calculator.
+/// Handler for Chmod Calculator (from permission matrix).
 pub fn handle_chmod(
     owner_r: bool,
     owner_w: bool,
@@ -246,7 +246,7 @@ pub fn handle_chmod(
     other_w: bool,
     other_x: bool,
 ) -> Result<ChmodOutput, String> {
-    let input = ChmodInput {
+    let input = ChmodInput::Matrix {
         owner: PermissionBits {
             read: owner_r,
             write: owner_w,
@@ -267,7 +267,18 @@ pub fn handle_chmod(
     match outcome {
         Ok(Ok(output)) => Ok(output),
         Ok(Err(err)) => Err(format!("Chmod error: {err}")),
-        Err(_) => Err("Chmod calculation not yet implemented (todo stub)".to_string()),
+        Err(_) => Err("Chmod calculation failed".to_string()),
+    }
+}
+
+/// Handler for Chmod Calculator (from raw octal string).
+pub fn handle_chmod_octal(octal: &str) -> Result<ChmodOutput, String> {
+    let input = ChmodInput::Octal(octal.to_string());
+    let outcome = catch_unwind(AssertUnwindSafe(|| chmod::calculate_permissions(&input)));
+    match outcome {
+        Ok(Ok(output)) => Ok(output),
+        Ok(Err(err)) => Err(format!("Chmod error: {err}")),
+        Err(_) => Err("Chmod calculation failed".to_string()),
     }
 }
 
