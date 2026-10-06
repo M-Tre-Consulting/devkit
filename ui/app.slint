@@ -200,7 +200,6 @@ export component AppWindow inherits Window {
     property <bool> is_tool: root.active_tool > 0;
     property <int> displayed_tool: root.is_tool ? root.active_tool : root.last_tool;
 
-    forward-focus: back_focus;
     back_focus := FocusScope {
         x: 0px;
         y: 0px;
@@ -235,7 +234,7 @@ export component AppWindow inherits Window {
             visible: self.opacity > 0.01;
 
             animate width, height, opacity {
-                duration: root.is_tool ? 400ms : 200ms;
+                duration: 200ms;
                 easing: cubic-bezier(0.05, 0.7, 0.1, 1.0);
             }
 
@@ -394,11 +393,11 @@ export component AppWindow inherits Window {
             visible: self.opacity > 0.01;
 
             animate x {
-                duration: root.is_tool ? 400ms : 200ms;
+                duration: 200ms;
                 easing: root.is_tool ? cubic-bezier(0.05, 0.7, 0.1, 1.0) : cubic-bezier(0.3, 0, 0.8, 0.15);
             }
             animate opacity {
-                duration: root.is_tool ? 400ms : 200ms;
+                duration: 200ms;
                 easing: root.is_tool ? cubic-bezier(0.05, 0.7, 0.1, 1.0) : cubic-bezier(0.3, 0, 0.8, 0.15);
             }
 

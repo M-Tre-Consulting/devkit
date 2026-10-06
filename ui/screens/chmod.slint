@@ -52,8 +52,7 @@ export component ChmodScreen inherits VerticalLayout {
         opacity: root.is_entered ? 1.0 : 0.0;
 
         animate opacity {
-            duration: 200ms;
-            delay: 150ms;
+            duration: 150ms;
             easing: cubic-bezier(0.05, 0.7, 0.1, 1.0);
         }
 
@@ -529,8 +528,10 @@ export component ChmodScreen inherits VerticalLayout {
             }
 
             TextField {
+                label: "Direct Octal (e.g. 755)";
                 placeholder_text: "e.g. 755";
                 text <=> root.octal_input;
+                enabled: true;
                 accepted => {
                     root.chmod-apply-octal(root.octal_input);
                     root.chmod-apply();
