@@ -81,23 +81,35 @@ impl std::error::Error for ChmodError {}
 
 /// Calculate numeric octal value and symbolic string representation for file permissions.
 ///
-/// Computes octal value (e.g. "0755"), symbolic string (e.g. "-rwxr-xr-x"), and command.
+/// Distinguishes between matrix-driven calculation and raw octal string input flows.
 pub fn calculate_permissions(input: &ChmodInput) -> Result<ChmodOutput, ChmodError> {
-    let matrix_input = match input {
-        ChmodInput::Matrix { .. } => input.clone(),
-        ChmodInput::Octal(raw) => parse_octal(raw)?,
-    };
+    match input {
+        ChmodInput::Matrix { .. } => {
+            let octal_val = compue_octal(input);
+            let octal = format!("0{:03o}", octal_val);
+            let symbolic = format!("-{}", compute_string(input));
+            let command = format!("chmod {:03o} <file>", octal_val);
 
-    let octal_val = compue_octal(&matrix_input);
-    let octal = format!("0{:03o}", octal_val);
-    let symbolic = format!("-{}", compute_string(&matrix_input));
-    let command = format!("chmod {:03o} <file>", octal_val);
+            Ok(ChmodOutput {
+                octal,
+                symbolic,
+                command,
+            })
+        }
+        ChmodInput::Octal(raw) => {
+            let parsed_matrix = parse_octal(raw)?;
+            let octal_val = compue_octal(&parsed_matrix);
+            let octal = format!("0{:03o}", octal_val);
+            let symbolic = format!("-{}", compute_string(&parsed_matrix));
+            let command = format!("chmod {:03o} <file>", octal_val);
 
-    Ok(ChmodOutput {
-        octal,
-        symbolic,
-        command,
-    })
+            Ok(ChmodOutput {
+                octal,
+                symbolic,
+                command,
+            })
+        }
+    }
 }
 
 /// Computes the full permissions string.
