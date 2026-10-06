@@ -134,8 +134,8 @@ export component ScrollView {
     property <length> prev_content_y: 0px;
 
     property <length> prev_dy: 0px;
-    property <duration> overscroll_duration: 380ms;
-    property <easing> overscroll_easing: cubic-bezier(0.05, 0.7, 0.1, 1.0);
+    property <duration> overscroll_duration: 140ms;
+    property <easing> overscroll_easing: cubic-bezier(0.2, 0.0, 0.0, 1.0);
     property <bool> is_bouncing: false;
 
     animate overscroll_y {
@@ -143,12 +143,21 @@ export component ScrollView {
         easing: root.overscroll_easing;
     }
 
+    function cancel_bounce() {
+        if root.is_bouncing || root.overscroll_y != 0px {
+            spring_timer.running = false;
+            root.is_bouncing = false;
+            root.overscroll_duration = 0ms;
+            root.overscroll_y = 0px;
+        }
+    }
+
     spring_timer := Timer {
-        interval: 100ms;
+        interval: 60ms;
         running: false;
         triggered => {
-            root.overscroll_duration = 380ms;
-            root.overscroll_easing = cubic-bezier(0.05, 0.7, 0.1, 1.0);
+            root.overscroll_duration = 140ms;
+            root.overscroll_easing = cubic-bezier(0.2, 0.0, 0.0, 1.0);
             root.overscroll_y = 0px;
             self.running = false;
             root.is_bouncing = false;
@@ -160,10 +169,10 @@ export component ScrollView {
             return;
         }
         root.is_bouncing = true;
-        root.overscroll_duration = 100ms;
+        root.overscroll_duration = 60ms;
         root.overscroll_easing = ease-out;
         root.overscroll_y = target_overshoot;
-        spring_timer.interval = 100ms;
+        spring_timer.interval = 60ms;
         spring_timer.running = true;
     }
 
@@ -172,6 +181,12 @@ export component ScrollView {
         let last_dy = root.prev_dy;
         root.prev_content_y = self.content_y;
         root.prev_dy = dy;
+
+        // If user touches/drags during a bounce, immediately cancel and settle the bounce
+        if root.is_bouncing && (dy.abs() > 0.2px) {
+            root.cancel_bounce();
+            return;
+        }
 
         let max_s = flickable.content_height - flickable.height;
         if max_s <= 0px {
@@ -184,7 +199,7 @@ export component ScrollView {
         if self.content_y >= -1px && (dy > 1.0px || last_dy > 1.0px) {
             let vel = max(dy, last_dy);
             root.prev_dy = 0px;
-            root.trigger_bounce(min(16px, vel * 0.8));
+            root.trigger_bounce(min(12px, vel * 0.5));
         }
         // Bottom boundary arrival:
         // dy < 0 means moving downward towards -max_s.
@@ -192,7 +207,7 @@ export component ScrollView {
         else if self.content_y <= -max_s + 1px && (dy < -1.0px || last_dy < -1.0px) {
             let vel = min(dy, last_dy);
             root.prev_dy = 0px;
-            root.trigger_bounce(max(-16px, vel * 0.8));
+            root.trigger_bounce(max(-12px, vel * 0.5));
         }
     }
 
@@ -202,22 +217,6 @@ export component ScrollView {
     vertical_stretch: 1;
     preferred_height: 100%;
     preferred_width: 100%;
-
-    touch_interrupt := TouchArea {
-        enabled: root.overscroll_y != 0px || spring_timer.running;
-        width: 100%;
-        height: 100%;
-        z: 100;
-
-        pointer-event(event) => {
-            if event.kind == PointerEventKind.down {
-                spring_timer.running = false;
-                root.is_bouncing = false;
-                root.overscroll_duration = 0ms;
-                root.overscroll_y = 0px;
-            }
-        }
-    }
 
     flickable := Flickable {
         x: 0;
@@ -231,14 +230,10 @@ export component ScrollView {
             let max_s = self.content_height - self.height;
             let dy = self.content_y - root.prev_content_y;
 
-            if self.content_y >= 0px && dy > 0.5px {
-                root.trigger_bounce(min(16px, dy * 0.8));
-            } else if max_s > 0px && self.content_y <= -max_s && dy < -0.5px {
-                root.trigger_bounce(max(-16px, dy * 0.8));
-            } else if self.content_y >= 0px && !root.is_bouncing {
-                root.trigger_bounce(12px);
-            } else if max_s > 0px && self.content_y <= -max_s && !root.is_bouncing {
-                root.trigger_bounce(-12px);
+            if self.content_y >= 0px && dy > 1.0px {
+                root.trigger_bounce(min(12px, dy * 0.5));
+            } else if max_s > 0px && self.content_y <= -max_s && dy < -1.0px {
+                root.trigger_bounce(max(-12px, dy * 0.5));
             }
             root.scrolled();
         }
