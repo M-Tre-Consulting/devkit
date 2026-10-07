@@ -6,8 +6,6 @@
 //! Provides generation of UUIDs across versions (v1 timestamp, v4 random, v7 Unix epoch time-ordered)
 //! with batch generation and custom formatting options.
 
-use std::io::Read;
-
 use uuid::Uuid;
 
 /// Supported UUID versions.
