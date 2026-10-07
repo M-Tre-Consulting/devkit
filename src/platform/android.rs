@@ -758,3 +758,100 @@ pub fn haptic_tap() {
 /// Fallback for non-Android targets.
 #[cfg(not(target_os = "android"))]
 pub fn haptic_tap() {}
+
+/// Query the Android system device ID (Settings.Secure.ANDROID_ID) via JNI.
+#[cfg(target_os = "android")]
+pub fn get_android_id() -> Result<String, String> {
+    static CACHED_ID: std::sync::OnceLock<String> = std::sync::OnceLock::new();
+
+    if let Some(cached) = CACHED_ID.get() {
+        return Ok(cached.clone());
+    }
+
+    let vm_ptr = VM_PTR.load(Ordering::SeqCst);
+    let activity_ptr = ACTIVITY_PTR.load(Ordering::SeqCst);
+    if vm_ptr.is_null() || activity_ptr.is_null() {
+        return Err("Android VM or Activity pointer is null".to_string());
+    }
+
+    unsafe {
+        let vm = match jni::JavaVM::from_raw(vm_ptr as *mut _) {
+            Ok(v) => v,
+            Err(e) => return Err(format!("JavaVM::from_raw failed: {e}")),
+        };
+        let mut env = match vm.attach_current_thread() {
+            Ok(e) => e,
+            Err(e) => return Err(format!("attach_current_thread failed: {e}")),
+        };
+
+        let activity = jni::objects::JObject::from_raw(activity_ptr as _);
+
+        let resolver = match env.call_method(
+            &activity,
+            "getContentResolver",
+            "()Landroid/content/ContentResolver;",
+            &[],
+        ) {
+            Ok(r) => match r.l() {
+                Ok(obj) => obj,
+                Err(e) => {
+                    let _ = env.exception_clear();
+                    return Err(format!("getContentResolver return object failed: {e}"));
+                }
+            },
+            Err(e) => {
+                let _ = env.exception_clear();
+                return Err(format!("getContentResolver call failed: {e}"));
+            }
+        };
+
+        let id_name = match env.new_string("android_id") {
+            Ok(s) => s,
+            Err(e) => {
+                let _ = env.exception_clear();
+                return Err(format!("new_string failed: {e}"));
+            }
+        };
+
+        let res = match env.call_static_method(
+            "android/provider/Settings$Secure",
+            "getString",
+            "(Landroid/content/ContentResolver;Ljava/lang/String;)Ljava/lang/String;",
+            &[(&resolver).into(), (&id_name).into()],
+        ) {
+            Ok(r) => match r.l() {
+                Ok(obj) => obj,
+                Err(e) => {
+                    let _ = env.exception_clear();
+                    return Err(format!("Settings.Secure.getString result object failed: {e}"));
+                }
+            },
+            Err(e) => {
+                let _ = env.exception_clear();
+                return Err(format!("Settings.Secure.getString call failed: {e}"));
+            }
+        };
+
+        if res.as_raw().is_null() {
+            return Err("Settings.Secure.ANDROID_ID returned null".to_string());
+        }
+
+        let jstr = jni::objects::JString::from(res);
+        let id_str: String = match env.get_string(&jstr) {
+            Ok(s) => s.into(),
+            Err(e) => {
+                let _ = env.exception_clear();
+                return Err(format!("get_string failed: {e}"));
+            }
+        };
+
+        let _ = CACHED_ID.set(id_str.clone());
+        Ok(id_str)
+    }
+}
+
+/// Fallback for non-Android targets.
+#[cfg(not(target_os = "android"))]
+pub fn get_android_id() -> Result<String, String> {
+    Err("Android ID is only available on Android".to_string())
+}
