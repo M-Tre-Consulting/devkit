@@ -94,7 +94,10 @@ pub fn generate(input: &UuidInput) -> Result<UuidOutput, UuidError> {
 fn generate_uuid(version: &UuidVersion) -> Result<String, UuidError> {
     // Generate UUID according to version
     let generated_uuid = match version {
-        UuidVersion::V1 => todo!(),
+        UuidVersion::V1 => {
+            let seed = get_uuid_seed()?;
+            Uuid::now_v1(&seed)
+        }
         UuidVersion::V4 => Uuid::new_v4(),
         UuidVersion::V7 => Uuid::now_v7(),
     };
@@ -104,21 +107,40 @@ fn generate_uuid(version: &UuidVersion) -> Result<String, UuidError> {
 
 /// Generates and returns a UUID seed value from platform-specific
 /// requirements.
-fn get_uuid_seed() -> Result<&[u8; 6], UuidError> {
-    if cfg!(target_os != "android") {
-        let mac = get_mac_address()?;
-        let seed: &[u8; 6] = mac
+fn get_uuid_seed() -> Result<[u8; 6], UuidError> {
+    #[cfg(target_os = "android")]
+    {
+        let android_id = get_android_id()?;
+        let seed: [u8; 6] = android_id
             .as_bytes()
             .get(..6)
-            .and_then(|bytes| <&[u8; 6]>::try_from(bytes).ok())
+            .and_then(|bytes| <[u8; 6]>::try_from(bytes).ok())
+            .ok_or_else(|| UuidError::GenerationFailed("Cannot retrieve Android ID".to_string()))?;
+
+        Ok(seed)
+    }
+
+    #[cfg(not(target_os = "android"))]
+    {
+        let mac = get_mac_address()?;
+        let seed: [u8; 6] = mac
+            .as_bytes()
+            .get(..6)
+            .and_then(|bytes| <[u8; 6]>::try_from(bytes).ok())
             .ok_or_else(|| {
                 UuidError::GenerationFailed("MAC address retrieval failed.".to_string())
             })?;
 
-        return Ok(seed);
-    } else {
-        todo!()
+        Ok(seed)
     }
+}
+
+/// Retrieves the Android device ID via the platform bridge.
+#[cfg(target_os = "android")]
+fn get_android_id() -> Result<String, UuidError> {
+    crate::platform::android::get_android_id().map_err(UuidError::GenerationFailed(
+        "Cloud not get Android ID".to_string(),
+    ))
 }
 
 /// Returns the system MAC address as a string.
