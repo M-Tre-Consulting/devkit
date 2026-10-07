@@ -13,6 +13,9 @@ local.properties
 .gradle/
 build/
 
+# Zed files
+.zed/
+
 # Signing keys & secrets
 *.keystore
 *.jks
