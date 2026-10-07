@@ -8,6 +8,12 @@
 
 use uuid::Uuid;
 
+#[cfg(target_os = "android")]
+mod android_imports {
+    pub use jni::objects::{JObject, JString};
+    pub use jni::JNIEnv;
+}
+
 /// Supported UUID versions.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum UuidVersion {
@@ -88,18 +94,7 @@ pub fn generate(input: &UuidInput) -> Result<UuidOutput, UuidError> {
 fn generate_uuid(version: &UuidVersion) -> Result<String, UuidError> {
     // Generate UUID according to version
     let generated_uuid = match version {
-        UuidVersion::V1 => {
-            let mac = get_mac_address()?;
-            let mac_begin: &[u8; 6] = mac
-                .as_bytes()
-                .get(..6)
-                .and_then(|bytes| <&[u8; 6]>::try_from(bytes).ok())
-                .ok_or_else(|| {
-                    UuidError::GenerationFailed("MAC address retrieval failed.".to_string())
-                })?;
-
-            Uuid::now_v1(mac_begin)
-        }
+        UuidVersion::V1 => todo!(),
         UuidVersion::V4 => Uuid::new_v4(),
         UuidVersion::V7 => Uuid::now_v7(),
     };
@@ -107,7 +102,27 @@ fn generate_uuid(version: &UuidVersion) -> Result<String, UuidError> {
     Ok(generated_uuid.to_string())
 }
 
+/// Generates and returns a UUID seed value from platform-specific
+/// requirements.
+fn get_uuid_seed() -> Result<&[u8; 6], UuidError> {
+    if cfg!(target_os != "android") {
+        let mac = get_mac_address()?;
+        let seed: &[u8; 6] = mac
+            .as_bytes()
+            .get(..6)
+            .and_then(|bytes| <&[u8; 6]>::try_from(bytes).ok())
+            .ok_or_else(|| {
+                UuidError::GenerationFailed("MAC address retrieval failed.".to_string())
+            })?;
+
+        return Ok(seed);
+    } else {
+        todo!()
+    }
+}
+
 /// Returns the system MAC address as a string.
+#[cfg(not(target_os = "android"))]
 fn get_mac_address() -> Result<String, UuidError> {
     let address = match mac_address2::get_mac_address() {
         Ok(Some(mac)) => mac,
