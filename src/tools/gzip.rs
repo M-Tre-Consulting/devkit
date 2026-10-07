@@ -44,9 +44,44 @@ pub enum GzipError {
 
 /// Processes input by compressing to Base64-encoded GZip or decompressing back to text.
 ///
-/// TODO: Implement compression and decompression using flate2 crate.
-pub fn process(_input: &GzipInput) -> Result<GzipOutput, GzipError> {
-    todo!("process gzip compression/decompression")
+/// Implements compression and decompression using flate2 crate.
+pub fn process(input: &GzipInput) -> Result<GzipOutput, GzipError> {
+    // Check input before proceeding
+    if input.input_data.is_empty() {
+        return Err(GzipError::EmptyInput);
+    }
+
+    // Match mode and run operations
+    match input.mode {
+        GzipMode::Compress => {
+            let result_data = compress(input.input_data.as_bytes())?;
+            let result_data: String = String::from_utf8_lossy(&result_data).into_owned();
+            let original_size = input.input_data.len();
+            let processed_size = result_data.len();
+            let ratio_percentage = (processed_size as f32 / original_size as f32) * 100f32;
+
+            Ok(GzipOutput {
+                result_data,
+                original_size,
+                processed_size,
+                ratio_percentage,
+            })
+        }
+        GzipMode::Decompress => {
+            let result_data = decompress(input.input_data.as_bytes())?;
+            let result_data: String = String::from_utf8_lossy(&result_data).into_owned();
+            let original_size = input.input_data.len();
+            let processed_size = result_data.len();
+            let ratio_percentage = (processed_size as f32 / original_size as f32) * 100f32;
+
+            Ok(GzipOutput {
+                result_data,
+                original_size,
+                processed_size,
+                ratio_percentage,
+            })
+        }
+    }
 }
 
 /// Compress a byte slice using the gzip algorithm.
