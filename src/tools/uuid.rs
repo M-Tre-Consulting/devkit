@@ -6,6 +6,8 @@
 //! Provides generation of UUIDs across versions (v1 timestamp, v4 random, v7 Unix epoch time-ordered)
 //! with batch generation and custom formatting options.
 
+use uuid::Uuid;
+
 /// Supported UUID versions.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum UuidVersion {
@@ -59,8 +61,23 @@ pub enum UuidError {
 /// Generates a batch of UUIDs matching the requested version and format.
 ///
 /// TODO: Implement UUID generation logic when uuid/rand crates are added.
-pub fn generate(_input: &UuidInput) -> Result<UuidOutput, UuidError> {
-    todo!("generate UUIDs according to requested version and count")
+pub fn generate(input: &UuidInput) -> Result<UuidOutput, UuidError> {
+    todo!();
+}
+
+/// Returns the system MAC address as a string.
+fn get_mac_address() -> Result<String, UuidError> {
+    let address = match mac_address2::get_mac_address() {
+        Ok(Some(mac)) => mac,
+        Ok(None) => {
+            return Err(UuidError::GenerationFailed(
+                "Cannot read MAC address from system".to_string(),
+            ))
+        }
+        Err(err) => return Err(UuidError::GenerationFailed(err.to_string())),
+    };
+
+    Ok(address.to_string())
 }
 
 #[cfg(test)]
