@@ -6,6 +6,8 @@
 //! Provides generation of UUIDs across versions (v1 timestamp, v4 random, v7 Unix epoch time-ordered)
 //! with batch generation and custom formatting options.
 
+use std::io::Read;
+
 use uuid::Uuid;
 
 /// Supported UUID versions.
@@ -60,9 +62,51 @@ pub enum UuidError {
 
 /// Generates a batch of UUIDs matching the requested version and format.
 ///
-/// TODO: Implement UUID generation logic when uuid/rand crates are added.
+/// Accepts a UuidInput structure.
 pub fn generate(input: &UuidInput) -> Result<UuidOutput, UuidError> {
-    todo!();
+    let uuids = (0..input.count)
+        .map(|_| {
+            let uuid = generate_uuid(&input.version)?;
+            let uuid = if input.hyphens {
+                uuid
+            } else {
+                uuid.replace('-', "")
+            };
+
+            Ok(if input.uppercase {
+                uuid.to_uppercase()
+            } else {
+                uuid
+            })
+        })
+        .collect::<Result<Vec<_>, UuidError>>()?;
+
+    Ok(UuidOutput { uuids })
+}
+
+/// Generates a single UUID given a version.
+///
+/// Accepts a UuidVersion enum.
+fn generate_uuid(version: &UuidVersion) -> Result<String, UuidError> {
+    // Generate UUID according to version
+    let generated_uuid = match version {
+        UuidVersion::V1 => {
+            let mac = get_mac_address()?;
+            let mac_begin: &[u8; 6] = mac
+                .as_bytes()
+                .get(..6)
+                .and_then(|bytes| <&[u8; 6]>::try_from(bytes).ok())
+                .ok_or_else(|| {
+                    UuidError::GenerationFailed("MAC address retrieval failed.".to_string())
+                })?;
+
+            Uuid::now_v1(mac_begin)
+        }
+        UuidVersion::V4 => Uuid::new_v4(),
+        UuidVersion::V7 => Uuid::now_v7(),
+    };
+
+    Ok(generated_uuid.to_string())
 }
 
 /// Returns the system MAC address as a string.
