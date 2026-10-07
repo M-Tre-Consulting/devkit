@@ -6,7 +6,7 @@
 //! Provides gzip compression and decompression on strings and byte sequences
 //! with size and compression ratio analysis.
 
-use flate2::write::GzEncoder;
+use flate2::write::{GzEncoder, GzDecoder}
 use flate2::Compression;
 use std::io::Write;
 
@@ -67,8 +67,19 @@ pub fn compress(input: &[u8]) -> Result<Vec<u8>, GzipError> {
 }
 
 /// Decompress a gzip-compressed byte slice.
-pub fn decompress(_input: &[u8]) -> Result<Vec<u8>, GzipError> {
-    todo!("decompress bytes using gzip")
+pub fn decompress(input: &[u8]) -> Result<Vec<u8>, GzipError> {
+    // Decompression buffer
+    let mut decoder = GzDecoder::new(Vec::new());
+
+    // Write compressed data to buffer
+    decoder.write_all(input)
+        .map_err(|e| GzipError::DecompressionFailed(e.to_string()))?;
+
+    // Decompress data
+    let decompressed = decoder.finish()
+        .map_err(|e| GzipError::DecompressionFailed(e.to_string()))?;
+
+    Ok(decompressed)
 }
 
 #[cfg(test)]
