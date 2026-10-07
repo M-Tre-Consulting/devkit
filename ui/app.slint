@@ -99,6 +99,16 @@ export struct ChmodResult {
     symbolic_output: string,
     command_output: string,
     error_message: string,
+    has_matrix: bool,
+    owner_r: bool,
+    owner_w: bool,
+    owner_x: bool,
+    group_r: bool,
+    group_w: bool,
+    group_x: bool,
+    other_r: bool,
+    other_w: bool,
+    other_x: bool,
 }
 
 export struct ColorResult {
@@ -178,6 +188,7 @@ export component AppWindow inherits Window {
     callback gzip-compress(string, bool) -> GzipResult;
     callback format-format(string, int, int) -> FormatterResult;
     callback chmod-apply(bool, bool, bool, bool, bool, bool, bool, bool, bool) -> ChmodResult;
+    callback chmod-apply-octal(string) -> ChmodResult;
     callback color-convert(string, int) -> ColorResult;
     callback contrast-check(string, string) -> ContrastCheckResult;
     callback jwt-decode(string) -> JwtResult;
@@ -607,6 +618,42 @@ export component AppWindow inherits Window {
                     self.symbolic_output = res.symbolic_output;
                     self.command_output = res.command_output;
                     self.error_message = res.error_message;
+                }
+                chmod-apply-octal(octal) => {
+                    let res = root.chmod-apply-octal(octal);
+                    self.octal_output = res.octal_output;
+                    self.symbolic_output = res.symbolic_output;
+                    self.command_output = res.command_output;
+                    self.error_message = res.error_message;
+                    if res.has_matrix {
+                        self.owner_r = res.owner_r;
+                        self.owner_w = res.owner_w;
+                        self.owner_x = res.owner_x;
+                        self.group_r = res.group_r;
+                        self.group_w = res.group_w;
+                        self.group_x = res.group_x;
+                        self.other_r = res.other_r;
+                        self.other_w = res.other_w;
+                        self.other_x = res.other_x;
+                    }
+                }
+                chmod-apply-preset(preset) => {
+                    let res = root.chmod-apply-octal(preset);
+                    self.octal_output = res.octal_output;
+                    self.symbolic_output = res.symbolic_output;
+                    self.command_output = res.command_output;
+                    self.error_message = res.error_message;
+                    if res.has_matrix {
+                        self.owner_r = res.owner_r;
+                        self.owner_w = res.owner_w;
+                        self.owner_x = res.owner_x;
+                        self.group_r = res.group_r;
+                        self.group_w = res.group_w;
+                        self.group_x = res.group_x;
+                        self.other_r = res.other_r;
+                        self.other_w = res.other_w;
+                        self.other_x = res.other_x;
+                    }
                 }
                 chmod-copy(val) => { root.copy_text(val); }
             }

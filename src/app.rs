@@ -282,12 +282,93 @@ pub fn setup_tool_handlers(ui: &crate::AppWindow) {
                 symbolic_output: out.symbolic.into(),
                 command_output: out.command.into(),
                 error_message: "".into(),
+                has_matrix: false,
+                owner_r: or,
+                owner_w: ow,
+                owner_x: ox,
+                group_r: gr,
+                group_w: gw,
+                group_x: gx,
+                other_r: tr,
+                other_w: tw,
+                other_x: tx,
             },
             Err(err) => crate::ChmodResult {
                 octal_output: "".into(),
                 symbolic_output: "".into(),
                 command_output: "".into(),
                 error_message: err.into(),
+                has_matrix: false,
+                owner_r: false,
+                owner_w: false,
+                owner_x: false,
+                group_r: false,
+                group_w: false,
+                group_x: false,
+                other_r: false,
+                other_w: false,
+                other_x: false,
+            },
+        }
+    });
+
+    ui.on_chmod_apply_octal(move |raw_octal| {
+        crate::platform::android::haptic_tap();
+        let octal_str = raw_octal.as_str();
+        match crate::tools::handlers::handle_chmod_octal(octal_str) {
+            Ok(out) => {
+                let matrix = crate::tools::chmod::parse_octal(octal_str).ok();
+                if let Some(crate::tools::chmod::ChmodInput::Matrix { owner, group, other }) = matrix {
+                    crate::ChmodResult {
+                        octal_output: out.octal.into(),
+                        symbolic_output: out.symbolic.into(),
+                        command_output: out.command.into(),
+                        error_message: "".into(),
+                        has_matrix: true,
+                        owner_r: owner.read,
+                        owner_w: owner.write,
+                        owner_x: owner.execute,
+                        group_r: group.read,
+                        group_w: group.write,
+                        group_x: group.execute,
+                        other_r: other.read,
+                        other_w: other.write,
+                        other_x: other.execute,
+                    }
+                } else {
+                    crate::ChmodResult {
+                        octal_output: out.octal.into(),
+                        symbolic_output: out.symbolic.into(),
+                        command_output: out.command.into(),
+                        error_message: "".into(),
+                        has_matrix: false,
+                        owner_r: false,
+                        owner_w: false,
+                        owner_x: false,
+                        group_r: false,
+                        group_w: false,
+                        group_x: false,
+                        other_r: false,
+                        other_w: false,
+                        other_x: false,
+                    }
+                }
+            }
+            Err(err) => crate::ChmodResult {
+                octal_output: "".into(),
+                symbolic_output: "".into(),
+                command_output: "".into(),
+                error_message: err.into(),
+                has_matrix: false,
+                owner_r: false,
+                owner_w: false,
+                owner_x: false,
+                group_r: false,
+                group_w: false,
+                group_x: false,
+                other_r: false,
+                other_w: false,
+                other_x: false,
             },
         }
     });

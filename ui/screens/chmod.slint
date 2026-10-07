@@ -102,6 +102,7 @@ export component ChmodScreen inherits VerticalLayout {
                                 root.octal_output = "0755";
                                 root.symbolic_output = "-rwxr-xr-x";
                                 root.command_output = "chmod 755 <file>";
+                                root.octal_input = "755";
                                 root.chmod-apply-preset("755");
                             }
                             HorizontalLayout {
@@ -139,6 +140,7 @@ export component ChmodScreen inherits VerticalLayout {
                                 root.octal_output = "0644";
                                 root.symbolic_output = "-rw-r--r--";
                                 root.command_output = "chmod 644 <file>";
+                                root.octal_input = "644";
                                 root.chmod-apply-preset("644");
                             }
                             HorizontalLayout {
@@ -176,6 +178,7 @@ export component ChmodScreen inherits VerticalLayout {
                                 root.octal_output = "0777";
                                 root.symbolic_output = "-rwxrwxrwx";
                                 root.command_output = "chmod 777 <file>";
+                                root.octal_input = "777";
                                 root.chmod-apply-preset("777");
                             }
                             HorizontalLayout {
@@ -213,6 +216,7 @@ export component ChmodScreen inherits VerticalLayout {
                                 root.octal_output = "0600";
                                 root.symbolic_output = "-rw-------";
                                 root.command_output = "chmod 600 <file>";
+                                root.octal_input = "600";
                                 root.chmod-apply-preset("600");
                             }
                             HorizontalLayout {
@@ -534,7 +538,6 @@ export component ChmodScreen inherits VerticalLayout {
                 enabled: true;
                 accepted => {
                     root.chmod-apply-octal(root.octal_input);
-                    root.chmod-apply();
                 }
             }
 
@@ -542,10 +545,7 @@ export component ChmodScreen inherits VerticalLayout {
                 text: "Apply";
                 height: 40px;
                 clicked => {
-                    if root.octal_input != "" {
-                        root.chmod-apply-octal(root.octal_input);
-                    }
-                    root.chmod-apply();
+                    root.chmod-apply-octal(root.octal_input);
                 }
             }
 
