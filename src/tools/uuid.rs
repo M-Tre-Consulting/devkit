@@ -162,9 +162,31 @@ fn get_mac_address() -> Result<String, UuidError> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::collections::HashSet;
 
     #[test]
-    #[ignore = "not implemented yet"]
+    fn test_uuid_version_from_index() {
+        assert_eq!(UuidVersion::from_index(0), UuidVersion::V1);
+        assert_eq!(UuidVersion::from_index(1), UuidVersion::V4);
+        assert_eq!(UuidVersion::from_index(2), UuidVersion::V7);
+        assert_eq!(UuidVersion::from_index(-1), UuidVersion::V4);
+        assert_eq!(UuidVersion::from_index(3), UuidVersion::V4);
+        assert_eq!(UuidVersion::from_index(99), UuidVersion::V4);
+    }
+
+    #[test]
+    fn test_uuid_version_as_str() {
+        assert_eq!(UuidVersion::V1.as_str(), "UUIDv1 (MAC & Time)");
+        assert_eq!(UuidVersion::V4.as_str(), "UUIDv4 (Random)");
+        assert_eq!(UuidVersion::V7.as_str(), "UUIDv7 (Epoch Time-Ordered)");
+    }
+
+    #[test]
+    fn test_uuid_version_default() {
+        assert_eq!(UuidVersion::default(), UuidVersion::V4);
+    }
+
+    #[test]
     fn test_generate_v4() {
         let input = UuidInput {
             version: UuidVersion::V4,
@@ -174,18 +196,139 @@ mod tests {
         };
         let res = generate(&input).unwrap();
         assert_eq!(res.uuids.len(), 3);
+
+        for uuid_str in &res.uuids {
+            assert_eq!(uuid_str.len(), 36);
+            let parsed = Uuid::parse_str(uuid_str).expect("Valid UUID string");
+            assert_eq!(parsed.get_version(), Some(uuid::Version::Random));
+            assert_eq!(uuid_str, &uuid_str.to_lowercase());
+        }
+
+        let set: HashSet<_> = res.uuids.into_iter().collect();
+        assert_eq!(set.len(), 3);
     }
 
     #[test]
-    #[ignore = "not implemented yet"]
     fn test_generate_v7() {
         let input = UuidInput {
             version: UuidVersion::V7,
-            count: 1,
+            count: 2,
+            uppercase: false,
+            hyphens: true,
+        };
+        let res = generate(&input).unwrap();
+        assert_eq!(res.uuids.len(), 2);
+
+        for uuid_str in &res.uuids {
+            assert_eq!(uuid_str.len(), 36);
+            let parsed = Uuid::parse_str(uuid_str).expect("Valid UUID string");
+            assert_eq!(parsed.get_version(), Some(uuid::Version::SortRand));
+        }
+
+        let set: HashSet<_> = res.uuids.into_iter().collect();
+        assert_eq!(set.len(), 2);
+    }
+
+    #[test]
+    fn test_generate_v1() {
+        let input = UuidInput {
+            version: UuidVersion::V1,
+            count: 2,
+            uppercase: false,
+            hyphens: true,
+        };
+        if let Ok(res) = generate(&input) {
+            assert_eq!(res.uuids.len(), 2);
+            for uuid_str in &res.uuids {
+                assert_eq!(uuid_str.len(), 36);
+                let parsed = Uuid::parse_str(uuid_str).expect("Valid UUID string");
+                assert_eq!(parsed.get_version(), Some(uuid::Version::Mac));
+            }
+        }
+    }
+
+    #[test]
+    fn test_generate_without_hyphens() {
+        let input = UuidInput {
+            version: UuidVersion::V4,
+            count: 2,
+            uppercase: false,
+            hyphens: false,
+        };
+        let res = generate(&input).unwrap();
+        assert_eq!(res.uuids.len(), 2);
+
+        for uuid_str in &res.uuids {
+            assert_eq!(uuid_str.len(), 32);
+            assert!(!uuid_str.contains('-'));
+            assert!(uuid_str.chars().all(|c| c.is_ascii_hexdigit()));
+            let parsed = Uuid::parse_str(uuid_str).expect("Valid hex UUID string");
+            assert_eq!(parsed.get_version(), Some(uuid::Version::Random));
+        }
+    }
+
+    #[test]
+    fn test_generate_uppercase() {
+        let input = UuidInput {
+            version: UuidVersion::V4,
+            count: 2,
+            uppercase: true,
+            hyphens: true,
+        };
+        let res = generate(&input).unwrap();
+        assert_eq!(res.uuids.len(), 2);
+
+        for uuid_str in &res.uuids {
+            assert_eq!(uuid_str.len(), 36);
+            assert_eq!(uuid_str, &uuid_str.to_uppercase());
+            let parsed = Uuid::parse_str(uuid_str).expect("Valid UUID string");
+            assert_eq!(parsed.get_version(), Some(uuid::Version::Random));
+        }
+    }
+
+    #[test]
+    fn test_generate_uppercase_no_hyphens() {
+        let input = UuidInput {
+            version: UuidVersion::V7,
+            count: 2,
             uppercase: true,
             hyphens: false,
         };
         let res = generate(&input).unwrap();
-        assert_eq!(res.uuids.len(), 1);
+        assert_eq!(res.uuids.len(), 2);
+
+        for uuid_str in &res.uuids {
+            assert_eq!(uuid_str.len(), 32);
+            assert!(!uuid_str.contains('-'));
+            assert_eq!(uuid_str, &uuid_str.to_uppercase());
+            let parsed = Uuid::parse_str(uuid_str).expect("Valid UUID string");
+            assert_eq!(parsed.get_version(), Some(uuid::Version::SortRand));
+        }
+    }
+
+    #[test]
+    fn test_generate_zero_count() {
+        let input = UuidInput {
+            version: UuidVersion::V4,
+            count: 0,
+            uppercase: false,
+            hyphens: true,
+        };
+        let res = generate(&input).unwrap();
+        assert!(res.uuids.is_empty());
+    }
+
+    #[test]
+    fn test_generate_batch() {
+        let input = UuidInput {
+            version: UuidVersion::V4,
+            count: 20,
+            uppercase: false,
+            hyphens: true,
+        };
+        let res = generate(&input).unwrap();
+        assert_eq!(res.uuids.len(), 20);
+        let set: HashSet<_> = res.uuids.into_iter().collect();
+        assert_eq!(set.len(), 20);
     }
 }
