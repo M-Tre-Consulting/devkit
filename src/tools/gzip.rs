@@ -6,6 +6,8 @@
 //! Provides gzip compression and decompression on strings and byte sequences
 //! with size and compression ratio analysis.
 
+use base64::engine::general_purpose::STANDARD;
+use base64::Engine as _;
 use flate2::write::{GzDecoder, GzEncoder};
 use flate2::Compression;
 use std::io::Write;
@@ -54,11 +56,15 @@ pub fn process(input: &GzipInput) -> Result<GzipOutput, GzipError> {
     // Match mode and run operations
     match input.mode {
         GzipMode::Compress => {
-            let result_data = compress(input.input_data.as_bytes())?;
-            let result_data: String = String::from_utf8_lossy(&result_data).into_owned();
+            let compressed_bytes = compress(input.input_data.as_bytes())?;
+            let processed_size = compressed_bytes.len();
+            let result_data = STANDARD.encode(&compressed_bytes);
             let original_size = input.input_data.len();
-            let processed_size = result_data.len();
-            let ratio_percentage = (processed_size as f32 / original_size as f32) * 100f32;
+            let ratio_percentage = if original_size > 0 {
+                ((original_size as f32 - processed_size as f32) / original_size as f32) * 100f32
+            } else {
+                0.0
+            };
 
             Ok(GzipOutput {
                 result_data,
@@ -68,11 +74,22 @@ pub fn process(input: &GzipInput) -> Result<GzipOutput, GzipError> {
             })
         }
         GzipMode::Decompress => {
-            let result_data = decompress(input.input_data.as_bytes())?;
-            let result_data: String = String::from_utf8_lossy(&result_data).into_owned();
+            let trimmed = input.input_data.trim();
+            let compressed_bytes = match STANDARD.decode(trimmed) {
+                Ok(bytes) => bytes,
+                Err(_) => input.input_data.as_bytes().to_vec(),
+            };
+            let decompressed_bytes = decompress(&compressed_bytes)?;
+            let result_data = String::from_utf8(decompressed_bytes).map_err(|e| {
+                GzipError::DecompressionFailed(format!("Decompressed output is not valid UTF-8: {e}"))
+            })?;
             let original_size = input.input_data.len();
             let processed_size = result_data.len();
-            let ratio_percentage = (processed_size as f32 / original_size as f32) * 100f32;
+            let ratio_percentage = if original_size > 0 {
+                ((original_size as f32 - processed_size as f32) / original_size as f32) * 100f32
+            } else {
+                0.0
+            };
 
             Ok(GzipOutput {
                 result_data,
@@ -132,8 +149,29 @@ mod tests {
         let res = process(&input).unwrap();
         assert_eq!(res.original_size, 26);
         assert!(res.processed_size > 0);
-        assert!(res.ratio_percentage > 0.0);
-        assert!(!res.result_data.is_empty());
+        // Base64-encoded gzip stream must start with "H4sI"
+        assert!(res.result_data.starts_with("H4sI"));
+    }
+
+    #[test]
+    fn test_process_sample_phrase_roundtrip() {
+        let sample = "DevKit: A native Rust + Slint developer toolbox for Android.".to_string();
+        let compress_input = GzipInput {
+            input_data: sample.clone(),
+            mode: GzipMode::Compress,
+        };
+        let compress_output = process(&compress_input).expect("compression should succeed");
+        assert!(compress_output.result_data.starts_with("H4sI"));
+        assert_eq!(compress_output.original_size, sample.len());
+        assert!(compress_output.processed_size > 0);
+
+        // Decompress the resulting Base64 string back to the original text
+        let decompress_input = GzipInput {
+            input_data: compress_output.result_data,
+            mode: GzipMode::Decompress,
+        };
+        let decompress_output = process(&decompress_input).expect("decompression should succeed");
+        assert_eq!(decompress_output.result_data, sample);
     }
 
     #[test]
@@ -254,7 +292,9 @@ mod tests {
             mode: GzipMode::Compress,
         };
         let out = process(&input).unwrap();
-        let expected_ratio = (out.processed_size as f32 / out.original_size as f32) * 100.0;
+        let expected_ratio = ((out.original_size as f32 - out.processed_size as f32)
+            / out.original_size as f32)
+            * 100.0;
         assert!((out.ratio_percentage - expected_ratio).abs() < f32::EPSILON);
     }
 }

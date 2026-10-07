@@ -241,13 +241,29 @@ pub fn setup_tool_handlers(ui: &crate::AppWindow) {
     ui.on_gzip_compress(move |data, is_comp| {
         crate::platform::android::haptic_tap();
         match crate::tools::handlers::handle_gzip(&data, is_comp) {
-            Ok(out) => crate::GzipResult {
-                result_data: out.result_data.into(),
-                original_size: format!("{} bytes", out.original_size).into(),
-                processed_size: format!("{} bytes", out.processed_size).into(),
-                ratio: format!("{:.1}% reduction", out.ratio_percentage).into(),
-                error_message: "".into(),
-            },
+            Ok(out) => {
+                let ratio_text = if out.original_size == 0 {
+                    "—".to_string()
+                } else {
+                    let factor = out.processed_size as f32 / out.original_size as f32;
+                    if out.processed_size < out.original_size {
+                        let reduction = (1.0 - factor) * 100.0;
+                        format!("{:.1}% reduction ({:.2}x)", reduction, factor)
+                    } else if out.processed_size == out.original_size {
+                        "0.0% change (1.00x)".to_string()
+                    } else {
+                        let increase = (factor - 1.0) * 100.0;
+                        format!("{:.1}% increase ({:.2}x)", increase, factor)
+                    }
+                };
+                crate::GzipResult {
+                    result_data: out.result_data.into(),
+                    original_size: format!("{} bytes", out.original_size).into(),
+                    processed_size: format!("{} bytes", out.processed_size).into(),
+                    ratio: ratio_text.into(),
+                    error_message: "".into(),
+                }
+            }
             Err(err) => crate::GzipResult {
                 result_data: "".into(),
                 original_size: "".into(),
