@@ -17,10 +17,10 @@ export component FormatterScreen inherits VerticalLayout {
     callback format-clear();
     callback format-copy(string);
 
-    in-out property <string> source_code: "{\"name\":\"DevKit\",\"version\":\"0.1.6\",\"status\":\"ready\"}";
+    in-out property <string> source_code: "{\"name\":\"DevKit\",\"version\":\"0.1.7\",\"status\":\"ready\"}";
     in-out property <int> selected_lang: 0; // 0: JSON, 1: YAML, 2: XML, 3: SQL, 4: TOML
     in-out property <int> indent_size: 2;
-    in-out property <string> formatted_code: "{\n  \"name\": \"DevKit\",\n  \"version\": \"0.1.6\",\n  \"status\": \"ready\"\n}";
+    in-out property <string> formatted_code: "{\n  \"name\": \"DevKit\",\n  \"version\": \"0.1.7\",\n  \"status\": \"ready\"\n}";
     in-out property <string> error_message: "";
     in-out property <bool> is_loading: false;
 
