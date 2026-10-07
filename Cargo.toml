@@ -30,7 +30,7 @@ mac_address2 = "2"
 flate2 = "1.0"
 
 [target.'cfg(target_os = "android")'.dependencies]
-slint = { version = "1.18", features = ["backend-android-activity-06"] }
+slint = { version = "1.18", features = ["backend-android-activity-06", "renderer-skia-vulkan"] }
 jni = "0.21"
 
 [build-dependencies]

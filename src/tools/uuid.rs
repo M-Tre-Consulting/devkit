@@ -8,11 +8,6 @@
 
 use uuid::Uuid;
 
-#[cfg(target_os = "android")]
-mod android_imports {
-    pub use jni::objects::{JObject, JString};
-    pub use jni::JNIEnv;
-}
 
 /// Supported UUID versions.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
@@ -138,9 +133,9 @@ fn get_uuid_seed() -> Result<[u8; 6], UuidError> {
 /// Retrieves the Android device ID via the platform bridge.
 #[cfg(target_os = "android")]
 fn get_android_id() -> Result<String, UuidError> {
-    crate::platform::android::get_android_id().map_err(UuidError::GenerationFailed(
-        "Cloud not get Android ID".to_string(),
-    ))
+    crate::platform::android::get_android_id().map_err(|_| {
+        UuidError::GenerationFailed("Could not get Android ID".to_string())
+    })
 }
 
 /// Returns the system MAC address as a string.

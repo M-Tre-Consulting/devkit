@@ -115,7 +115,7 @@ jobs:
           yes | sdkmanager --licenses > /dev/null 2>&1 || true
 
           # Install / verify required platform and build-tools
-          sdkmanager --install "platforms;android-35" "platforms;android-30" "build-tools;35.0.0"
+          sdkmanager --install "platforms;android-36" "platforms;android-35" "platforms;android-30" "build-tools;35.0.0"
 
           # Detect or install Android NDK
           if [ -d "$ANDROID_ROOT/ndk" ] && [ -n "$(ls -A "$ANDROID_ROOT/ndk" 2>/dev/null)" ]; then
