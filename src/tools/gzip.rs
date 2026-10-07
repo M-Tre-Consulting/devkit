@@ -124,23 +124,137 @@ mod tests {
     use super::*;
 
     #[test]
-    #[ignore = "not implemented yet"]
     fn test_gzip_compression() {
         let input = GzipInput {
             input_data: "Lorem ipsum dolor sit amet".to_string(),
             mode: GzipMode::Compress,
         };
         let res = process(&input).unwrap();
+        assert_eq!(res.original_size, 26);
         assert!(res.processed_size > 0);
+        assert!(res.ratio_percentage > 0.0);
+        assert!(!res.result_data.is_empty());
     }
 
     #[test]
-    #[ignore = "not implemented yet"]
     fn test_gzip_empty_input() {
         let input = GzipInput {
             input_data: "".to_string(),
             mode: GzipMode::Compress,
         };
-        assert!(process(&input).is_err());
+        assert_eq!(process(&input), Err(GzipError::EmptyInput));
+
+        let input_decomp = GzipInput {
+            input_data: "".to_string(),
+            mode: GzipMode::Decompress,
+        };
+        assert_eq!(process(&input_decomp), Err(GzipError::EmptyInput));
+    }
+
+    #[test]
+    fn test_compress_magic_header() {
+        let data = b"Hello world!";
+        let compressed = compress(data).expect("compression should succeed");
+        // Gzip streams always start with ID1 = 0x1F, ID2 = 0x8B
+        assert!(compressed.len() >= 10);
+        assert_eq!(compressed[0], 0x1f);
+        assert_eq!(compressed[1], 0x8b);
+    }
+
+    #[test]
+    fn test_compress_decompress_roundtrip() {
+        let original = b"The quick brown fox jumps over the lazy dog";
+        let compressed = compress(original).expect("compression should succeed");
+        let decompressed = decompress(&compressed).expect("decompression should succeed");
+        assert_eq!(decompressed, original);
+    }
+
+    #[test]
+    fn test_compress_decompress_empty_slice() {
+        let original = b"";
+        let compressed = compress(original).expect("compressing empty slice should succeed");
+        assert!(!compressed.is_empty()); // Gzip has header + footer metadata even for empty payload
+        let decompressed = decompress(&compressed).expect("decompression should succeed");
+        assert_eq!(decompressed, original);
+    }
+
+    #[test]
+    fn test_compress_decompress_large_repetitive() {
+        let original = "A".repeat(10_000);
+        let compressed = compress(original.as_bytes()).expect("compression should succeed");
+        assert!(compressed.len() < original.len()); // Repetitive text must compress significantly
+        let decompressed = decompress(&compressed).expect("decompression should succeed");
+        assert_eq!(decompressed, original.as_bytes());
+    }
+
+    #[test]
+    fn test_compress_decompress_unicode() {
+        let original = "Hello 🦀 世界! Sonderzeichen: äöüß, emojis: 🚀✨🎉".as_bytes();
+        let compressed = compress(original).expect("compression should succeed");
+        let decompressed = decompress(&compressed).expect("decompression should succeed");
+        assert_eq!(decompressed, original);
+    }
+
+    #[test]
+    fn test_decompress_invalid_data() {
+        let invalid_data = b"This is definitely not a gzip stream";
+        let result = decompress(invalid_data);
+        assert!(matches!(result, Err(GzipError::DecompressionFailed(_))));
+    }
+
+    #[test]
+    fn test_decompress_truncated_stream() {
+        let original = b"Sample text to compress and then truncate";
+        let compressed = compress(original).expect("compression should succeed");
+        // Truncate stream halfway
+        let truncated = &compressed[..compressed.len() / 2];
+        let result = decompress(truncated);
+        assert!(matches!(result, Err(GzipError::DecompressionFailed(_))));
+    }
+
+    #[test]
+    fn test_decompress_empty_bytes() {
+        let result = decompress(b"");
+        assert!(matches!(result, Err(GzipError::DecompressionFailed(_))));
+    }
+
+    #[test]
+    fn test_process_decompress_invalid_input() {
+        let input = GzipInput {
+            input_data: "corrupted or non-gzip payload".to_string(),
+            mode: GzipMode::Decompress,
+        };
+        let result = process(&input);
+        assert!(matches!(result, Err(GzipError::DecompressionFailed(_))));
+    }
+
+    #[test]
+    fn test_gzip_types_and_defaults() {
+        assert_eq!(GzipMode::default(), GzipMode::Compress);
+
+        let default_output = GzipOutput::default();
+        assert_eq!(default_output.result_data, "");
+        assert_eq!(default_output.original_size, 0);
+        assert_eq!(default_output.processed_size, 0);
+        assert_eq!(default_output.ratio_percentage, 0.0);
+
+        let err1 = GzipError::EmptyInput;
+        let err2 = GzipError::EmptyInput;
+        assert_eq!(err1, err2);
+        assert_ne!(
+            GzipError::CompressionFailed("a".to_string()),
+            GzipError::CompressionFailed("b".to_string())
+        );
+    }
+
+    #[test]
+    fn test_ratio_percentage_calculation() {
+        let input = GzipInput {
+            input_data: "Repeat repeat repeat repeat repeat repeat repeat".to_string(),
+            mode: GzipMode::Compress,
+        };
+        let out = process(&input).unwrap();
+        let expected_ratio = (out.processed_size as f32 / out.original_size as f32) * 100.0;
+        assert!((out.ratio_percentage - expected_ratio).abs() < f32::EPSILON);
     }
 }
