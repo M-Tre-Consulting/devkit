@@ -112,8 +112,10 @@ pub fn handle_uuid(
 /// Handler for Timestamp Converter.
 pub fn handle_timestamp(
     timestamp: &str,
+    mode_idx: i32,
     timezone_str: &str,
 ) -> Result<TimestampOutput, String> {
+    let mode = TimestampMode::from_index(mode_idx);
     let timezone = if timezone_str.eq_ignore_ascii_case("Local") {
         TimezoneOption::Local
     } else {
@@ -121,14 +123,35 @@ pub fn handle_timestamp(
     };
     let input = TimestampInput {
         input_value: timestamp.to_string(),
-        mode: TimestampMode::EpochToHuman,
+        mode,
         timezone,
     };
     let outcome = catch_unwind(AssertUnwindSafe(|| timestamp::convert(&input)));
     match outcome {
         Ok(Ok(output)) => Ok(output),
-        Ok(Err(err)) => Err(format!("Timestamp error: {err:?}")),
-        Err(_) => Err("Timestamp conversion not yet implemented (todo stub)".to_string()),
+        Ok(Err(err)) => Err(match err {
+            timestamp::TimestampError::InvalidFormat(msg) => msg,
+            timestamp::TimestampError::OutOfBounds(msg) => msg,
+        }),
+        Err(_) => Err("Timestamp conversion failed".to_string()),
+    }
+}
+
+/// Handler for getting current timestamp representations.
+pub fn handle_timestamp_now(
+    mode_idx: i32,
+    timezone_str: &str,
+) -> Result<TimestampOutput, String> {
+    let mode = TimestampMode::from_index(mode_idx);
+    let timezone = if timezone_str.eq_ignore_ascii_case("Local") {
+        TimezoneOption::Local
+    } else {
+        TimezoneOption::Utc
+    };
+    let outcome = catch_unwind(AssertUnwindSafe(|| timestamp::now(mode, timezone)));
+    match outcome {
+        Ok(output) => Ok(output),
+        Err(_) => Err("Failed to retrieve current timestamp".to_string()),
     }
 }
 

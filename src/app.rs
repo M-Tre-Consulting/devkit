@@ -147,10 +147,11 @@ pub fn setup_tool_handlers(ui: &crate::AppWindow) {
     });
 
     // 5. Timestamp Converter
-    ui.on_timestamp_convert(move |ts, tz| {
+    ui.on_timestamp_convert(move |ts, mode, tz| {
         crate::platform::android::haptic_tap();
-        match crate::tools::handlers::handle_timestamp(&ts, &tz) {
+        match crate::tools::handlers::handle_timestamp(&ts, mode, &tz) {
             Ok(out) => crate::TimestampResult {
+                input_value: out.input_value.into(),
                 unix_seconds: out.unix_seconds.into(),
                 unix_millis: out.unix_millis.into(),
                 iso_8601: out.iso_8601.into(),
@@ -159,6 +160,31 @@ pub fn setup_tool_handlers(ui: &crate::AppWindow) {
                 error_message: "".into(),
             },
             Err(err) => crate::TimestampResult {
+                input_value: "".into(),
+                unix_seconds: "".into(),
+                unix_millis: "".into(),
+                iso_8601: "".into(),
+                rfc_2822: "".into(),
+                human_readable: "".into(),
+                error_message: err.into(),
+            },
+        }
+    });
+
+    ui.on_timestamp_now(move |mode, tz| {
+        crate::platform::android::haptic_tap();
+        match crate::tools::handlers::handle_timestamp_now(mode, &tz) {
+            Ok(out) => crate::TimestampResult {
+                input_value: out.input_value.into(),
+                unix_seconds: out.unix_seconds.into(),
+                unix_millis: out.unix_millis.into(),
+                iso_8601: out.iso_8601.into(),
+                rfc_2822: out.rfc_2822.into(),
+                human_readable: out.human_readable.into(),
+                error_message: "".into(),
+            },
+            Err(err) => crate::TimestampResult {
+                input_value: "".into(),
                 unix_seconds: "".into(),
                 unix_millis: "".into(),
                 iso_8601: "".into(),

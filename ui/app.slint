@@ -56,6 +56,7 @@ export struct UuidResult {
 }
 
 export struct TimestampResult {
+    input_value: string,
     unix_seconds: string,
     unix_millis: string,
     iso_8601: string,
@@ -181,7 +182,8 @@ export component AppWindow inherits Window {
     callback hash-calculate(string, int) -> HashResult;
     callback base64-convert(string, bool, bool, bool) -> Base64Result;
     callback uuid-generate(int, int, bool, bool) -> UuidResult;
-    callback timestamp-convert(string, string) -> TimestampResult;
+    callback timestamp-convert(string, int, string) -> TimestampResult;
+    callback timestamp-now(int, string) -> TimestampResult;
     callback regex-test(string, string, bool, bool, bool) -> RegexResult;
     callback json-yaml-convert(string, bool, int) -> JsonYamlResult;
     callback cron-parse(string) -> CronResult;
@@ -497,13 +499,39 @@ export component AppWindow inherits Window {
                 nav_bar_inset: root.nav_bar_inset;
                 timestamp-back => { root.back(); }
                 timestamp-convert => {
-                    let res = root.timestamp-convert(self.input_value, self.timezone == 0 ? "UTC" : "Local");
+                    let res = root.timestamp-convert(self.input_value, self.mode, self.timezone == 0 ? "UTC" : "Local");
                     self.unix_seconds = res.unix_seconds;
                     self.unix_millis = res.unix_millis;
                     self.iso_8601 = res.iso_8601;
                     self.rfc_2822 = res.rfc_2822;
                     self.human_readable = res.human_readable;
                     self.error_message = res.error_message;
+                }
+                timestamp-now => {
+                    let res = root.timestamp-now(self.mode, self.timezone == 0 ? "UTC" : "Local");
+                    self.input_value = res.input_value;
+                    self.unix_seconds = res.unix_seconds;
+                    self.unix_millis = res.unix_millis;
+                    self.iso_8601 = res.iso_8601;
+                    self.rfc_2822 = res.rfc_2822;
+                    self.human_readable = res.human_readable;
+                    self.error_message = res.error_message;
+                }
+                timestamp-swap-mode => {
+                    if self.mode == 1 && self.unix_seconds != "" && self.input_value == self.unix_seconds && self.iso_8601 != "" {
+                        self.input_value = self.iso_8601;
+                    } else if self.mode == 0 && self.iso_8601 != "" && self.input_value == self.iso_8601 && self.unix_seconds != "" {
+                        self.input_value = self.unix_seconds;
+                    }
+                    if self.input_value != "" {
+                        let res = root.timestamp-convert(self.input_value, self.mode, self.timezone == 0 ? "UTC" : "Local");
+                        self.unix_seconds = res.unix_seconds;
+                        self.unix_millis = res.unix_millis;
+                        self.iso_8601 = res.iso_8601;
+                        self.rfc_2822 = res.rfc_2822;
+                        self.human_readable = res.human_readable;
+                        self.error_message = res.error_message;
+                    }
                 }
                 timestamp-copy(val) => { root.copy_text(val); }
             }

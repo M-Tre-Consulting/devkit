@@ -150,7 +150,12 @@ export component TimestampScreen inherits VerticalLayout {
                         height: 100%;
                         border_radius: parent.border_radius;
                         color: MaterialPalette.primary;
-                        clicked => { root.timezone = 0; }
+                        clicked => {
+                            root.timezone = 0;
+                            if root.input_value != "" && !root.is_loading {
+                                root.timestamp-convert();
+                            }
+                        }
                         HorizontalLayout {
                             alignment: center;
                             VerticalLayout {
@@ -178,7 +183,12 @@ export component TimestampScreen inherits VerticalLayout {
                         height: 100%;
                         border_radius: parent.border_radius;
                         color: MaterialPalette.primary;
-                        clicked => { root.timezone = 1; }
+                        clicked => {
+                            root.timezone = 1;
+                            if root.input_value != "" && !root.is_loading {
+                                root.timestamp-convert();
+                            }
+                        }
                         HorizontalLayout {
                             alignment: center;
                             VerticalLayout {
