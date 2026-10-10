@@ -63,22 +63,40 @@ pub enum UuidError {
 ///
 /// Accepts a UuidInput structure.
 pub fn generate(input: &UuidInput) -> Result<UuidOutput, UuidError> {
-    let uuids = (0..input.count)
-        .map(|_| {
-            let uuid = generate_uuid(&input.version)?;
-            let uuid = if input.hyphens {
-                uuid
+    if input.count == 0 {
+        return Ok(UuidOutput { uuids: Vec::new() });
+    }
+
+    let mut uuids = Vec::with_capacity(input.count as usize);
+    let mut seen = std::collections::HashSet::with_capacity(input.count as usize);
+
+    let max_attempts = (input.count as usize).saturating_mul(20).max(100);
+    let mut attempts = 0;
+
+    while uuids.len() < input.count as usize && attempts < max_attempts {
+        attempts += 1;
+        let raw_uuid = generate_uuid(&input.version)?;
+        if seen.insert(raw_uuid.clone()) {
+            let formatted = if input.hyphens {
+                raw_uuid
             } else {
-                uuid.replace('-', "")
+                raw_uuid.replace('-', "")
             };
 
-            Ok(if input.uppercase {
-                uuid.to_uppercase()
+            let final_uuid = if input.uppercase {
+                formatted.to_uppercase()
             } else {
-                uuid
-            })
-        })
-        .collect::<Result<Vec<_>, UuidError>>()?;
+                formatted
+            };
+            uuids.push(final_uuid);
+        }
+    }
+
+    if uuids.len() < input.count as usize {
+        return Err(UuidError::GenerationFailed(
+            "Could not generate requested number of unique UUIDs".to_string(),
+        ));
+    }
 
     Ok(UuidOutput { uuids })
 }
@@ -207,12 +225,13 @@ mod tests {
     fn test_generate_v7() {
         let input = UuidInput {
             version: UuidVersion::V7,
-            count: 2,
+            count: 5,
             uppercase: false,
             hyphens: true,
         };
         let res = generate(&input).unwrap();
-        assert_eq!(res.uuids.len(), 2);
+        println!("V7 UUIDS: {:#?}", res.uuids);
+        assert_eq!(res.uuids.len(), 5);
 
         for uuid_str in &res.uuids {
             assert_eq!(uuid_str.len(), 36);
@@ -221,7 +240,7 @@ mod tests {
         }
 
         let set: HashSet<_> = res.uuids.into_iter().collect();
-        assert_eq!(set.len(), 2);
+        assert_eq!(set.len(), 5);
     }
 
     #[test]
@@ -240,6 +259,20 @@ mod tests {
                 assert_eq!(parsed.get_version(), Some(uuid::Version::Mac));
             }
         }
+    }
+
+    #[test]
+    fn test_v1_batch() {
+        let input = UuidInput {
+            version: UuidVersion::V1,
+            count: 5,
+            uppercase: false,
+            hyphens: true,
+        };
+        let res = generate(&input).unwrap();
+        println!("V1 UUIDS: {:#?}", res.uuids);
+        let set: HashSet<_> = res.uuids.into_iter().collect();
+        assert_eq!(set.len(), 5);
     }
 
     #[test]
@@ -325,5 +358,22 @@ mod tests {
         assert_eq!(res.uuids.len(), 20);
         let set: HashSet<_> = res.uuids.into_iter().collect();
         assert_eq!(set.len(), 20);
+    }
+
+    #[test]
+    fn test_batch_uniqueness_all_versions() {
+        for version in [UuidVersion::V1, UuidVersion::V4, UuidVersion::V7] {
+            let input = UuidInput {
+                version,
+                count: 10,
+                uppercase: false,
+                hyphens: true,
+            };
+            if let Ok(res) = generate(&input) {
+                assert_eq!(res.uuids.len(), 10);
+                let set: HashSet<_> = res.uuids.into_iter().collect();
+                assert_eq!(set.len(), 10, "Duplicate UUID generated for {:?}", version);
+            }
+        }
     }
 }

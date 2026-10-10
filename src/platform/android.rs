@@ -1096,3 +1096,110 @@ pub fn get_android_id() -> Result<String, String> {
 pub fn get_android_id() -> Result<String, String> {
     Err("Android ID is only available on Android".to_string())
 }
+
+/// Copies the given text to the Android system clipboard via JNI ClipboardManager.
+#[cfg(target_os = "android")]
+pub fn copy_to_clipboard(text: &str) -> Result<(), String> {
+    let vm_ptr = VM_PTR.load(Ordering::SeqCst);
+    let activity_ptr = ACTIVITY_PTR.load(Ordering::SeqCst);
+    if vm_ptr.is_null() || activity_ptr.is_null() {
+        return Err("Android VM or Activity pointer is null".to_string());
+    }
+
+    unsafe {
+        let vm = match jni::JavaVM::from_raw(vm_ptr as *mut _) {
+            Ok(v) => v,
+            Err(e) => return Err(format!("JavaVM::from_raw failed: {e}")),
+        };
+        let mut env = match vm.attach_current_thread() {
+            Ok(e) => e,
+            Err(e) => return Err(format!("attach_current_thread failed: {e}")),
+        };
+
+        let activity = jni::objects::JObject::from_raw(activity_ptr as _);
+
+        let service_name = match env.new_string("clipboard") {
+            Ok(s) => s,
+            Err(e) => {
+                let _ = env.exception_clear();
+                return Err(format!("new_string clipboard failed: {e}"));
+            }
+        };
+
+        let clipboard_mgr = match env.call_method(
+            &activity,
+            "getSystemService",
+            "(Ljava/lang/String;)Ljava/lang/Object;",
+            &[(&service_name).into()],
+        ) {
+            Ok(r) => match r.l() {
+                Ok(obj) => obj,
+                Err(e) => {
+                    let _ = env.exception_clear();
+                    return Err(format!("getSystemService return object failed: {e}"));
+                }
+            },
+            Err(e) => {
+                let _ = env.exception_clear();
+                return Err(format!("getSystemService failed: {e}"));
+            }
+        };
+
+        if clipboard_mgr.as_raw().is_null() {
+            return Err("ClipboardManager is null".to_string());
+        }
+
+        let label = match env.new_string("DevKit") {
+            Ok(s) => s,
+            Err(e) => {
+                let _ = env.exception_clear();
+                return Err(format!("new_string label failed: {e}"));
+            }
+        };
+
+        let clip_text = match env.new_string(text) {
+            Ok(s) => s,
+            Err(e) => {
+                let _ = env.exception_clear();
+                return Err(format!("new_string clip_text failed: {e}"));
+            }
+        };
+
+        let clip_data = match env.call_static_method(
+            "android/content/ClipData",
+            "newPlainText",
+            "(Ljava/lang/CharSequence;Ljava/lang/CharSequence;)Landroid/content/ClipData;",
+            &[(&label).into(), (&clip_text).into()],
+        ) {
+            Ok(r) => match r.l() {
+                Ok(obj) => obj,
+                Err(e) => {
+                    let _ = env.exception_clear();
+                    return Err(format!("ClipData.newPlainText return object failed: {e}"));
+                }
+            },
+            Err(e) => {
+                let _ = env.exception_clear();
+                return Err(format!("ClipData.newPlainText failed: {e}"));
+            }
+        };
+
+        if let Err(e) = env.call_method(
+            &clipboard_mgr,
+            "setPrimaryClip",
+            "(Landroid/content/ClipData;)V",
+            &[(&clip_data).into()],
+        ) {
+            let _ = env.exception_clear();
+            return Err(format!("setPrimaryClip failed: {e}"));
+        }
+
+        Ok(())
+    }
+}
+
+/// Fallback for non-Android targets.
+#[cfg(not(target_os = "android"))]
+pub fn copy_to_clipboard(_text: &str) -> Result<(), String> {
+    Ok(())
+}

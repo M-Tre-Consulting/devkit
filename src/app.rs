@@ -238,7 +238,23 @@ pub fn setup_tool_handlers(ui: &crate::AppWindow) {
                 let matches_formatted: Vec<slint::SharedString> = out
                     .matches
                     .into_iter()
-                    .map(|m| format!("Match {}: '{}' [{}..{}]", m.index, m.text, m.start, m.end).into())
+                    .map(|m| {
+                        if m.captures.is_empty() {
+                            format!("Match {}: '{}' [{}..{}]", m.index, m.text, m.start, m.end).into()
+                        } else {
+                            let groups = m
+                                .captures
+                                .iter()
+                                .map(|g| format!("'{}'", g))
+                                .collect::<Vec<_>>()
+                                .join(", ");
+                            format!(
+                                "Match {}: '{}' [{}..{}] (groups: {})",
+                                m.index, m.text, m.start, m.end, groups
+                            )
+                            .into()
+                        }
+                    })
                     .collect();
                 crate::RegexResult {
                     match_summary: summary.into(),
@@ -519,9 +535,9 @@ pub fn setup_tool_handlers(ui: &crate::AppWindow) {
     });
 
     // Clipboard copy action
-    ui.on_copy_text(move |_text| {
+    ui.on_copy_text(move |text| {
         crate::platform::android::haptic_tap();
-        // Ready for system clipboard integration
+        let _ = crate::platform::android::copy_to_clipboard(text.as_str());
     });
 }
 

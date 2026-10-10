@@ -266,7 +266,7 @@ export component UuidScreen inherits VerticalLayout {
             VerticalLayout {
                 spacing: MaterialStyleMetrics.spacing_8;
 
-                for uuid[idx] in root.uuids: Rectangle {
+                for uuid_item[idx] in root.uuids: Rectangle {
                     border_radius: MaterialStyleMetrics.border_radius_12;
                     background: MaterialPalette.surface_container;
                     border_width: 1px;
@@ -277,11 +277,14 @@ export component UuidScreen inherits VerticalLayout {
                         alignment: space-between;
 
                         VerticalLayout {
+                            horizontal-stretch: 1;
                             alignment: center;
                             MaterialText {
-                                text: uuid;
+                                text: uuid_item;
                                 style: MaterialTypography.body_medium;
                                 color: MaterialPalette.on_surface;
+                                font_size: 13px;
+                                wrap: word-wrap;
                             }
                         }
 
@@ -294,7 +297,7 @@ export component UuidScreen inherits VerticalLayout {
                                 height: 100%;
                                 border_radius: parent.border_radius;
                                 color: MaterialPalette.primary;
-                                clicked => { root.uuid-copy-item(uuid); }
+                                clicked => { root.uuid-copy-item(uuid_item); }
                                 HorizontalLayout {
                                     alignment: center;
                                     VerticalLayout {
