@@ -116,6 +116,7 @@ export component MenuInner {
 
 export component PopupMenu inherits PopupWindow {
     in property <[MenuItem]> items;
+    in_out property <int> current_index <=> inner.current_index;
 
     callback activated(index: int);
 

@@ -83,6 +83,15 @@ pub fn update_theme_settings(ui: &crate::AppWindow) {
     }
 }
 
+pub fn update_tool_preferences(ui: &crate::AppWindow) {
+    let hash_algo = crate::storage::load_default_hash_algorithm();
+    ui.set_default_hash_algorithm(hash_algo);
+    let uuid_ver = crate::storage::load_default_uuid_version();
+    ui.set_default_uuid_version(uuid_ver);
+    let ts_fmt = crate::storage::load_default_timestamp_format();
+    ui.set_default_timestamp_format(ts_fmt);
+}
+
 pub fn setup_tool_handlers(ui: &crate::AppWindow) {
     // 1. Subnet Calculator
     ui.on_subnet_calculate(move |ip| {
@@ -518,6 +527,7 @@ pub fn setup_tool_handlers(ui: &crate::AppWindow) {
 
 pub fn setup_app_state(ui: &crate::AppWindow) {
     update_theme_settings(ui);
+    update_tool_preferences(ui);
     update_favorites(ui);
     update_recents(ui);
     update_high_refresh_rate(ui);
@@ -605,6 +615,33 @@ pub fn setup_app_state(ui: &crate::AppWindow) {
         crate::storage::save_dynamic_color(enabled);
         if let Some(ui) = ui_handle.upgrade() {
             ui.set_dynamic_color_enabled(enabled);
+        }
+    });
+
+    let ui_handle = ui.as_weak();
+    ui.on_default_hash_algorithm_changed(move |algo| {
+        crate::platform::android::haptic_tap();
+        crate::storage::save_default_hash_algorithm(algo);
+        if let Some(ui) = ui_handle.upgrade() {
+            ui.set_default_hash_algorithm(algo);
+        }
+    });
+
+    let ui_handle = ui.as_weak();
+    ui.on_default_uuid_version_changed(move |ver| {
+        crate::platform::android::haptic_tap();
+        crate::storage::save_default_uuid_version(ver);
+        if let Some(ui) = ui_handle.upgrade() {
+            ui.set_default_uuid_version(ver);
+        }
+    });
+
+    let ui_handle = ui.as_weak();
+    ui.on_default_timestamp_format_changed(move |fmt| {
+        crate::platform::android::haptic_tap();
+        crate::storage::save_default_timestamp_format(fmt);
+        if let Some(ui) = ui_handle.upgrade() {
+            ui.set_default_timestamp_format(fmt);
         }
     });
 

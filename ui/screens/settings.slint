@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2026 M-Tre Consulting
 
-import { Icons, ScrollView, Switch, HorizontalDivider, MaterialPalette, MaterialStyleMetrics, MaterialTypography, MaterialText, StateLayerArea, Icon } from "@material";
+import { Icons, ScrollView, Switch, HorizontalDivider, MaterialPalette, MaterialStyleMetrics, MaterialTypography, MaterialText, StateLayerArea, Icon, PopupMenu, MenuItem } from "@material";
 import { SectionHeader } from "../components/section-header.slint";
 import { AppIcons } from "../components/app-icons.slint";
 import { TopBar } from "../components/top-bar.slint";
@@ -22,8 +22,40 @@ export component SettingsScreen inherits VerticalLayout {
 
     in-out property <bool> dark_theme_enabled: true;
     in-out property <bool> dynamic_color_enabled: false;
+    in-out property <int> default_hash_algorithm: 2;
+    in-out property <int> default_uuid_version: 1;
+    in-out property <int> default_timestamp_format: 0;
     callback settings-dark-theme-changed(bool);
     callback settings-dynamic-color-changed(bool);
+    callback settings-default-hash-algorithm-changed(int);
+    callback settings-default-uuid-version-changed(int);
+    callback settings-default-timestamp-format-changed(int);
+
+    pure function hash_algo_name(idx: int) -> string {
+        if idx == 0 { return "MD5"; }
+        if idx == 1 { return "SHA-1"; }
+        if idx == 2 { return "SHA-256"; }
+        if idx == 3 { return "SHA-512"; }
+        if idx == 4 { return "BLAKE2b"; }
+        if idx == 5 { return "BLAKE3"; }
+        return "SHA-256";
+    }
+
+    pure function uuid_version_name(idx: int) -> string {
+        if idx == 0 { return "UUID v1"; }
+        if idx == 1 { return "UUID v4"; }
+        if idx == 2 { return "UUID v7"; }
+        return "UUID v4";
+    }
+
+    pure function timestamp_format_name(idx: int) -> string {
+        if idx == 0 { return "ISO 8601"; }
+        if idx == 1 { return "RFC 2822"; }
+        if idx == 2 { return "Human Readable"; }
+        if idx == 3 { return "Unix Seconds"; }
+        if idx == 4 { return "Unix Millis"; }
+        return "ISO 8601";
+    }
 
     // Status bar clearance
     Rectangle {
@@ -227,66 +259,205 @@ export component SettingsScreen inherits VerticalLayout {
                 border_color: MaterialPalette.outline_variant.with_alpha(15%);
 
                 VerticalLayout {
-                    HorizontalLayout {
-                        padding: MaterialStyleMetrics.padding_16;
-                        alignment: space-between;
+                    StateLayerArea {
+                        width: 100%;
+                        color: MaterialPalette.on_surface;
 
-                        VerticalLayout {
-                            alignment: center;
-                            spacing: MaterialStyleMetrics.spacing_4;
-
-                            MaterialText {
-                                text: "Default Hash Algorithm";
-                                style: MaterialTypography.title_medium;
-                                color: MaterialPalette.on_surface;
-                            }
-                            MaterialText {
-                                text: "Pre-select SHA-256 on tool open";
-                                style: MaterialTypography.body_small;
-                                color: MaterialPalette.on_surface_variant;
-                            }
+                        clicked => {
+                            hash_menu.show();
                         }
 
                         HorizontalLayout {
-                            alignment: center;
-                            spacing: 4px;
-                            MaterialText {
-                                text: "SHA-256";
-                                style: MaterialTypography.label_medium;
-                                color: MaterialPalette.primary;
+                            padding: MaterialStyleMetrics.padding_16;
+                            alignment: space-between;
+
+                            VerticalLayout {
+                                horizontal-stretch: 1;
+                                alignment: center;
+                                spacing: MaterialStyleMetrics.spacing_4;
+
+                                MaterialText {
+                                    text: "Default Hash Algorithm";
+                                    style: MaterialTypography.title_medium;
+                                    color: MaterialPalette.on_surface;
+                                }
+                                MaterialText {
+                                    text: "Pre-select " + root.hash_algo_name(root.default_hash_algorithm) + " on tool open";
+                                    style: MaterialTypography.body_small;
+                                    color: MaterialPalette.on_surface_variant;
+                                }
+                            }
+
+                            HorizontalLayout {
+                                alignment: center;
+                                spacing: 4px;
+                                MaterialText {
+                                    text: root.hash_algo_name(root.default_hash_algorithm);
+                                    style: MaterialTypography.label_medium;
+                                    color: MaterialPalette.primary;
+                                }
+                                Icon {
+                                    source: Icons.arrow_drop_down;
+                                    colorize: MaterialPalette.primary;
+                                    width: 20px;
+                                    height: 20px;
+                                }
+                            }
+                        }
+
+                        hash_menu := PopupMenu {
+                            width: 200px;
+                            x: parent.width - self.width - 16px;
+                            y: parent.height;
+                            current_index: root.default_hash_algorithm;
+                            items: [
+                                { icon: @image-url(""), text: "MD5", trailing_text: "", enabled: true },
+                                { icon: @image-url(""), text: "SHA-1", trailing_text: "", enabled: true },
+                                { icon: @image-url(""), text: "SHA-256", trailing_text: "", enabled: true },
+                                { icon: @image-url(""), text: "SHA-512", trailing_text: "", enabled: true },
+                                { icon: @image-url(""), text: "BLAKE2b", trailing_text: "", enabled: true },
+                                { icon: @image-url(""), text: "BLAKE3", trailing_text: "", enabled: true },
+                            ];
+                            activated(index) => {
+                                root.default_hash_algorithm = index;
+                                root.settings-default-hash-algorithm-changed(index);
+                                hash_menu.close();
                             }
                         }
                     }
 
                     HorizontalDivider {}
 
-                    HorizontalLayout {
-                        padding: MaterialStyleMetrics.padding_16;
-                        alignment: space-between;
+                    // Default UUID Version
+                    StateLayerArea {
+                        width: 100%;
+                        color: MaterialPalette.on_surface;
 
-                        VerticalLayout {
-                            alignment: center;
-                            spacing: MaterialStyleMetrics.spacing_4;
-
-                            MaterialText {
-                                text: "Timestamp Output";
-                                style: MaterialTypography.title_medium;
-                                color: MaterialPalette.on_surface;
-                            }
-                            MaterialText {
-                                text: "Format timestamp conversions in UTC";
-                                style: MaterialTypography.body_small;
-                                color: MaterialPalette.on_surface_variant;
-                            }
+                        clicked => {
+                            uuid_menu.show();
                         }
 
                         HorizontalLayout {
-                            alignment: center;
-                            spacing: 4px;
-                            MaterialText {
-                                text: "ISO 8601";
-                                style: MaterialTypography.label_medium;
-                                color: MaterialPalette.primary;
+                            padding: MaterialStyleMetrics.padding_16;
+                            alignment: space-between;
+
+                            VerticalLayout {
+                                horizontal-stretch: 1;
+                                alignment: center;
+                                spacing: MaterialStyleMetrics.spacing_4;
+
+                                MaterialText {
+                                    text: "Default UUID Version";
+                                    style: MaterialTypography.title_medium;
+                                    color: MaterialPalette.on_surface;
+                                }
+                                MaterialText {
+                                    text: "Pre-select " + root.uuid_version_name(root.default_uuid_version) + " on tool open";
+                                    style: MaterialTypography.body_small;
+                                    color: MaterialPalette.on_surface_variant;
+                                }
+                            }
+
+                            HorizontalLayout {
+                                alignment: center;
+                                spacing: 4px;
+                                MaterialText {
+                                    text: root.uuid_version_name(root.default_uuid_version);
+                                    style: MaterialTypography.label_medium;
+                                    color: MaterialPalette.primary;
+                                }
+                                Icon {
+                                    source: Icons.arrow_drop_down;
+                                    colorize: MaterialPalette.primary;
+                                    width: 20px;
+                                    height: 20px;
+                                }
+                            }
+                        }
+
+                        uuid_menu := PopupMenu {
+                            width: 220px;
+                            x: parent.width - self.width - 16px;
+                            y: parent.height;
+                            current_index: root.default_uuid_version;
+                            items: [
+                                { icon: @image-url(""), text: "UUID v1 (MAC & Time)", trailing_text: "", enabled: true },
+                                { icon: @image-url(""), text: "UUID v4 (Random)", trailing_text: "", enabled: true },
+                                { icon: @image-url(""), text: "UUID v7 (Time-ordered)", trailing_text: "", enabled: true },
+                            ];
+                            activated(index) => {
+                                root.default_uuid_version = index;
+                                root.settings-default-uuid-version-changed(index);
+                                uuid_menu.close();
+                            }
+                        }
+                    }
+
+                    HorizontalDivider {}
+
+                    // Timestamp Output
+                    StateLayerArea {
+                        width: 100%;
+                        color: MaterialPalette.on_surface;
+
+                        clicked => {
+                            timestamp_menu.show();
+                        }
+
+                        HorizontalLayout {
+                            padding: MaterialStyleMetrics.padding_16;
+                            alignment: space-between;
+
+                            VerticalLayout {
+                                horizontal-stretch: 1;
+                                alignment: center;
+                                spacing: MaterialStyleMetrics.spacing_4;
+
+                                MaterialText {
+                                    text: "Timestamp Output";
+                                    style: MaterialTypography.title_medium;
+                                    color: MaterialPalette.on_surface;
+                                }
+                                MaterialText {
+                                    text: "Default format: " + root.timestamp_format_name(root.default_timestamp_format);
+                                    style: MaterialTypography.body_small;
+                                    color: MaterialPalette.on_surface_variant;
+                                }
+                            }
+
+                            HorizontalLayout {
+                                alignment: center;
+                                spacing: 4px;
+                                MaterialText {
+                                    text: root.timestamp_format_name(root.default_timestamp_format);
+                                    style: MaterialTypography.label_medium;
+                                    color: MaterialPalette.primary;
+                                }
+                                Icon {
+                                    source: Icons.arrow_drop_down;
+                                    colorize: MaterialPalette.primary;
+                                    width: 20px;
+                                    height: 20px;
+                                }
+                            }
+                        }
+
+                        timestamp_menu := PopupMenu {
+                            width: 220px;
+                            x: parent.width - self.width - 16px;
+                            y: parent.height;
+                            current_index: root.default_timestamp_format;
+                            items: [
+                                { icon: @image-url(""), text: "ISO 8601", trailing_text: "", enabled: true },
+                                { icon: @image-url(""), text: "RFC 2822", trailing_text: "", enabled: true },
+                                { icon: @image-url(""), text: "Human Readable", trailing_text: "", enabled: true },
+                                { icon: @image-url(""), text: "Unix Seconds", trailing_text: "", enabled: true },
+                                { icon: @image-url(""), text: "Unix Milliseconds", trailing_text: "", enabled: true },
+                            ];
+                            activated(index) => {
+                                root.default_timestamp_format = index;
+                                root.settings-default-timestamp-format-changed(index);
+                                timestamp_menu.close();
                             }
                         }
                     }

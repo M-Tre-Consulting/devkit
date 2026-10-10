@@ -63,6 +63,18 @@ fn dynamic_color_file() -> PathBuf {
     get_storage_dir().join("dynamic_color.txt")
 }
 
+fn default_hash_algorithm_file() -> PathBuf {
+    get_storage_dir().join("default_hash_algorithm.txt")
+}
+
+fn default_uuid_version_file() -> PathBuf {
+    get_storage_dir().join("default_uuid_version.txt")
+}
+
+fn default_timestamp_format_file() -> PathBuf {
+    get_storage_dir().join("default_timestamp_format.txt")
+}
+
 fn welcome_file() -> PathBuf {
     get_storage_dir().join("welcome_seen.txt")
 }
@@ -223,6 +235,66 @@ pub fn save_dynamic_color(enabled: bool) {
     let _ = fs::write(dynamic_color_file(), if enabled { "true" } else { "false" });
 }
 
+/// Load the persisted default hash algorithm index (defaults to 2 for SHA-256).
+pub fn load_default_hash_algorithm() -> i32 {
+    let path = default_hash_algorithm_file();
+    if let Ok(content) = fs::read_to_string(path) {
+        if let Ok(val) = content.trim().parse::<i32>() {
+            if (0..=5).contains(&val) {
+                return val;
+            }
+        }
+    }
+    2
+}
+
+/// Save the default hash algorithm index.
+pub fn save_default_hash_algorithm(algo: i32) {
+    let dir = get_storage_dir();
+    let _ = fs::create_dir_all(&dir);
+    let _ = fs::write(default_hash_algorithm_file(), algo.to_string());
+}
+
+/// Load the persisted default UUID version index (defaults to 1 for v4).
+pub fn load_default_uuid_version() -> i32 {
+    let path = default_uuid_version_file();
+    if let Ok(content) = fs::read_to_string(path) {
+        if let Ok(val) = content.trim().parse::<i32>() {
+            if (0..=2).contains(&val) {
+                return val;
+            }
+        }
+    }
+    1
+}
+
+/// Save the default UUID version index.
+pub fn save_default_uuid_version(version: i32) {
+    let dir = get_storage_dir();
+    let _ = fs::create_dir_all(&dir);
+    let _ = fs::write(default_uuid_version_file(), version.to_string());
+}
+
+/// Load the persisted default timestamp format index (defaults to 0 for ISO 8601).
+pub fn load_default_timestamp_format() -> i32 {
+    let path = default_timestamp_format_file();
+    if let Ok(content) = fs::read_to_string(path) {
+        if let Ok(val) = content.trim().parse::<i32>() {
+            if (0..=4).contains(&val) {
+                return val;
+            }
+        }
+    }
+    0
+}
+
+/// Save the default timestamp format index.
+pub fn save_default_timestamp_format(format: i32) {
+    let dir = get_storage_dir();
+    let _ = fs::create_dir_all(&dir);
+    let _ = fs::write(default_timestamp_format_file(), format.to_string());
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -309,6 +381,60 @@ mod tests {
         // Reset and verify
         reset_welcome();
         assert!(!load_has_seen_welcome());
+
+        let _ = fs::remove_dir_all(&temp_dir);
+    }
+
+    #[test]
+    fn test_default_hash_algorithm_persistence() {
+        let _guard = TEST_LOCK.lock().unwrap();
+        let temp_dir = std::env::temp_dir().join(format!("devkit_hash_algo_test_{}", std::process::id()));
+        init_storage_dir(temp_dir.clone());
+
+        let _ = fs::remove_file(default_hash_algorithm_file());
+        assert_eq!(load_default_hash_algorithm(), 2); // Default is SHA-256 (2)
+
+        save_default_hash_algorithm(0); // MD5
+        assert_eq!(load_default_hash_algorithm(), 0);
+
+        save_default_hash_algorithm(5); // BLAKE3
+        assert_eq!(load_default_hash_algorithm(), 5);
+
+        let _ = fs::remove_dir_all(&temp_dir);
+    }
+
+    #[test]
+    fn test_default_uuid_version_persistence() {
+        let _guard = TEST_LOCK.lock().unwrap();
+        let temp_dir = std::env::temp_dir().join(format!("devkit_uuid_ver_test_{}", std::process::id()));
+        init_storage_dir(temp_dir.clone());
+
+        let _ = fs::remove_file(default_uuid_version_file());
+        assert_eq!(load_default_uuid_version(), 1); // Default is v4 (1)
+
+        save_default_uuid_version(2); // v7
+        assert_eq!(load_default_uuid_version(), 2);
+
+        save_default_uuid_version(0); // v1
+        assert_eq!(load_default_uuid_version(), 0);
+
+        let _ = fs::remove_dir_all(&temp_dir);
+    }
+
+    #[test]
+    fn test_default_timestamp_format_persistence() {
+        let _guard = TEST_LOCK.lock().unwrap();
+        let temp_dir = std::env::temp_dir().join(format!("devkit_ts_fmt_test_{}", std::process::id()));
+        init_storage_dir(temp_dir.clone());
+
+        let _ = fs::remove_file(default_timestamp_format_file());
+        assert_eq!(load_default_timestamp_format(), 0); // Default is ISO 8601 (0)
+
+        save_default_timestamp_format(1); // RFC 2822
+        assert_eq!(load_default_timestamp_format(), 1);
+
+        save_default_timestamp_format(3); // Seconds
+        assert_eq!(load_default_timestamp_format(), 3);
 
         let _ = fs::remove_dir_all(&temp_dir);
     }

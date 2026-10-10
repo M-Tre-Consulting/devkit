@@ -177,6 +177,9 @@ export component AppWindow inherits Window {
     in-out property <color> monet_tertiary_dark <=> MaterialPalette.monet_tertiary_dark;
     in-out property <color> monet_surface_light <=> MaterialPalette.monet_surface_light;
     in-out property <color> monet_surface_dark <=> MaterialPalette.monet_surface_dark;
+    in-out property <int> default_hash_algorithm: 2;
+    in-out property <int> default_uuid_version: 1;
+    in-out property <int> default_timestamp_format: 0;
 
     // Navigation and state callbacks
     callback switch_mode(int);
@@ -187,6 +190,9 @@ export component AppWindow inherits Window {
     callback open_about();
     callback dark_theme_changed(bool);
     callback dynamic_color_changed(bool);
+    callback default_hash_algorithm_changed(int);
+    callback default_uuid_version_changed(int);
+    callback default_timestamp_format_changed(int);
     callback high_refresh_rate_changed(bool);
     callback dismiss_welcome();
     callback reset_welcome();
@@ -393,6 +399,9 @@ export component AppWindow inherits Window {
                     pill_bottom_margin: root.pill_bottom_margin;
                     dark_theme_enabled: root.dark_theme_enabled;
                     dynamic_color_enabled: root.dynamic_color_enabled;
+                    default_hash_algorithm: root.default_hash_algorithm;
+                    default_uuid_version: root.default_uuid_version;
+                    default_timestamp_format: root.default_timestamp_format;
                     settings-dark-theme-changed(enabled) => {
                         root.dark_theme_enabled = enabled;
                         root.dark_theme_changed(enabled);
@@ -400,6 +409,18 @@ export component AppWindow inherits Window {
                     settings-dynamic-color-changed(enabled) => {
                         root.dynamic_color_enabled = enabled;
                         root.dynamic_color_changed(enabled);
+                    }
+                    settings-default-hash-algorithm-changed(algo) => {
+                        root.default_hash_algorithm = algo;
+                        root.default_hash_algorithm_changed(algo);
+                    }
+                    settings-default-uuid-version-changed(ver) => {
+                        root.default_uuid_version = ver;
+                        root.default_uuid_version_changed(ver);
+                    }
+                    settings-default-timestamp-format-changed(fmt) => {
+                        root.default_timestamp_format = fmt;
+                        root.default_timestamp_format_changed(fmt);
                     }
                     high_refresh_rate_enabled: root.high_refresh_rate_enabled;
                     high_refresh_rate_supported: root.high_refresh_rate_supported;
@@ -471,6 +492,7 @@ export component AppWindow inherits Window {
                 height: 100%;
                 status_bar_inset: root.status_bar_inset;
                 nav_bar_inset: root.nav_bar_inset;
+                selected_algorithm: root.default_hash_algorithm;
                 hash-back => { root.back(); }
                 hash-calculate => {
                     let res = root.hash-calculate(self.input_text, self.selected_algorithm);
@@ -506,6 +528,7 @@ export component AppWindow inherits Window {
                 height: 100%;
                 status_bar_inset: root.status_bar_inset;
                 nav_bar_inset: root.nav_bar_inset;
+                version: root.default_uuid_version;
                 uuid-back => { root.back(); }
                 uuid-generate => {
                     let res = root.uuid-generate(self.version, self.count, self.uppercase, self.hyphens);
