@@ -12,7 +12,7 @@ pub fn setup_keyboard_observer(ui: &crate::AppWindow) -> slint::Timer {
     let kb_timer = slint::Timer::default();
     let ui_weak = ui.as_weak();
     let mut last_kb: f32 = 0.0;
-    kb_timer.start(slint::TimerMode::Repeated, std::time::Duration::from_millis(32), move || {
+    kb_timer.start(slint::TimerMode::Repeated, std::time::Duration::from_millis(200), move || {
         let kb = crate::platform::android::query_keyboard_inset();
         if (kb - last_kb).abs() > 0.5 {
             last_kb = kb;
@@ -60,6 +60,27 @@ pub fn update_high_refresh_rate(ui: &crate::AppWindow) {
     ui.set_high_refresh_rate_supported(supported);
     let enabled = crate::storage::load_high_refresh_rate();
     ui.set_high_refresh_rate_enabled(enabled);
+}
+
+pub fn update_theme_settings(ui: &crate::AppWindow) {
+    let dark = crate::storage::load_dark_theme();
+    ui.set_dark_theme_enabled(dark);
+    let dynamic = crate::storage::load_dynamic_color();
+    ui.set_dynamic_color_enabled(dynamic);
+
+    if let Some(colors) = crate::platform::android::get_system_monet_colors() {
+        ui.set_has_monet(true);
+        ui.set_monet_primary_light(slint::Color::from_rgb_u8(colors.primary_light.0, colors.primary_light.1, colors.primary_light.2));
+        ui.set_monet_primary_dark(slint::Color::from_rgb_u8(colors.primary_dark.0, colors.primary_dark.1, colors.primary_dark.2));
+        ui.set_monet_primary_container_light(slint::Color::from_rgb_u8(colors.primary_container_light.0, colors.primary_container_light.1, colors.primary_container_light.2));
+        ui.set_monet_primary_container_dark(slint::Color::from_rgb_u8(colors.primary_container_dark.0, colors.primary_container_dark.1, colors.primary_container_dark.2));
+        ui.set_monet_secondary_light(slint::Color::from_rgb_u8(colors.secondary_light.0, colors.secondary_light.1, colors.secondary_light.2));
+        ui.set_monet_secondary_dark(slint::Color::from_rgb_u8(colors.secondary_dark.0, colors.secondary_dark.1, colors.secondary_dark.2));
+        ui.set_monet_tertiary_light(slint::Color::from_rgb_u8(colors.tertiary_light.0, colors.tertiary_light.1, colors.tertiary_light.2));
+        ui.set_monet_tertiary_dark(slint::Color::from_rgb_u8(colors.tertiary_dark.0, colors.tertiary_dark.1, colors.tertiary_dark.2));
+        ui.set_monet_surface_light(slint::Color::from_rgb_u8(colors.surface_light.0, colors.surface_light.1, colors.surface_light.2));
+        ui.set_monet_surface_dark(slint::Color::from_rgb_u8(colors.surface_dark.0, colors.surface_dark.1, colors.surface_dark.2));
+    }
 }
 
 pub fn setup_tool_handlers(ui: &crate::AppWindow) {
@@ -496,6 +517,7 @@ pub fn setup_tool_handlers(ui: &crate::AppWindow) {
 }
 
 pub fn setup_app_state(ui: &crate::AppWindow) {
+    update_theme_settings(ui);
     update_favorites(ui);
     update_recents(ui);
     update_high_refresh_rate(ui);
@@ -566,6 +588,24 @@ pub fn setup_app_state(ui: &crate::AppWindow) {
         let _ = std::panic::catch_unwind(|| {
             crate::platform::android::apply_refresh_rate_setting(enabled);
         });
+    });
+
+    let ui_handle = ui.as_weak();
+    ui.on_dark_theme_changed(move |enabled| {
+        crate::platform::android::haptic_tap();
+        crate::storage::save_dark_theme(enabled);
+        if let Some(ui) = ui_handle.upgrade() {
+            ui.set_dark_theme_enabled(enabled);
+        }
+    });
+
+    let ui_handle = ui.as_weak();
+    ui.on_dynamic_color_changed(move |enabled| {
+        crate::platform::android::haptic_tap();
+        crate::storage::save_dynamic_color(enabled);
+        if let Some(ui) = ui_handle.upgrade() {
+            ui.set_dynamic_color_enabled(enabled);
+        }
     });
 
     let state_clone = nav_state.clone();

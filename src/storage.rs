@@ -55,6 +55,14 @@ fn high_refresh_rate_file() -> PathBuf {
     get_storage_dir().join("high_refresh_rate.txt")
 }
 
+fn dark_theme_file() -> PathBuf {
+    get_storage_dir().join("dark_theme.txt")
+}
+
+fn dynamic_color_file() -> PathBuf {
+    get_storage_dir().join("dynamic_color.txt")
+}
+
 fn welcome_file() -> PathBuf {
     get_storage_dir().join("welcome_seen.txt")
 }
@@ -181,6 +189,40 @@ pub fn save_high_refresh_rate(enabled: bool) {
     let _ = fs::write(high_refresh_rate_file(), if enabled { "true" } else { "false" });
 }
 
+/// Load the persisted dark theme preference (defaults to true).
+pub fn load_dark_theme() -> bool {
+    let path = dark_theme_file();
+    if let Ok(content) = fs::read_to_string(path) {
+        content.trim().eq_ignore_ascii_case("true") || content.trim() == "1"
+    } else {
+        true
+    }
+}
+
+/// Save the dark theme preference.
+pub fn save_dark_theme(enabled: bool) {
+    let dir = get_storage_dir();
+    let _ = fs::create_dir_all(&dir);
+    let _ = fs::write(dark_theme_file(), if enabled { "true" } else { "false" });
+}
+
+/// Load the persisted dynamic color (Monet) preference (defaults to false).
+pub fn load_dynamic_color() -> bool {
+    let path = dynamic_color_file();
+    if let Ok(content) = fs::read_to_string(path) {
+        content.trim().eq_ignore_ascii_case("true") || content.trim() == "1"
+    } else {
+        false
+    }
+}
+
+/// Save the dynamic color (Monet) preference.
+pub fn save_dynamic_color(enabled: bool) {
+    let dir = get_storage_dir();
+    let _ = fs::create_dir_all(&dir);
+    let _ = fs::write(dynamic_color_file(), if enabled { "true" } else { "false" });
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -204,6 +246,48 @@ mod tests {
         // Save false and verify
         save_high_refresh_rate(false);
         assert!(!load_high_refresh_rate());
+
+        let _ = fs::remove_dir_all(&temp_dir);
+    }
+
+    #[test]
+    fn test_dark_theme_persistence() {
+        let _guard = TEST_LOCK.lock().unwrap();
+        let temp_dir = std::env::temp_dir().join(format!("devkit_theme_test_{}", std::process::id()));
+        init_storage_dir(temp_dir.clone());
+
+        // Default should be true (dark) when file does not exist
+        let _ = fs::remove_file(dark_theme_file());
+        assert!(load_dark_theme());
+
+        // Save false (light) and verify
+        save_dark_theme(false);
+        assert!(!load_dark_theme());
+
+        // Save true and verify
+        save_dark_theme(true);
+        assert!(load_dark_theme());
+
+        let _ = fs::remove_dir_all(&temp_dir);
+    }
+
+    #[test]
+    fn test_dynamic_color_persistence() {
+        let _guard = TEST_LOCK.lock().unwrap();
+        let temp_dir = std::env::temp_dir().join(format!("devkit_monet_test_{}", std::process::id()));
+        init_storage_dir(temp_dir.clone());
+
+        // Default should be false when file does not exist
+        let _ = fs::remove_file(dynamic_color_file());
+        assert!(!load_dynamic_color());
+
+        // Save true and verify
+        save_dynamic_color(true);
+        assert!(load_dynamic_color());
+
+        // Save false and verify
+        save_dynamic_color(false);
+        assert!(!load_dynamic_color());
 
         let _ = fs::remove_dir_all(&temp_dir);
     }

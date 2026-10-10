@@ -14,6 +14,8 @@ static STATUS_BAR_INSET: AtomicU32 = AtomicU32::new(0);
 static NAVIGATION_BAR_INSET: AtomicU32 = AtomicU32::new(0);
 static KEYBOARD_INSET: AtomicU32 = AtomicU32::new(0);
 #[cfg(target_os = "android")]
+static CACHED_DENSITY: AtomicU32 = AtomicU32::new(0);
+#[cfg(target_os = "android")]
 static VM_PTR: AtomicPtr<std::ffi::c_void> = AtomicPtr::new(std::ptr::null_mut());
 #[cfg(target_os = "android")]
 static ACTIVITY_PTR: AtomicPtr<std::ffi::c_void> = AtomicPtr::new(std::ptr::null_mut());
@@ -531,31 +533,40 @@ pub fn query_keyboard_inset() -> f32 {
             }
         };
 
-        let metrics = match env.call_method(
-            &resources,
-            "getDisplayMetrics",
-            "()Landroid/util/DisplayMetrics;",
-            &[],
-        ) {
-            Ok(m) => match m.l() {
-                Ok(obj) => obj,
+        let cached_bits = CACHED_DENSITY.load(Ordering::Relaxed);
+        let density = if cached_bits != 0 {
+            f32::from_bits(cached_bits)
+        } else {
+            let metrics = match env.call_method(
+                &resources,
+                "getDisplayMetrics",
+                "()Landroid/util/DisplayMetrics;",
+                &[],
+            ) {
+                Ok(m) => match m.l() {
+                    Ok(obj) => obj,
+                    Err(_) => {
+                        let _ = env.exception_clear();
+                        return ime_bottom_px as f32;
+                    }
+                },
                 Err(_) => {
                     let _ = env.exception_clear();
                     return ime_bottom_px as f32;
                 }
-            },
-            Err(_) => {
-                let _ = env.exception_clear();
-                return ime_bottom_px as f32;
-            }
-        };
+            };
 
-        let density = match env.get_field(&metrics, "density", "F") {
-            Ok(d) => d.f().unwrap_or(1.0),
-            Err(_) => {
-                let _ = env.exception_clear();
-                1.0
+            let d = match env.get_field(&metrics, "density", "F") {
+                Ok(val) => val.f().unwrap_or(1.0),
+                Err(_) => {
+                    let _ = env.exception_clear();
+                    1.0
+                }
+            };
+            if d > 0.0 {
+                CACHED_DENSITY.store(d.to_bits(), Ordering::Relaxed);
             }
+            d
         };
 
         let dp = if density > 0.0 && ime_bottom_px > 0 {
@@ -573,9 +584,125 @@ pub fn query_keyboard_inset() -> f32 {
     get_keyboard_inset()
 }
 
+/// Extracted Android Material You (Monet) system dynamic palette colors.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct MonetColors {
+    pub primary_light: (u8, u8, u8),
+    pub primary_dark: (u8, u8, u8),
+    pub primary_container_light: (u8, u8, u8),
+    pub primary_container_dark: (u8, u8, u8),
+    pub secondary_light: (u8, u8, u8),
+    pub secondary_dark: (u8, u8, u8),
+    pub tertiary_light: (u8, u8, u8),
+    pub tertiary_dark: (u8, u8, u8),
+    pub surface_light: (u8, u8, u8),
+    pub surface_dark: (u8, u8, u8),
+}
+
+/// Query the Android system Material You / Monet colors from wallpaper via JNI.
+#[cfg(target_os = "android")]
+pub fn get_system_monet_colors() -> Option<MonetColors> {
+    let vm_ptr = VM_PTR.load(Ordering::SeqCst);
+    let activity_ptr = ACTIVITY_PTR.load(Ordering::SeqCst);
+    if vm_ptr.is_null() || activity_ptr.is_null() {
+        return None;
+    }
+
+    unsafe {
+        let vm = jni::JavaVM::from_raw(vm_ptr as *mut _).ok()?;
+        let mut env = vm.attach_current_thread().ok()?;
+        let activity = jni::objects::JObject::from_raw(activity_ptr as _);
+        let resources = env
+            .call_method(&activity, "getResources", "()Landroid/content/res/Resources;", &[])
+            .ok()?
+            .l()
+            .ok()?;
+
+        let mut query_color = |name: &str| -> Option<(u8, u8, u8)> {
+            let res_name = env.new_string(name).ok()?;
+            let def_type = env.new_string("color").ok()?;
+            let def_package = env.new_string("android").ok()?;
+            let id_val = env
+                .call_method(
+                    &resources,
+                    "getIdentifier",
+                    "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)I",
+                    &[(&res_name).into(), (&def_type).into(), (&def_package).into()],
+                )
+                .ok()?
+                .i()
+                .ok()?;
+
+            if id_val <= 0 {
+                return None;
+            }
+
+            let color_val = env
+                .call_method(&activity, "getColor", "(I)I", &[id_val.into()])
+                .ok()?
+                .i()
+                .ok()?;
+
+            let r = ((color_val >> 16) & 0xFF) as u8;
+            let g = ((color_val >> 8) & 0xFF) as u8;
+            let b = (color_val & 0xFF) as u8;
+            Some((r, g, b))
+        };
+
+        let primary_light = query_color("system_accent1_600")
+            .or_else(|| query_color("system_accent1_500"))?;
+        let primary_dark = query_color("system_accent1_200")
+            .or_else(|| query_color("system_accent1_300"))
+            .unwrap_or(primary_light);
+        let primary_container_light = query_color("system_accent1_100")
+            .unwrap_or(primary_dark);
+        let primary_container_dark = query_color("system_accent1_700")
+            .unwrap_or(primary_light);
+
+        let secondary_light = query_color("system_accent2_600")
+            .or_else(|| query_color("system_accent2_500"))
+            .unwrap_or(primary_light);
+        let secondary_dark = query_color("system_accent2_200")
+            .unwrap_or(secondary_light);
+
+        let tertiary_light = query_color("system_accent3_600")
+            .or_else(|| query_color("system_accent3_500"))
+            .unwrap_or(primary_light);
+        let tertiary_dark = query_color("system_accent3_200")
+            .unwrap_or(tertiary_light);
+
+        let surface_light = query_color("system_neutral1_10")
+            .or_else(|| query_color("system_neutral1_50"))
+            .unwrap_or((249, 249, 255));
+        let surface_dark = query_color("system_neutral1_900")
+            .unwrap_or((17, 19, 24));
+
+        let _ = env.exception_clear();
+
+        Some(MonetColors {
+            primary_light,
+            primary_dark,
+            primary_container_light,
+            primary_container_dark,
+            secondary_light,
+            secondary_dark,
+            tertiary_light,
+            tertiary_dark,
+            surface_light,
+            surface_dark,
+        })
+    }
+}
+
+/// Fallback for non-Android targets.
+#[cfg(not(target_os = "android"))]
+pub fn get_system_monet_colors() -> Option<MonetColors> {
+    None
+}
+
 /// Get the Android system accent color (Material You / Monet dynamic theming).
 pub fn get_system_accent_color() -> Option<(u8, u8, u8)> {
-    None
+    get_system_monet_colors().map(|c| c.primary_light)
 }
 
 /// Get the system font scaling factor configured by the user in Android Settings.
@@ -584,22 +711,136 @@ pub fn get_font_scale() -> f32 {
 }
 
 /// Request the display's maximum supported refresh rate (e.g., 90 Hz or 120 Hz).
-///
-/// Intended behavior when the JNI bridge is implemented:
-/// - Guard API level: Verify Build.VERSION.SDK_INT >= Build.VERSION_CODES.R (API 30+) before calling setFrameRate().
-/// - Validate display modes: Query Display.getSupportedModes() to find the actual maximum supported refresh rate before requesting it.
-/// - Seamless transition: When requesting a higher refresh rate, use the strategy that avoids visual interruptions.
-///   Passing CHANGE_FRAME_RATE_ALWAYS can cause a black screen or flicker on some devices.
-///   Use Surface.CHANGE_FRAME_RATE_ONLY_IF_SEAMLESS (or ANATIVEWINDOW_CHANGE_FRAME_RATE_ONLY_IF_SEAMLESS in native code) to avoid flicker.
-/// - Graceful failure: If the device does not support the requested rate or the system overrides it (e.g., battery saver),
-///   catch any exceptions and silently revert to the default behavior.
-/// - Do nothing if enabled is false.
+#[cfg(target_os = "android")]
 pub fn apply_refresh_rate_setting(enabled: bool) {
-    if !enabled {
+    let vm_ptr = VM_PTR.load(Ordering::SeqCst);
+    let activity_ptr = ACTIVITY_PTR.load(Ordering::SeqCst);
+    if vm_ptr.is_null() || activity_ptr.is_null() {
         return;
     }
-    todo!("Query Display.getSupportedModes(), check SDK_INT >= 30, use seamless frame rate switching strategy, and gracefully handle unsupported displays")
+
+    unsafe {
+        let vm = match jni::JavaVM::from_raw(vm_ptr as *mut _) {
+            Ok(v) => v,
+            Err(_) => return,
+        };
+        let mut env = match vm.attach_current_thread() {
+            Ok(e) => e,
+            Err(_) => return,
+        };
+
+        let activity = jni::objects::JObject::from_raw(activity_ptr as _);
+        let window = match env.call_method(&activity, "getWindow", "()Landroid/view/Window;", &[]) {
+            Ok(w) => match w.l() {
+                Ok(obj) => obj,
+                Err(_) => {
+                    let _ = env.exception_clear();
+                    return;
+                }
+            },
+            Err(_) => {
+                let _ = env.exception_clear();
+                return;
+            }
+        };
+
+        let window_manager = match env.call_method(
+            &activity,
+            "getWindowManager",
+            "()Landroid/view/WindowManager;",
+            &[],
+        ) {
+            Ok(r) => match r.l() {
+                Ok(wm) => wm,
+                Err(_) => {
+                    let _ = env.exception_clear();
+                    return;
+                }
+            },
+            Err(_) => {
+                let _ = env.exception_clear();
+                return;
+            }
+        };
+
+        let display = match env.call_method(
+            &window_manager,
+            "getDefaultDisplay",
+            "()Landroid/view/Display;",
+            &[],
+        ) {
+            Ok(r) => match r.l() {
+                Ok(d) => d,
+                Err(_) => {
+                    let _ = env.exception_clear();
+                    return;
+                }
+            },
+            Err(_) => {
+                let _ = env.exception_clear();
+                return;
+            }
+        };
+
+        let mut best_mode_id = 0i32;
+        let mut max_rate = 0.0f32;
+
+        if enabled {
+            if let Ok(modes_val) = env.call_method(
+                &display,
+                "getSupportedModes",
+                "()[Landroid/view/Display$Mode;",
+                &[],
+            ) {
+                if let Ok(arr) = modes_val.l() {
+                    let modes_array = jni::objects::JObjectArray::from_raw(arr.as_raw());
+                    let count = env.get_array_length(&modes_array).unwrap_or(0);
+                    for i in 0..count {
+                        if let Ok(mode) = env.get_object_array_element(&modes_array, i) {
+                            let rate = env
+                                .call_method(&mode, "getRefreshRate", "()F", &[])
+                                .and_then(|r| r.f())
+                                .unwrap_or(0.0);
+                            let mode_id = env
+                                .call_method(&mode, "getModeId", "()I", &[])
+                                .and_then(|r| r.i())
+                                .unwrap_or(0);
+                            if rate > max_rate {
+                                max_rate = rate;
+                                best_mode_id = mode_id;
+                            }
+                        }
+                    }
+                }
+            }
+            let _ = env.exception_clear();
+        }
+
+        // Set WindowManager.LayoutParams.preferredDisplayModeId and preferredRefreshRate
+        if let Ok(attrs) = env.call_method(
+            &window,
+            "getAttributes",
+            "()Landroid/view/WindowManager$LayoutParams;",
+            &[],
+        ) {
+            if let Ok(attrs_obj) = attrs.l() {
+                let _ = env.set_field(&attrs_obj, "preferredDisplayModeId", "I", best_mode_id.into());
+                let _ = env.set_field(&attrs_obj, "preferredRefreshRate", "F", max_rate.into());
+                let _ = env.call_method(
+                    &window,
+                    "setAttributes",
+                    "(Landroid/view/WindowManager$LayoutParams;)V",
+                    &[(&attrs_obj).into()],
+                );
+            }
+        }
+        let _ = env.exception_clear();
+    }
 }
+
+/// Fallback for non-Android platforms.
+#[cfg(not(target_os = "android"))]
+pub fn apply_refresh_rate_setting(_enabled: bool) {}
 
 /// Query whether the device display hardware supports high refresh rates (>= 90 Hz).
 ///

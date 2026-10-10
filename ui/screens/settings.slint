@@ -20,9 +20,10 @@ export component SettingsScreen inherits VerticalLayout {
     callback settings-reset-welcome();
     callback settings-open-about();
 
-    // Local toggle state properties (stubbed for future engine wiring)
-    property <bool> dark_theme_enabled: true;
-    property <bool> dynamic_color_enabled <=> MaterialPalette.dynamic_color_enabled;
+    in-out property <bool> dark_theme_enabled: true;
+    in-out property <bool> dynamic_color_enabled: false;
+    callback settings-dark-theme-changed(bool);
+    callback settings-dynamic-color-changed(bool);
 
     // Status bar clearance
     Rectangle {
@@ -62,34 +63,49 @@ export component SettingsScreen inherits VerticalLayout {
                 background: MaterialPalette.surface_container;
                 border_width: 1px;
                 border_color: MaterialPalette.outline_variant.with_alpha(15%);
+                clip: true;
 
                 VerticalLayout {
                     // Dark theme toggle
-                    HorizontalLayout {
-                        padding: MaterialStyleMetrics.padding_16;
-                        alignment: space-between;
+                    StateLayerArea {
+                        width: 100%;
+                        color: MaterialPalette.on_surface;
 
-                        VerticalLayout {
-                            alignment: center;
-                            spacing: MaterialStyleMetrics.spacing_4;
-
-                            MaterialText {
-                                text: "Dark Theme";
-                                style: MaterialTypography.title_medium;
-                                color: MaterialPalette.on_surface;
-                            }
-                            MaterialText {
-                                text: "Follow system display appearance";
-                                style: MaterialTypography.body_small;
-                                color: MaterialPalette.on_surface_variant;
-                            }
+                        clicked => {
+                            root.dark_theme_enabled = !root.dark_theme_enabled;
+                            root.settings-dark-theme-changed(root.dark_theme_enabled);
                         }
 
-                        Switch {
-                            checked: root.dark_theme_enabled;
-                            checked_state_changed(checked) => {
-                                // TODO: Wire to theme engine
-                                root.dark_theme_enabled = checked;
+                        HorizontalLayout {
+                            padding: MaterialStyleMetrics.padding_16;
+                            alignment: space-between;
+
+                            VerticalLayout {
+                                horizontal-stretch: 1;
+                                alignment: center;
+                                spacing: MaterialStyleMetrics.spacing_4;
+
+                                MaterialText {
+                                    text: "Dark Theme";
+                                    style: MaterialTypography.title_medium;
+                                    color: MaterialPalette.on_surface;
+                                }
+                                MaterialText {
+                                    text: "Follow system display appearance";
+                                    style: MaterialTypography.body_small;
+                                    color: MaterialPalette.on_surface_variant;
+                                }
+                            }
+
+                            VerticalLayout {
+                                alignment: center;
+                                Switch {
+                                    checked: root.dark_theme_enabled;
+                                    checked_state_changed(checked) => {
+                                        root.dark_theme_enabled = checked;
+                                        root.settings-dark-theme-changed(checked);
+                                    }
+                                }
                             }
                         }
                     }
@@ -97,31 +113,45 @@ export component SettingsScreen inherits VerticalLayout {
                     HorizontalDivider {}
 
                     // Dynamic colors toggle
-                    HorizontalLayout {
-                        padding: MaterialStyleMetrics.padding_16;
-                        alignment: space-between;
+                    StateLayerArea {
+                        width: 100%;
+                        color: MaterialPalette.on_surface;
 
-                        VerticalLayout {
-                            alignment: center;
-                            spacing: MaterialStyleMetrics.spacing_4;
-
-                            MaterialText {
-                                text: "Dynamic Colors";
-                                style: MaterialTypography.title_medium;
-                                color: MaterialPalette.on_surface;
-                            }
-                            MaterialText {
-                                text: "Extract accents from wallpaper (Monet)";
-                                style: MaterialTypography.body_small;
-                                color: MaterialPalette.on_surface_variant;
-                            }
+                        clicked => {
+                            root.dynamic_color_enabled = !root.dynamic_color_enabled;
+                            root.settings-dynamic-color-changed(root.dynamic_color_enabled);
                         }
 
-                        Switch {
-                            checked: root.dynamic_color_enabled;
-                            checked_state_changed(checked) => {
-                                // TODO: Wire to dynamic color Monet provider
-                                root.dynamic_color_enabled = checked;
+                        HorizontalLayout {
+                            padding: MaterialStyleMetrics.padding_16;
+                            alignment: space-between;
+
+                            VerticalLayout {
+                                horizontal-stretch: 1;
+                                alignment: center;
+                                spacing: MaterialStyleMetrics.spacing_4;
+
+                                MaterialText {
+                                    text: "Dynamic Colors";
+                                    style: MaterialTypography.title_medium;
+                                    color: MaterialPalette.on_surface;
+                                }
+                                MaterialText {
+                                    text: "Extract accents from wallpaper (Monet)";
+                                    style: MaterialTypography.body_small;
+                                    color: MaterialPalette.on_surface_variant;
+                                }
+                            }
+
+                            VerticalLayout {
+                                alignment: center;
+                                Switch {
+                                    checked: root.dynamic_color_enabled;
+                                    checked_state_changed(checked) => {
+                                        root.dynamic_color_enabled = checked;
+                                        root.settings-dynamic-color-changed(checked);
+                                    }
+                                }
                             }
                         }
                     }

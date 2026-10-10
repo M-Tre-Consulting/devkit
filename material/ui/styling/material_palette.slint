@@ -65,6 +65,20 @@ export global MaterialPalette {
     out property <color> background_modal: #000000.with_alpha(50%);
 
     in-out property <bool> dynamic_color_enabled: false;
+    in-out property <bool> dark_color_scheme: true;
+    in-out property <bool> has_monet: false;
+    in-out property <color> monet_primary_light: rgb(68, 94, 145);
+    in-out property <color> monet_primary_dark: rgb(173, 198, 255);
+    in-out property <color> monet_primary_container_light: rgb(216, 226, 255);
+    in-out property <color> monet_primary_container_dark: rgb(43, 70, 120);
+    in-out property <color> monet_secondary_light: rgb(87, 94, 113);
+    in-out property <color> monet_secondary_dark: rgb(191, 198, 220);
+    in-out property <color> monet_secondary_container_light: rgb(219, 226, 249);
+    in-out property <color> monet_secondary_container_dark: rgb(63, 71, 89);
+    in-out property <color> monet_tertiary_light: rgb(113, 85, 115);
+    in-out property <color> monet_tertiary_dark: rgb(222, 188, 223);
+    in-out property <color> monet_surface_light: rgb(249, 249, 255);
+    in-out property <color> monet_surface_dark: rgb(17, 19, 24);
 
     // M-Tre Brand Scheme (Primary Pine/Teal #2C7A66 / #5FC9A3, Secondary Rust #B75F3E / #E07A5F, Tertiary Amber #E7B44A / #F5C767)
     in property <MaterialSchemes> brand_schemes: {
@@ -174,16 +188,16 @@ export global MaterialPalette {
 
     in property <MaterialSchemes> dynamic_schemes: {
         light: {
-            primary: rgb(68, 94, 145),
-            surfaceTint: rgb(68, 94, 145),
+            primary: root.has_monet ? root.monet_primary_light : rgb(68, 94, 145),
+            surfaceTint: root.has_monet ? root.monet_primary_light : rgb(68, 94, 145),
             onPrimary: rgb(255, 255, 255),
-            primaryContainer: rgb(216, 226, 255),
+            primaryContainer: root.has_monet ? root.monet_primary_container_light : rgb(216, 226, 255),
             onPrimaryContainer: rgb(0, 26, 66),
-            secondary: rgb(87, 94, 113),
+            secondary: root.has_monet ? root.monet_secondary_light : rgb(87, 94, 113),
             onSecondary: rgb(255, 255, 255),
-            secondaryContainer: rgb(219, 226, 249),
+            secondaryContainer: root.has_monet ? root.monet_secondary_container_light : rgb(219, 226, 249),
             onSecondaryContainer: rgb(20, 27, 44),
-            tertiary: rgb(113, 85, 115),
+            tertiary: root.has_monet ? root.monet_tertiary_light : rgb(113, 85, 115),
             onTertiary: rgb(255, 255, 255),
             tertiaryContainer: rgb(252, 215, 251),
             onTertiaryContainer: rgb(41, 19, 45),
@@ -191,9 +205,9 @@ export global MaterialPalette {
             onError: rgb(255, 255, 255),
             errorContainer: rgb(255, 218, 214),
             onErrorContainer: rgb(65, 0, 2),
-            background: rgb(249, 249, 255),
+            background: root.has_monet ? root.monet_surface_light : rgb(249, 249, 255),
             onBackground: rgb(26, 27, 32),
-            surface: rgb(249, 249, 255),
+            surface: root.has_monet ? root.monet_surface_light : rgb(249, 249, 255),
             onSurface: rgb(26, 27, 32),
             surfaceVariant: rgb(225, 226, 236),
             onSurfaceVariant: rgb(68, 71, 79),
@@ -203,7 +217,7 @@ export global MaterialPalette {
             scrim: rgb(0, 0, 0),
             inverseSurface: rgb(47, 48, 54),
             inverseOnSurface: rgb(240, 240, 247),
-            inversePrimary: rgb(173, 198, 255),
+            inversePrimary: root.has_monet ? root.monet_primary_dark : rgb(173, 198, 255),
             primaryFixed: rgb(216, 226, 255),
             onPrimaryFixed: rgb(0, 26, 66),
             primaryFixedDim: rgb(173, 198, 255),
@@ -225,16 +239,16 @@ export global MaterialPalette {
             surfaceContainerHighest: rgb(226, 226, 233),
         },
         dark: {
-            primary: rgb(173, 198, 255),
-            surfaceTint: rgb(173, 198, 255),
+            primary: root.has_monet ? root.monet_primary_dark : rgb(173, 198, 255),
+            surfaceTint: root.has_monet ? root.monet_primary_dark : rgb(173, 198, 255),
             onPrimary: rgb(17, 47, 96),
-            primaryContainer: rgb(43, 70, 120),
+            primaryContainer: root.has_monet ? root.monet_primary_container_dark : rgb(43, 70, 120),
             onPrimaryContainer: rgb(216, 226, 255),
-            secondary: rgb(191, 198, 220),
+            secondary: root.has_monet ? root.monet_secondary_dark : rgb(191, 198, 220),
             onSecondary: rgb(41, 48, 65),
-            secondaryContainer: rgb(63, 71, 89),
+            secondaryContainer: root.has_monet ? root.monet_secondary_container_dark : rgb(63, 71, 89),
             onSecondaryContainer: rgb(219, 226, 249),
-            tertiary: rgb(222, 188, 223),
+            tertiary: root.has_monet ? root.monet_tertiary_dark : rgb(222, 188, 223),
             onTertiary: rgb(64, 40, 67),
             tertiaryContainer: rgb(88, 62, 91),
             onTertiaryContainer: rgb(252, 215, 251),
@@ -242,9 +256,9 @@ export global MaterialPalette {
             onError: rgb(105, 0, 5),
             errorContainer: rgb(147, 0, 10),
             onErrorContainer: rgb(255, 218, 214),
-            background: rgb(17, 19, 24),
+            background: root.has_monet ? root.monet_surface_dark : rgb(17, 19, 24),
             onBackground: rgb(226, 226, 233),
-            surface: rgb(17, 19, 24),
+            surface: root.has_monet ? root.monet_surface_dark : rgb(17, 19, 24),
             onSurface: rgb(226, 226, 233),
             surfaceVariant: rgb(68, 71, 79),
             onSurfaceVariant: rgb(196, 198, 208),
@@ -254,7 +268,7 @@ export global MaterialPalette {
             scrim: rgb(0, 0, 0),
             inverseSurface: rgb(226, 226, 233),
             inverseOnSurface: rgb(47, 48, 54),
-            inversePrimary: rgb(68, 94, 145),
+            inversePrimary: root.has_monet ? root.monet_primary_light : rgb(68, 94, 145),
             primaryFixed: rgb(216, 226, 255),
             onPrimaryFixed: rgb(0, 26, 66),
             primaryFixedDim: rgb(173, 198, 255),
@@ -278,5 +292,5 @@ export global MaterialPalette {
     };
 
     property <MaterialSchemes> active_schemes: root.dynamic_color_enabled ? root.dynamic_schemes : root.brand_schemes;
-    property <MaterialScheme> scheme: Palette.color_scheme == ColorScheme.dark ? root.active_schemes.dark : root.active_schemes.light;
+    property <MaterialScheme> scheme: root.dark_color_scheme ? root.active_schemes.dark : root.active_schemes.light;
 }

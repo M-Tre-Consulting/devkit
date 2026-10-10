@@ -162,6 +162,21 @@ export component AppWindow inherits Window {
     in-out property <bool> high_refresh_rate_supported: false;
     in-out property <bool> welcome_open: false;
     in-out property <int> welcome_page: 0;
+    in-out property <bool> dark_theme_enabled <=> MaterialPalette.dark_color_scheme;
+    in-out property <bool> dynamic_color_enabled <=> MaterialPalette.dynamic_color_enabled;
+    in-out property <bool> has_monet <=> MaterialPalette.has_monet;
+    in-out property <color> monet_primary_light <=> MaterialPalette.monet_primary_light;
+    in-out property <color> monet_primary_dark <=> MaterialPalette.monet_primary_dark;
+    in-out property <color> monet_primary_container_light <=> MaterialPalette.monet_primary_container_light;
+    in-out property <color> monet_primary_container_dark <=> MaterialPalette.monet_primary_container_dark;
+    in-out property <color> monet_secondary_light <=> MaterialPalette.monet_secondary_light;
+    in-out property <color> monet_secondary_dark <=> MaterialPalette.monet_secondary_dark;
+    in-out property <color> monet_secondary_container_light <=> MaterialPalette.monet_secondary_container_light;
+    in-out property <color> monet_secondary_container_dark <=> MaterialPalette.monet_secondary_container_dark;
+    in-out property <color> monet_tertiary_light <=> MaterialPalette.monet_tertiary_light;
+    in-out property <color> monet_tertiary_dark <=> MaterialPalette.monet_tertiary_dark;
+    in-out property <color> monet_surface_light <=> MaterialPalette.monet_surface_light;
+    in-out property <color> monet_surface_dark <=> MaterialPalette.monet_surface_dark;
 
     // Navigation and state callbacks
     callback switch_mode(int);
@@ -170,6 +185,8 @@ export component AppWindow inherits Window {
     callback clear_recents();
     callback clear_favorites();
     callback open_about();
+    callback dark_theme_changed(bool);
+    callback dynamic_color_changed(bool);
     callback high_refresh_rate_changed(bool);
     callback dismiss_welcome();
     callback reset_welcome();
@@ -374,6 +391,16 @@ export component AppWindow inherits Window {
                     nav_bar_inset: root.nav_bar_inset;
                     pill_height: pill_nav.height;
                     pill_bottom_margin: root.pill_bottom_margin;
+                    dark_theme_enabled: root.dark_theme_enabled;
+                    dynamic_color_enabled: root.dynamic_color_enabled;
+                    settings-dark-theme-changed(enabled) => {
+                        root.dark_theme_enabled = enabled;
+                        root.dark_theme_changed(enabled);
+                    }
+                    settings-dynamic-color-changed(enabled) => {
+                        root.dynamic_color_enabled = enabled;
+                        root.dynamic_color_changed(enabled);
+                    }
                     high_refresh_rate_enabled: root.high_refresh_rate_enabled;
                     high_refresh_rate_supported: root.high_refresh_rate_supported;
                     settings-high-refresh-rate-changed(enabled) => {
