@@ -167,22 +167,94 @@ mod tests {
     const SAMPLE_JWT: &str = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c";
 
     #[test]
-    #[ignore = "not implemented yet"]
     fn test_decode_sample_jwt() {
         let input = JwtInput {
             token: SAMPLE_JWT.to_string(),
         };
-        let out = decode_jwt(&input).unwrap();
-        assert!(out.header_json.contains("HS256"));
-        assert!(out.payload_json.contains("John Doe"));
+        let out = decode_jwt(&input).expect("valid token should decode");
+        assert_eq!(out.algorithm, "HS256");
+        assert!(out.header_json.contains("\"alg\": \"HS256\""));
+        assert!(out.payload_json.contains("\"name\": \"John Doe\""));
+        assert_eq!(out.signature, "SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c");
+        assert_eq!(out.expiration_status, ExpirationStatus::NoExpirationClaim);
+        assert_eq!(out.expiration_time, "None");
     }
 
     #[test]
-    #[ignore = "not implemented yet"]
-    fn test_decode_empty() {
-        let input = JwtInput {
+    fn test_decode_empty_and_whitespace() {
+        let empty = JwtInput {
             token: "".to_string(),
         };
-        assert!(decode_jwt(&input).is_err());
+        assert_eq!(decode_jwt(&empty), Err(JwtError::EmptyToken));
+
+        let whitespace = JwtInput {
+            token: "   \t\n  ".to_string(),
+        };
+        assert_eq!(decode_jwt(&whitespace), Err(JwtError::EmptyToken));
+    }
+
+    #[test]
+    fn test_decode_invalid_segment_count() {
+        let one_seg = JwtInput {
+            token: "single_part".to_string(),
+        };
+        assert_eq!(decode_jwt(&one_seg), Err(JwtError::InvalidSegmentCount(1)));
+
+        let two_segs = JwtInput {
+            token: "part1.part2".to_string(),
+        };
+        assert_eq!(decode_jwt(&two_segs), Err(JwtError::InvalidSegmentCount(2)));
+
+        let four_segs = JwtInput {
+            token: "part1.part2.part3.part4".to_string(),
+        };
+        assert_eq!(decode_jwt(&four_segs), Err(JwtError::InvalidSegmentCount(4)));
+    }
+
+    #[test]
+    fn test_decode_invalid_base64() {
+        let invalid_b64 = JwtInput {
+            token: "not-valid-base64!!!.eyJzdWIiOiIxMjM0In0.sig".to_string(),
+        };
+        assert!(matches!(decode_jwt(&invalid_b64), Err(JwtError::InvalidBase64(_))));
+    }
+
+    #[test]
+    fn test_decode_invalid_json() {
+        let non_json = JwtInput {
+            token: "aGVsbG8gd29ybGQ.aGVsbG8gd29ybGQ.sig".to_string(),
+        };
+        assert!(matches!(decode_jwt(&non_json), Err(JwtError::InvalidJson(_))));
+    }
+
+    #[test]
+    fn test_decode_expired_token() {
+        let expired_token = JwtInput {
+            token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhbGljZSIsImV4cCI6MTAwMDAwMDAwMH0.fakesig".to_string(),
+        };
+        let out = decode_jwt(&expired_token).expect("expired token is still structurally valid");
+        assert_eq!(out.algorithm, "HS256");
+        assert_eq!(out.expiration_status, ExpirationStatus::Expired);
+        assert!(out.expiration_time.contains("2001-09-09"));
+    }
+
+    #[test]
+    fn test_decode_active_token() {
+        let active_token = JwtInput {
+            token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJib2IiLCJleHAiOjI1MDAwMDAwMDB9.fakesig".to_string(),
+        };
+        let out = decode_jwt(&active_token).expect("active token should decode successfully");
+        assert_eq!(out.algorithm, "HS256");
+        assert_eq!(out.expiration_status, ExpirationStatus::Active);
+        assert!(out.expiration_time.contains("2049-03-22"));
+    }
+
+    #[test]
+    fn test_decode_padded_base64url() {
+        let padded_token = JwtInput {
+            token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhbGljZSIsImV4cCI6MTAwMDAwMDAwMH0=.fakesig".to_string(),
+        };
+        let out = decode_jwt(&padded_token).expect("padded token should decode successfully");
+        assert_eq!(out.expiration_status, ExpirationStatus::Expired);
     }
 }
