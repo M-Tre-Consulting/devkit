@@ -180,6 +180,7 @@ export component AppWindow inherits Window {
     in-out property <int> default_hash_algorithm: 2;
     in-out property <int> default_uuid_version: 1;
     in-out property <int> default_timestamp_format: 0;
+    in-out property <bool> vulkan_backend_enabled: true;
 
     // Navigation and state callbacks
     callback switch_mode(int);
@@ -194,6 +195,7 @@ export component AppWindow inherits Window {
     callback default_uuid_version_changed(int);
     callback default_timestamp_format_changed(int);
     callback high_refresh_rate_changed(bool);
+    callback graphics_backend_changed(bool);
     callback dismiss_welcome();
     callback reset_welcome();
     callback back();
@@ -427,6 +429,11 @@ export component AppWindow inherits Window {
                     settings-high-refresh-rate-changed(enabled) => {
                         root.high_refresh_rate_enabled = enabled;
                         root.high_refresh_rate_changed(enabled);
+                    }
+                    vulkan_backend_enabled: root.vulkan_backend_enabled;
+                    settings-graphics-backend-changed(enabled) => {
+                        root.vulkan_backend_enabled = enabled;
+                        root.graphics_backend_changed(enabled);
                     }
                     settings-clear-recents => {
                         root.clear_recents();

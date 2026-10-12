@@ -63,6 +63,10 @@ fn dynamic_color_file() -> PathBuf {
     get_storage_dir().join("dynamic_color.txt")
 }
 
+fn vulkan_backend_file() -> PathBuf {
+    get_storage_dir().join("vulkan_backend.txt")
+}
+
 fn default_hash_algorithm_file() -> PathBuf {
     get_storage_dir().join("default_hash_algorithm.txt")
 }
@@ -233,6 +237,23 @@ pub fn save_dynamic_color(enabled: bool) {
     let dir = get_storage_dir();
     let _ = fs::create_dir_all(&dir);
     let _ = fs::write(dynamic_color_file(), if enabled { "true" } else { "false" });
+}
+
+/// Load the persisted graphics backend preference (true = Vulkan, false = OpenGL ES, defaults to true).
+pub fn load_vulkan_backend() -> bool {
+    let path = vulkan_backend_file();
+    if let Ok(content) = fs::read_to_string(path) {
+        content.trim().eq_ignore_ascii_case("true") || content.trim() == "1"
+    } else {
+        true
+    }
+}
+
+/// Save the graphics backend preference.
+pub fn save_vulkan_backend(enabled: bool) {
+    let dir = get_storage_dir();
+    let _ = fs::create_dir_all(&dir);
+    let _ = fs::write(vulkan_backend_file(), if enabled { "true" } else { "false" });
 }
 
 /// Load the persisted default hash algorithm index (defaults to 2 for SHA-256).
@@ -435,6 +456,24 @@ mod tests {
 
         save_default_timestamp_format(3); // Seconds
         assert_eq!(load_default_timestamp_format(), 3);
+
+        let _ = fs::remove_dir_all(&temp_dir);
+    }
+
+    #[test]
+    fn test_vulkan_backend_persistence() {
+        let _guard = TEST_LOCK.lock().unwrap();
+        let temp_dir = std::env::temp_dir().join(format!("devkit_vulkan_test_{}", std::process::id()));
+        init_storage_dir(temp_dir.clone());
+
+        let _ = fs::remove_file(vulkan_backend_file());
+        assert!(load_vulkan_backend()); // Default is true (Vulkan)
+
+        save_vulkan_backend(false); // Toggle to OpenGL ES
+        assert!(!load_vulkan_backend());
+
+        save_vulkan_backend(true);
+        assert!(load_vulkan_backend());
 
         let _ = fs::remove_dir_all(&temp_dir);
     }

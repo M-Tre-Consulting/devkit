@@ -12,7 +12,7 @@ pub fn setup_keyboard_observer(ui: &crate::AppWindow) -> slint::Timer {
     let kb_timer = slint::Timer::default();
     let ui_weak = ui.as_weak();
     let mut last_kb: f32 = 0.0;
-    kb_timer.start(slint::TimerMode::Repeated, std::time::Duration::from_millis(200), move || {
+    kb_timer.start(slint::TimerMode::Repeated, std::time::Duration::from_millis(500), move || {
         let kb = crate::platform::android::query_keyboard_inset();
         if (kb - last_kb).abs() > 0.5 {
             last_kb = kb;
@@ -26,6 +26,13 @@ pub fn setup_keyboard_observer(ui: &crate::AppWindow) -> slint::Timer {
 }
 
 pub fn run() -> Result<(), slint::PlatformError> {
+    let vulkan_backend = crate::storage::load_vulkan_backend();
+    if vulkan_backend {
+        std::env::set_var("SLINT_BACKEND", "winit-skia-vulkan");
+    } else {
+        std::env::set_var("SLINT_BACKEND", "winit-skia-opengl");
+    }
+
     let ui = crate::AppWindow::new()?;
     let status_inset = crate::platform::android::get_status_bar_inset();
     let nav_inset = crate::platform::android::get_navigation_bar_inset();
@@ -60,6 +67,8 @@ pub fn update_high_refresh_rate(ui: &crate::AppWindow) {
     ui.set_high_refresh_rate_supported(supported);
     let enabled = crate::storage::load_high_refresh_rate();
     ui.set_high_refresh_rate_enabled(enabled);
+    let vulkan_backend = crate::storage::load_vulkan_backend();
+    ui.set_vulkan_backend_enabled(vulkan_backend);
 }
 
 pub fn update_theme_settings(ui: &crate::AppWindow) {
@@ -617,6 +626,15 @@ pub fn setup_app_state(ui: &crate::AppWindow) {
     });
 
     let ui_handle = ui.as_weak();
+    ui.on_graphics_backend_changed(move |enabled| {
+        crate::platform::android::haptic_tap();
+        crate::storage::save_vulkan_backend(enabled);
+        if let Some(ui) = ui_handle.upgrade() {
+            ui.set_vulkan_backend_enabled(enabled);
+        }
+    });
+
+    let ui_handle = ui.as_weak();
     ui.on_dark_theme_changed(move |enabled| {
         crate::platform::android::haptic_tap();
         crate::storage::save_dark_theme(enabled);
@@ -770,6 +788,12 @@ pub fn android_main(android_app: slint::android::AndroidApp) {
     let nav_inset = crate::platform::android::query_navigation_bar_inset(&android_app);
     crate::platform::android::set_status_bar_inset(status_inset);
     crate::platform::android::set_navigation_bar_inset(nav_inset);
+    let vulkan_backend = crate::storage::load_vulkan_backend();
+    if vulkan_backend {
+        std::env::set_var("SLINT_BACKEND", "android-skia-vulkan");
+    } else {
+        std::env::set_var("SLINT_BACKEND", "android-skia-opengl");
+    }
     slint::android::init(android_app).unwrap();
     let ui = crate::AppWindow::new().unwrap();
     ui.set_status_bar_inset(status_inset);
