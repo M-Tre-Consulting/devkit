@@ -1,6 +1,6 @@
 [package]
 name = "devkit"
-version = "0.2.1"
+version = "0.2.3"
 edition = "2021"
 license = "Apache-2.0"
 
@@ -47,12 +47,13 @@ target_archs = ["arm64-v8a", "x86_64"]
 
 [package.metadata.android.sdk]
 min_sdk_version = 26
-target_sdk_version = 36
+target_sdk_version = 35
 
 [package.metadata.android.application]
 label = "DevKit"
 icon = "@mipmap/ic_launcher"
 round_icon = "@mipmap/ic_launcher_round"
+extract_native_libs = true
 
 [package.metadata.android.activity]
 window_soft_input_mode = "adjustResize"
