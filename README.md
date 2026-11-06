@@ -61,6 +61,25 @@ PATH=/opt/android-studio/jbr/bin:$PATH cargo apk run --target aarch64-linux-andr
 
 > Note: Setting `JAVA_HOME` alone is not sufficient because `apksigner` requires the `java` binary to be present directly in `PATH`.
 
+### Building Android App Bundle (.aab)
+
+- **Linux / WSL:**
+  ```bash
+  ./scripts/build-aab.sh target/release/apk/devkit.apk target/release/bundle/devkit.aab
+  ```
+
+- **Windows (PowerShell, senza WSL):**
+  ```powershell
+  .\scripts\build-aab.ps1
+  # Per compilare prima l'APK ed esportare l'AAB:
+  .\scripts\build-aab.ps1 -BuildApk
+  ```
+
+- **Windows (CMD / Batch):**
+  ```cmd
+  scripts\build-aab.bat
+  ```
+
 ## Project structure
 
 ```

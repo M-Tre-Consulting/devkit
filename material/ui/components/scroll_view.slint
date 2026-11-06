@@ -134,9 +134,10 @@ export component ScrollView {
     property <length> prev_content_y: 0px;
 
     property <length> prev_dy: 0px;
-    property <duration> overscroll_duration: 140ms;
+    property <duration> overscroll_duration: 180ms;
     property <easing> overscroll_easing: cubic-bezier(0.2, 0.0, 0.0, 1.0);
     property <bool> is_bouncing: false;
+    property <length> momentum_velocity: 0px;
 
     animate overscroll_y {
         duration: root.overscroll_duration;
@@ -152,15 +153,61 @@ export component ScrollView {
         }
     }
 
+    function cancel_momentum() {
+        if momentum_timer.running {
+            momentum_timer.running = false;
+            root.momentum_velocity = 0px;
+        }
+    }
+
+    function start_momentum(v: length) {
+        if root.is_bouncing || spring_timer.running {
+            return;
+        }
+        root.momentum_velocity = v;
+        momentum_timer.running = true;
+    }
+
     spring_timer := Timer {
-        interval: 60ms;
+        interval: 80ms;
         running: false;
         triggered => {
-            root.overscroll_duration = 140ms;
+            root.overscroll_duration = 180ms;
             root.overscroll_easing = cubic-bezier(0.2, 0.0, 0.0, 1.0);
             root.overscroll_y = 0px;
             self.running = false;
             root.is_bouncing = false;
+        }
+    }
+
+    momentum_timer := Timer {
+        interval: 16ms;
+        running: false;
+        triggered => {
+            let max_s = flickable.content_height - flickable.height;
+            if max_s <= 0px {
+                self.running = false;
+                return;
+            }
+            // Natural exponential momentum decay
+            root.momentum_velocity = root.momentum_velocity * 0.94;
+            let next_y = flickable.content_y + root.momentum_velocity;
+
+            if next_y >= 0px {
+                flickable.content_y = 0px;
+                self.running = false;
+                root.trigger_bounce(min(24px, root.momentum_velocity.abs() * 0.7));
+            } else if next_y <= -max_s {
+                flickable.content_y = -max_s;
+                self.running = false;
+                root.trigger_bounce(max(-24px, -root.momentum_velocity.abs() * 0.7));
+            } else {
+                flickable.content_y = next_y;
+            }
+
+            if root.momentum_velocity.abs() < 0.4px {
+                self.running = false;
+            }
         }
     }
 
@@ -169,10 +216,10 @@ export component ScrollView {
             return;
         }
         root.is_bouncing = true;
-        root.overscroll_duration = 60ms;
+        root.overscroll_duration = 80ms;
         root.overscroll_easing = ease-out;
         root.overscroll_y = target_overshoot;
-        spring_timer.interval = 60ms;
+        spring_timer.interval = 80ms;
         spring_timer.running = true;
     }
 
@@ -182,9 +229,10 @@ export component ScrollView {
         root.prev_content_y = self.content_y;
         root.prev_dy = dy;
 
-        // If user touches/drags during a bounce, immediately cancel and settle the bounce
-        if root.is_bouncing && (dy.abs() > 0.2px) {
+        // If user touches/drags during a bounce or momentum, immediately cancel and settle
+        if (root.is_bouncing || momentum_timer.running) && (dy.abs() > 0.2px) {
             root.cancel_bounce();
+            root.cancel_momentum();
             return;
         }
 
@@ -194,20 +242,16 @@ export component ScrollView {
         }
 
         // Top boundary arrival:
-        // dy > 0 means moving upward towards 0px.
-        // If content_y reached 0px (or >= -1px) and incoming velocity was positive:
         if self.content_y >= -1px && (dy > 1.0px || last_dy > 1.0px) {
             let vel = max(dy, last_dy);
             root.prev_dy = 0px;
-            root.trigger_bounce(min(12px, vel * 0.5));
+            root.trigger_bounce(min(24px, vel * 0.7));
         }
         // Bottom boundary arrival:
-        // dy < 0 means moving downward towards -max_s.
-        // If content_y reached -max_s (or <= -max_s + 1px) and incoming velocity was negative:
         else if self.content_y <= -max_s + 1px && (dy < -1.0px || last_dy < -1.0px) {
             let vel = min(dy, last_dy);
             root.prev_dy = 0px;
-            root.trigger_bounce(max(-12px, vel * 0.5));
+            root.trigger_bounce(max(-24px, vel * 0.7));
         }
     }
 
@@ -231,9 +275,11 @@ export component ScrollView {
             let dy = self.content_y - root.prev_content_y;
 
             if self.content_y >= 0px && dy > 1.0px {
-                root.trigger_bounce(min(12px, dy * 0.5));
+                root.trigger_bounce(min(24px, dy * 0.7));
             } else if max_s > 0px && self.content_y <= -max_s && dy < -1.0px {
-                root.trigger_bounce(max(-12px, dy * 0.5));
+                root.trigger_bounce(max(-24px, dy * 0.7));
+            } else if dy.abs() > 1.5px {
+                root.start_momentum(dy * 2.2);
             }
             root.scrolled();
         }

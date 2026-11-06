@@ -951,6 +951,85 @@ pub fn is_high_refresh_rate_supported() -> bool {
     false
 }
 
+/// Detects whether the current device is a Google Tensor G5 / G6 or utilizes an
+/// Imagination Technologies GPU (IMG DXT / C-Series) where Vulkan exhibits pipeline
+/// compile micro-stuttering with Skia.
+#[cfg(target_os = "android")]
+pub fn is_tensor_g5_or_g6() -> bool {
+    let vm_ptr = VM_PTR.load(Ordering::SeqCst);
+    if vm_ptr.is_null() {
+        return false;
+    }
+
+    unsafe {
+        let vm = match jni::JavaVM::from_raw(vm_ptr as *mut _) {
+            Ok(v) => v,
+            Err(_) => return false,
+        };
+        let mut env = match vm.attach_current_thread() {
+            Ok(e) => e,
+            Err(_) => return false,
+        };
+
+        let check_field = |env: &mut jni::JNIEnv, field: &str| -> Option<String> {
+            let class = env.find_class("android/os/Build").ok()?;
+            let val = env.get_static_field(class, field, "Ljava/lang/String;").ok()?;
+            let obj = val.l().ok()?;
+            if obj.as_raw().is_null() {
+                return None;
+            }
+            let jstr: jni::objects::JString = obj.into();
+            env.get_string(&jstr).ok().map(|s| s.to_string_lossy().into_owned())
+        };
+
+        let hardware = check_field(&mut env, "HARDWARE").unwrap_or_default().to_lowercase();
+        let board = check_field(&mut env, "BOARD").unwrap_or_default().to_lowercase();
+        let soc_model = check_field(&mut env, "SOC_MODEL").unwrap_or_default().to_lowercase();
+        let device = check_field(&mut env, "DEVICE").unwrap_or_default().to_lowercase();
+
+        let _ = env.exception_clear();
+
+        // Tensor G5 ("laguna") / Tensor G6 ("malibu") / IMG PowerVR GPUs
+        hardware.contains("laguna")
+            || board.contains("laguna")
+            || hardware.contains("malibu")
+            || board.contains("malibu")
+            || device.contains("laguna")
+            || device.contains("malibu")
+            || soc_model.contains("tensor g5")
+            || soc_model.contains("tensor-g5")
+            || soc_model.contains("tensor_g5")
+            || soc_model.contains("tensor g6")
+            || soc_model.contains("tensor-g6")
+            || soc_model.contains("tensor_g6")
+            || hardware.contains("powervr")
+            || hardware.contains("img")
+    }
+}
+
+#[cfg(not(target_os = "android"))]
+pub fn is_tensor_g5_or_g6() -> bool {
+    false
+}
+
+/// Returns the optimal graphics backend based on hardware detection.
+/// Tensor G5 and G6 use Skia OpenGL ES to eliminate driver presentation micro-stutters,
+/// whereas Snapdragon, Exynos, Dimensity, and Tensor G1-G4 use Skia Vulkan.
+pub fn get_optimal_graphics_backend() -> &'static str {
+    #[cfg(target_os = "android")]
+    {
+        if is_tensor_g5_or_g6() {
+            "android-skia-opengl"
+        } else {
+            "android-skia-vulkan"
+        }
+    }
+    #[cfg(not(target_os = "android"))]
+    {
+        "winit-skia-opengl"
+    }
+}
+
 /// Perform a subtle haptic tap (KEYBOARD_TAP) via JNI on Android.
 ///
 /// Respects the user's system haptic feedback setting (Settings.System.HAPTIC_FEEDBACK_ENABLED).
