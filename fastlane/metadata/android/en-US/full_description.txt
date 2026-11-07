@@ -1,0 +1,29 @@
+DevKit is an all-in-one developer and system administrator utility toolbox for Android, built 100% in Rust with Slint UI and Material Design 3.
+
+Designed to be fast, privacy-focused, and completely offline-first, DevKit provides essential utilities for day-to-day coding, networking, and debugging tasks without tracking, ads, or unnecessary permissions.
+
+Included Tools:
+• Subnet Calculator: IPv4 CIDR, netmask, broadcast, host ranges, and binary masks
+• Hash Calculator: MD5, SHA-1, SHA-256, SHA-512, BLAKE2b, and BLAKE3 checksums (Hex & Base64)
+• Base64: Encode and decode strings and byte payloads with URL-safe support
+• UUID Generator: Bulk generation for UUID v1, v4, and v7 with customizable casing and hyphens
+• Timestamp: Bidirectional Unix Epoch and ISO 8601 conversions with live clock
+• Regex Tester: Real-time pattern evaluation with capture groups and flags
+• JSON ↔ YAML: Seamless bidirectional format conversion
+• CRON Parser: Schedule syntax inspection with human-readable explanations and upcoming triggers
+• GZip: Payload compression and decompression utilities
+• Code Formatter: Prettify and validate JSON, SQL, and HTML markup
+• Chmod Calculator: Linux permission calculator with interactive matrix, octal, and symbolic output
+• Color Converter: Multi-format conversions across HEX, RGB, HSL, HSV, and CMYK with live preview
+• Contrast Checker: WCAG 2.1 compliance checker with contrast ratio calculation and AA/AAA badges
+• JWT Decoder: Inspect tokens, claims, headers, and expiry timestamps
+• Diff Studio: Side-by-side and unified text comparison
+• QR Code Studio: Generate QR codes with configurable ECC and integrated TOTP generation
+• HTTP Client: On-device REST testing with custom HTTP methods, headers, and body inspection
+• LAN Scout: Local network device discovery and subnet scanner
+
+Features:
+• Native Material Design 3 interface with Dark Theme and Dynamic Colors (Monet)
+• Floating Pill Navigation with quick access to Favorites and Recents
+• Zero JVM runtime overhead — 100% native Rust UI and logic
+• Complete privacy: offline-first, no telemetry, no third-party network trackers

@@ -1,0 +1,1 @@
+All-in-one developer & sysadmin toolbox built with Rust and Slint.
