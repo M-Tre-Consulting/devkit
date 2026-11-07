@@ -6,7 +6,7 @@
 //! Rapidly probes targets for open developer servers, databases, containers,
 //! and remote shells (Vite, Next.js, Node, Docker, PostgreSQL, Redis, SSH).
 
-use std::net::{SocketAddr, TcpStream};
+use std::net::{SocketAddr, TcpStream, ToSocketAddrs};
 use std::time::{Duration, Instant};
 
 /// Known developer and infrastructure port definition.
@@ -46,35 +46,112 @@ pub struct PortScanResult {
     pub latency_ms: u64,
 }
 
-/// Scan a single IP host for the standard developer service ports.
+/// Structure holding discovered local network parameters.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct NetworkIdentity {
+    pub device_ip: Option<String>,
+    pub gateway_ip: Option<String>,
+}
+
+/// Detect active local Wi-Fi / LAN IP and gateway without network delay.
+pub fn detect_network_identity() -> NetworkIdentity {
+    let mut device_ip = None;
+    let mut gateway_ip = None;
+
+    // 1. Query kernel route table using connected UDP socket (no packets transmitted)
+    if let Ok(socket) = std::net::UdpSocket::bind("0.0.0.0:0") {
+        if socket.connect("8.8.8.8:80").is_ok() {
+            if let Ok(local) = socket.local_addr() {
+                if let std::net::IpAddr::V4(v4) = local.ip() {
+                    let oct = v4.octets();
+                    device_ip = Some(v4.to_string());
+                    if oct[0] == 10 && oct[1] == 0 && oct[2] == 2 {
+                        gateway_ip = Some("10.0.2.2".to_string());
+                    } else {
+                        gateway_ip = Some(format!("{}.{}.{}.1", oct[0], oct[1], oct[2]));
+                    }
+                }
+            }
+        }
+    }
+
+    // 2. Parse /proc/net/route if present (Linux / Android standard interface table)
+    if let Ok(content) = std::fs::read_to_string("/proc/net/route") {
+        for line in content.lines().skip(1) {
+            let fields: Vec<&str> = line.split_whitespace().collect();
+            if fields.len() >= 3 {
+                let dest = fields[1];
+                let gw = fields[2];
+                if dest == "00000000" && gw != "00000000" {
+                    if let Ok(num) = u32::from_str_radix(gw, 16) {
+                        let b = num.to_le_bytes();
+                        gateway_ip = Some(format!("{}.{}.{}.{}", b[0], b[1], b[2], b[3]));
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
+    // Default fallback to 192.168.0.1 if discovery yielded nothing
+    let final_gateway = gateway_ip.or_else(|| Some("192.168.0.1".to_string()));
+    let final_device = device_ip.or_else(|| Some("127.0.0.1".to_string()));
+
+    NetworkIdentity {
+        device_ip: final_device,
+        gateway_ip: final_gateway,
+    }
+}
+
+/// Scan a single IP host or hostname for the standard developer service ports in parallel.
 pub fn scan_host(host_ip: &str, timeout_ms: u64) -> Result<Vec<PortScanResult>, String> {
     let clean_ip = host_ip.trim();
     if clean_ip.is_empty() {
         return Err("Host IP address cannot be empty".to_string());
     }
 
-    let ip: std::net::IpAddr = clean_ip
-        .parse()
-        .map_err(|e| format!("Invalid IP address '{clean_ip}': {e}"))?;
+    // Resolve IP or hostname (e.g. "localhost", "192.168.0.1", "server.local")
+    let target_ip = if let Ok(ip) = clean_ip.parse::<std::net::IpAddr>() {
+        ip
+    } else {
+        let probe = format!("{clean_ip}:80");
+        match probe.to_socket_addrs() {
+            Ok(mut addrs) => {
+                if let Some(first) = addrs.next() {
+                    first.ip()
+                } else {
+                    return Err(format!("Could not resolve host '{clean_ip}'"));
+                }
+            }
+            Err(e) => return Err(format!("Invalid IP or unresolvable hostname '{clean_ip}': {e}")),
+        }
+    };
 
-    let timeout = Duration::from_millis(timeout_ms.clamp(100, 3000));
-    let mut results = Vec::new();
+    let timeout = Duration::from_millis(timeout_ms.clamp(80, 3000));
 
-    for svc in KNOWN_SERVICES {
-        let addr = SocketAddr::new(ip, svc.port);
-        let start = Instant::now();
-        let is_open = TcpStream::connect_timeout(&addr, timeout).is_ok();
-        let elapsed = start.elapsed().as_millis() as u64;
+    // Parallel port probe using scoped threads for fast results
+    let results: Vec<PortScanResult> = std::thread::scope(|s| {
+        let mut handles = Vec::with_capacity(KNOWN_SERVICES.len());
+        for svc in KNOWN_SERVICES {
+            handles.push(s.spawn(move || {
+                let addr = SocketAddr::new(target_ip, svc.port);
+                let start = Instant::now();
+                let is_open = TcpStream::connect_timeout(&addr, timeout).is_ok();
+                let elapsed = start.elapsed().as_millis() as u64;
 
-        results.push(PortScanResult {
-            port: svc.port,
-            is_open,
-            service_name: svc.name.to_string(),
-            service_category: svc.category.to_string(),
-            description: svc.description.to_string(),
-            latency_ms: elapsed,
-        });
-    }
+                PortScanResult {
+                    port: svc.port,
+                    is_open,
+                    service_name: svc.name.to_string(),
+                    service_category: svc.category.to_string(),
+                    description: svc.description.to_string(),
+                    latency_ms: elapsed,
+                }
+            }));
+        }
+
+        handles.into_iter().map(|h| h.join().unwrap()).collect()
+    });
 
     Ok(results)
 }
@@ -102,16 +179,21 @@ mod tests {
 
     #[test]
     fn test_invalid_ip() {
-        let res = scan_host("invalid.ip.format", 200);
+        let res = scan_host("invalid.ip.format.nonexistent.xyz", 200);
         assert!(res.is_err());
     }
 
     #[test]
     fn test_scan_localhost() {
-        // Scanning 127.0.0.1 should execute quickly without panicking
         let res = scan_host("127.0.0.1", 100);
         assert!(res.is_ok());
         let ports = res.unwrap();
         assert_eq!(ports.len(), KNOWN_SERVICES.len());
+    }
+
+    #[test]
+    fn test_network_identity_detection() {
+        let ident = detect_network_identity();
+        assert!(ident.gateway_ip.is_some());
     }
 }

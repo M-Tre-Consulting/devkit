@@ -746,6 +746,15 @@ pub fn setup_app_state(ui: &crate::AppWindow) {
     update_high_refresh_rate(ui);
     setup_tool_handlers(ui);
 
+    // Auto-detect local network identity (gateway and device IP) for LAN Scout
+    let net = crate::tools::lan_scout::detect_network_identity();
+    if let Some(gw) = net.gateway_ip {
+        ui.set_detected_gateway(gw.into());
+    }
+    if let Some(dev) = net.device_ip {
+        ui.set_detected_device_ip(dev.into());
+    }
+
     let nav_state = Rc::new(RefCell::new(NavigationState::new()));
 
     let state_clone = nav_state.clone();

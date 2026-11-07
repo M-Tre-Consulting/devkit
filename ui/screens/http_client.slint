@@ -67,116 +67,157 @@ export component HttpClientScreen inherits VerticalLayout {
                 message: root.error_message;
             }
 
-            // Method Selector Chips
-            HorizontalLayout {
-                spacing: 6px;
-                alignment: start;
+            // Method Selector Chips (Horizontally Scrollable)
+            ScrollView {
+                vertical_scrollbar_policy: ScrollBarPolicy.always_off;
+                horizontal_scrollbar_policy: ScrollBarPolicy.as_needed;
+                height: 38px;
 
-                // GET
-                Rectangle {
-                    border_radius: MaterialStyleMetrics.shape_small;
-                    background: root.selected_method == 0 ? #1976d2 : MaterialPalette.surface_container;
-                    height: 32px;
-                    StateLayerArea {
-                        width: 100%;
-                        border_radius: parent.border_radius;
-                        clicked => { root.selected_method = 0; }
-                        HorizontalLayout {
-                            padding_left: 10px;
-                            padding_right: 10px;
-                            alignment: center;
-                            MaterialText {
-                                text: "GET";
-                                style: MaterialTypography.label_medium;
-                                color: root.selected_method == 0 ? #ffffff : MaterialPalette.on_surface_variant;
+                HorizontalLayout {
+                    spacing: 8px;
+                    alignment: start;
+                    padding_right: 16px;
+
+                    // GET
+                    Rectangle {
+                        horizontal-stretch: 0;
+                        min-width: 56px;
+                        border_radius: MaterialStyleMetrics.shape_small;
+                        background: root.selected_method == 0 ? #1976d2 : MaterialPalette.surface_container;
+                        height: 34px;
+                        StateLayerArea {
+                            width: 100%;
+                            border_radius: parent.border_radius;
+                            clicked => { root.selected_method = 0; }
+                            HorizontalLayout {
+                                padding_left: 12px;
+                                padding_right: 12px;
+                                alignment: center;
+                                MaterialText {
+                                    text: "GET";
+                                    style: MaterialTypography.label_medium;
+                                    color: root.selected_method == 0 ? #ffffff : MaterialPalette.on_surface_variant;
+                                }
                             }
                         }
                     }
-                }
 
-                // POST
-                Rectangle {
-                    border_radius: MaterialStyleMetrics.shape_small;
-                    background: root.selected_method == 1 ? #388e3c : MaterialPalette.surface_container;
-                    height: 32px;
-                    StateLayerArea {
-                        width: 100%;
-                        border_radius: parent.border_radius;
-                        clicked => { root.selected_method = 1; }
-                        HorizontalLayout {
-                            padding_left: 10px;
-                            padding_right: 10px;
-                            alignment: center;
-                            MaterialText {
-                                text: "POST";
-                                style: MaterialTypography.label_medium;
-                                color: root.selected_method == 1 ? #ffffff : MaterialPalette.on_surface_variant;
+                    // POST
+                    Rectangle {
+                        horizontal-stretch: 0;
+                        min-width: 66px;
+                        border_radius: MaterialStyleMetrics.shape_small;
+                        background: root.selected_method == 1 ? #2e7d32 : MaterialPalette.surface_container;
+                        height: 34px;
+                        StateLayerArea {
+                            width: 100%;
+                            border_radius: parent.border_radius;
+                            clicked => { root.selected_method = 1; }
+                            HorizontalLayout {
+                                padding_left: 12px;
+                                padding_right: 12px;
+                                alignment: center;
+                                MaterialText {
+                                    text: "POST";
+                                    style: MaterialTypography.label_medium;
+                                    color: root.selected_method == 1 ? #ffffff : MaterialPalette.on_surface_variant;
+                                }
                             }
                         }
                     }
-                }
 
-                // PUT
-                Rectangle {
-                    border_radius: MaterialStyleMetrics.shape_small;
-                    background: root.selected_method == 2 ? #f57c00 : MaterialPalette.surface_container;
-                    height: 32px;
-                    StateLayerArea {
-                        width: 100%;
-                        border_radius: parent.border_radius;
-                        clicked => { root.selected_method = 2; }
-                        HorizontalLayout {
-                            padding_left: 10px;
-                            padding_right: 10px;
-                            alignment: center;
-                            MaterialText {
-                                text: "PUT";
-                                style: MaterialTypography.label_medium;
-                                color: root.selected_method == 2 ? #ffffff : MaterialPalette.on_surface_variant;
+                    // PUT
+                    Rectangle {
+                        horizontal-stretch: 0;
+                        min-width: 56px;
+                        border_radius: MaterialStyleMetrics.shape_small;
+                        background: root.selected_method == 2 ? #f57c00 : MaterialPalette.surface_container;
+                        height: 34px;
+                        StateLayerArea {
+                            width: 100%;
+                            border_radius: parent.border_radius;
+                            clicked => { root.selected_method = 2; }
+                            HorizontalLayout {
+                                padding_left: 12px;
+                                padding_right: 12px;
+                                alignment: center;
+                                MaterialText {
+                                    text: "PUT";
+                                    style: MaterialTypography.label_medium;
+                                    color: root.selected_method == 2 ? #ffffff : MaterialPalette.on_surface_variant;
+                                }
                             }
                         }
                     }
-                }
 
-                // DELETE
-                Rectangle {
-                    border_radius: MaterialStyleMetrics.shape_small;
-                    background: root.selected_method == 3 ? #d32f2f : MaterialPalette.surface_container;
-                    height: 32px;
-                    StateLayerArea {
-                        width: 100%;
-                        border_radius: parent.border_radius;
-                        clicked => { root.selected_method = 3; }
-                        HorizontalLayout {
-                            padding_left: 10px;
-                            padding_right: 10px;
-                            alignment: center;
-                            MaterialText {
-                                text: "DEL";
-                                style: MaterialTypography.label_medium;
-                                color: root.selected_method == 3 ? #ffffff : MaterialPalette.on_surface_variant;
+                    // DELETE
+                    Rectangle {
+                        horizontal-stretch: 0;
+                        min-width: 76px;
+                        border_radius: MaterialStyleMetrics.shape_small;
+                        background: root.selected_method == 3 ? #d32f2f : MaterialPalette.surface_container;
+                        height: 34px;
+                        StateLayerArea {
+                            width: 100%;
+                            border_radius: parent.border_radius;
+                            clicked => { root.selected_method = 3; }
+                            HorizontalLayout {
+                                padding_left: 12px;
+                                padding_right: 12px;
+                                alignment: center;
+                                MaterialText {
+                                    text: "DELETE";
+                                    style: MaterialTypography.label_medium;
+                                    color: root.selected_method == 3 ? #ffffff : MaterialPalette.on_surface_variant;
+                                }
                             }
                         }
                     }
-                }
 
-                // PATCH
-                Rectangle {
-                    border_radius: MaterialStyleMetrics.shape_small;
-                    background: root.selected_method == 4 ? #7b1fa2 : MaterialPalette.surface_container;
-                    height: 32px;
-                    StateLayerArea {
-                        width: 100%;
-                        border_radius: parent.border_radius;
-                        clicked => { root.selected_method = 4; }
-                        HorizontalLayout {
-                            padding_left: 10px;
-                            padding_right: 10px;
-                            alignment: center;
-                            MaterialText {
-                                text: "PATCH";
-                                style: MaterialTypography.label_medium;
-                                color: root.selected_method == 4 ? #ffffff : MaterialPalette.on_surface_variant;
+                    // PATCH
+                    Rectangle {
+                        horizontal-stretch: 0;
+                        min-width: 70px;
+                        border_radius: MaterialStyleMetrics.shape_small;
+                        background: root.selected_method == 4 ? #7b1fa2 : MaterialPalette.surface_container;
+                        height: 34px;
+                        StateLayerArea {
+                            width: 100%;
+                            border_radius: parent.border_radius;
+                            clicked => { root.selected_method = 4; }
+                            HorizontalLayout {
+                                padding_left: 12px;
+                                padding_right: 12px;
+                                alignment: center;
+                                MaterialText {
+                                    text: "PATCH";
+                                    style: MaterialTypography.label_medium;
+                                    color: root.selected_method == 4 ? #ffffff : MaterialPalette.on_surface_variant;
+                                }
+                            }
+                        }
+                    }
+
+                    // HEAD
+                    Rectangle {
+                        horizontal-stretch: 0;
+                        min-width: 64px;
+                        border_radius: MaterialStyleMetrics.shape_small;
+                        background: root.selected_method == 5 ? #546e7a : MaterialPalette.surface_container;
+                        height: 34px;
+                        StateLayerArea {
+                            width: 100%;
+                            border_radius: parent.border_radius;
+                            clicked => { root.selected_method = 5; }
+                            HorizontalLayout {
+                                padding_left: 12px;
+                                padding_right: 12px;
+                                alignment: center;
+                                MaterialText {
+                                    text: "HEAD";
+                                    style: MaterialTypography.label_medium;
+                                    color: root.selected_method == 5 ? #ffffff : MaterialPalette.on_surface_variant;
+                                }
                             }
                         }
                     }

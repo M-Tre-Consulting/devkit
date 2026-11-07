@@ -23,7 +23,9 @@ export component LanScoutScreen inherits VerticalLayout {
     callback scout-scan(string, int);
     callback scout-copy(string);
 
-    in-out property <string> target_host: "192.168.1.1";
+    in-out property <string> detected_gateway: "192.168.0.1";
+    in-out property <string> detected_device_ip: "127.0.0.1";
+    in-out property <string> target_host: "192.168.0.1";
     in-out property <int> selected_timeout_ms: 600; // 300, 600, 1200
     in-out property <bool> is_scanning: false;
     in-out property <bool> filter_only_open: false;
@@ -66,87 +68,134 @@ export component LanScoutScreen inherits VerticalLayout {
                 message: root.error_message;
             }
 
-            // Quick Host Preset Chips
-            HorizontalLayout {
-                spacing: MaterialStyleMetrics.spacing_8;
+            // Quick Host Preset Chips (Horizontally Scrollable)
+            ScrollView {
+                vertical_scrollbar_policy: ScrollBarPolicy.always_off;
+                horizontal_scrollbar_policy: ScrollBarPolicy.as_needed;
+                height: 38px;
 
-                Rectangle {
-                    border-radius: 8px;
-                    background: root.target_host == "192.168.1.1" ? MaterialPalette.secondary_container : MaterialPalette.surface_container;
-                    border-width: 1px;
-                    border-color: root.target_host == "192.168.1.1" ? MaterialPalette.secondary : MaterialPalette.outline_variant;
-                    height: 32px;
+                HorizontalLayout {
+                    spacing: MaterialStyleMetrics.spacing_8;
+                    alignment: start;
+                    padding_right: 16px;
 
-                    HorizontalLayout {
-                        padding_left: 10px;
-                        padding_right: 10px;
-                        alignment: center;
+                    // Gateway Chip
+                    Rectangle {
+                        horizontal-stretch: 0;
+                        min-width: 160px;
+                        border-radius: 8px;
+                        background: root.target_host == root.detected_gateway ? MaterialPalette.secondary_container : MaterialPalette.surface_container;
+                        border-width: 1px;
+                        border-color: root.target_host == root.detected_gateway ? MaterialPalette.secondary : MaterialPalette.outline_variant;
+                        height: 32px;
 
-                        MaterialText {
-                            text: "Gateway (192.168.1.1)";
-                            style: MaterialTypography.label_medium;
-                            color: root.target_host == "192.168.1.1" ? MaterialPalette.on_secondary_container : MaterialPalette.on_surface_variant;
-                            vertical_alignment: center;
+                        HorizontalLayout {
+                            padding_left: 12px;
+                            padding_right: 12px;
+                            alignment: center;
+
+                            MaterialText {
+                                text: "Gateway (" + root.detected_gateway + ")";
+                                style: MaterialTypography.label_medium;
+                                color: root.target_host == root.detected_gateway ? MaterialPalette.on_secondary_container : MaterialPalette.on_surface_variant;
+                                vertical_alignment: center;
+                            }
+                        }
+
+                        StateLayerArea {
+                            clicked => {
+                                root.target_host = root.detected_gateway;
+                            }
                         }
                     }
 
-                    StateLayerArea {
-                        clicked => {
-                            root.target_host = "192.168.1.1";
+                    // Device IP Chip
+                    Rectangle {
+                        horizontal-stretch: 0;
+                        min-width: 170px;
+                        border-radius: 8px;
+                        background: root.target_host == root.detected_device_ip ? MaterialPalette.secondary_container : MaterialPalette.surface_container;
+                        border-width: 1px;
+                        border-color: root.target_host == root.detected_device_ip ? MaterialPalette.secondary : MaterialPalette.outline_variant;
+                        height: 32px;
+
+                        HorizontalLayout {
+                            padding_left: 12px;
+                            padding_right: 12px;
+                            alignment: center;
+
+                            MaterialText {
+                                text: "My Device (" + root.detected_device_ip + ")";
+                                style: MaterialTypography.label_medium;
+                                color: root.target_host == root.detected_device_ip ? MaterialPalette.on_secondary_container : MaterialPalette.on_surface_variant;
+                                vertical_alignment: center;
+                            }
                         }
-                    }
-                }
 
-                Rectangle {
-                    border-radius: 8px;
-                    background: root.target_host == "127.0.0.1" ? MaterialPalette.secondary_container : MaterialPalette.surface_container;
-                    border-width: 1px;
-                    border-color: root.target_host == "127.0.0.1" ? MaterialPalette.secondary : MaterialPalette.outline_variant;
-                    height: 32px;
-
-                    HorizontalLayout {
-                        padding_left: 10px;
-                        padding_right: 10px;
-                        alignment: center;
-
-                        MaterialText {
-                            text: "localhost";
-                            style: MaterialTypography.label_medium;
-                            color: root.target_host == "127.0.0.1" ? MaterialPalette.on_secondary_container : MaterialPalette.on_surface_variant;
-                            vertical_alignment: center;
-                        }
-                    }
-
-                    StateLayerArea {
-                        clicked => {
-                            root.target_host = "127.0.0.1";
-                        }
-                    }
-                }
-
-                Rectangle {
-                    border-radius: 8px;
-                    background: root.target_host == "10.0.2.2" ? MaterialPalette.secondary_container : MaterialPalette.surface_container;
-                    border-width: 1px;
-                    border-color: root.target_host == "10.0.2.2" ? MaterialPalette.secondary : MaterialPalette.outline_variant;
-                    height: 32px;
-
-                    HorizontalLayout {
-                        padding_left: 10px;
-                        padding_right: 10px;
-                        alignment: center;
-
-                        MaterialText {
-                            text: "Host (10.0.2.2)";
-                            style: MaterialTypography.label_medium;
-                            color: root.target_host == "10.0.2.2" ? MaterialPalette.on_secondary_container : MaterialPalette.on_surface_variant;
-                            vertical_alignment: center;
+                        StateLayerArea {
+                            clicked => {
+                                root.target_host = root.detected_device_ip;
+                            }
                         }
                     }
 
-                    StateLayerArea {
-                        clicked => {
-                            root.target_host = "10.0.2.2";
+                    // localhost Chip
+                    Rectangle {
+                        horizontal-stretch: 0;
+                        min-width: 90px;
+                        border-radius: 8px;
+                        background: root.target_host == "127.0.0.1" ? MaterialPalette.secondary_container : MaterialPalette.surface_container;
+                        border-width: 1px;
+                        border-color: root.target_host == "127.0.0.1" ? MaterialPalette.secondary : MaterialPalette.outline_variant;
+                        height: 32px;
+
+                        HorizontalLayout {
+                            padding_left: 12px;
+                            padding_right: 12px;
+                            alignment: center;
+
+                            MaterialText {
+                                text: "localhost";
+                                style: MaterialTypography.label_medium;
+                                color: root.target_host == "127.0.0.1" ? MaterialPalette.on_secondary_container : MaterialPalette.on_surface_variant;
+                                vertical_alignment: center;
+                            }
+                        }
+
+                        StateLayerArea {
+                            clicked => {
+                                root.target_host = "127.0.0.1";
+                            }
+                        }
+                    }
+
+                    // Host Emulator Chip
+                    Rectangle {
+                        horizontal-stretch: 0;
+                        min-width: 125px;
+                        border-radius: 8px;
+                        background: root.target_host == "10.0.2.2" ? MaterialPalette.secondary_container : MaterialPalette.surface_container;
+                        border-width: 1px;
+                        border-color: root.target_host == "10.0.2.2" ? MaterialPalette.secondary : MaterialPalette.outline_variant;
+                        height: 32px;
+
+                        HorizontalLayout {
+                            padding_left: 12px;
+                            padding_right: 12px;
+                            alignment: center;
+
+                            MaterialText {
+                                text: "Host (10.0.2.2)";
+                                style: MaterialTypography.label_medium;
+                                color: root.target_host == "10.0.2.2" ? MaterialPalette.on_secondary_container : MaterialPalette.on_surface_variant;
+                                vertical_alignment: center;
+                            }
+                        }
+
+                        StateLayerArea {
+                            clicked => {
+                                root.target_host = "10.0.2.2";
+                            }
                         }
                     }
                 }
