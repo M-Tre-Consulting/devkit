@@ -20,7 +20,7 @@ export component HttpClientScreen inherits VerticalLayout {
 
     in-out property <int> selected_method: 0; // 0: GET, 1: POST, 2: PUT, 3: DELETE, 4: PATCH, 5: HEAD
     in-out property <string> url: "https://httpbin.org/get";
-    in-out property <string> headers_text: "Accept: application/json\nUser-Agent: DevKit-Mobile/0.2.3";
+    in-out property <string> headers_text: "Accept: application/json\nUser-Agent: DevKit-Mobile/0.2.4";
     in-out property <string> body_text: "{\n  \"message\": \"Hello from DevKit!\"\n}";
     in-out property <int> active_tab: 0; // 0: Headers, 1: Body, 2: cURL
     in-out property <string> curl_command: "curl -X GET \"https://httpbin.org/get\" -H \"Accept: application/json\"";
