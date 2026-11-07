@@ -105,6 +105,9 @@ pub fn reset_welcome() {
     save_has_seen_welcome(false);
 }
 
+/// Highest valid tool ID registered in the application.
+pub const MAX_TOOL_ID: i32 = 18;
+
 /// Load list of recent tool IDs (up to 5, most recent first).
 pub fn load_recents() -> Vec<i32> {
     let path = recents_file();
@@ -113,7 +116,7 @@ pub fn load_recents() -> Vec<i32> {
             .lines()
             .flat_map(|line| line.split(','))
             .filter_map(|s| s.trim().parse::<i32>().ok())
-            .filter(|&id| (1..=6).contains(&id))
+            .filter(|&id| (1..=MAX_TOOL_ID).contains(&id))
             .take(5)
             .collect()
     } else {
@@ -148,7 +151,7 @@ pub fn load_favorites() -> HashSet<i32> {
             .lines()
             .flat_map(|line| line.split(','))
             .filter_map(|s| s.trim().parse::<i32>().ok())
-            .filter(|&id| (1..=6).contains(&id))
+            .filter(|&id| (1..=MAX_TOOL_ID).contains(&id))
             .collect()
     } else {
         HashSet::new()

@@ -1,0 +1,470 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2026 M-Tre Consulting
+
+import { Icons, ScrollView, MaterialPalette, MaterialStyleMetrics, MaterialTypography, MaterialText, StateLayerArea, Icon, TextField } from "@material";
+import { TopBar } from "../components/top-bar.slint";
+import { ToolErrorBanner } from "../components/tool-error-banner.slint";
+import { ToolActionButton } from "../components/tool-action-button.slint";
+import { AppIcons } from "../components/app-icons.slint";
+
+export struct PortItem {
+    port: int,
+    is_open: bool,
+    service_name: string,
+    service_category: string,
+    description: string,
+    latency_ms: int,
+}
+
+export component LanScoutScreen inherits VerticalLayout {
+    in property <length> status_bar_inset: 24px;
+    in property <length> nav_bar_inset: 16px;
+    callback scout-back();
+    callback scout-scan(string, int);
+    callback scout-copy(string);
+
+    in-out property <string> target_host: "192.168.1.1";
+    in-out property <int> selected_timeout_ms: 600; // 300, 600, 1200
+    in-out property <bool> is_scanning: false;
+    in-out property <bool> filter_only_open: false;
+    in-out property <string> error_message: "";
+
+    in-out property <int> open_ports_count: 0;
+    in-out property <int> total_scanned_count: 0;
+    in-out property <[PortItem]> scan_results: [];
+
+    property <bool> is_entered: false;
+    init => {
+        self.is_entered = true;
+    }
+
+    TopBar {
+        title: "LAN & Service Scout";
+        has_back: true;
+        back => { root.scout-back(); }
+    }
+
+    ScrollView {
+        vertical-stretch: 1;
+        opacity: root.is_entered ? 1.0 : 0.0;
+
+        animate opacity {
+            duration: 200ms;
+            delay: 150ms;
+            easing: cubic-bezier(0.05, 0.7, 0.1, 1.0);
+        }
+
+        VerticalLayout {
+            padding_left: MaterialStyleMetrics.padding_16;
+            padding_right: MaterialStyleMetrics.padding_16;
+            padding_top: MaterialStyleMetrics.padding_16;
+            padding_bottom: 96px + root.nav_bar_inset;
+            spacing: MaterialStyleMetrics.spacing_16;
+            alignment: start;
+
+            ToolErrorBanner {
+                message: root.error_message;
+            }
+
+            // Quick Host Preset Chips
+            HorizontalLayout {
+                spacing: MaterialStyleMetrics.spacing_8;
+
+                Rectangle {
+                    border-radius: 8px;
+                    background: root.target_host == "192.168.1.1" ? MaterialPalette.secondary_container : MaterialPalette.surface_container;
+                    border-width: 1px;
+                    border-color: root.target_host == "192.168.1.1" ? MaterialPalette.secondary : MaterialPalette.outline_variant;
+                    height: 32px;
+
+                    HorizontalLayout {
+                        padding_left: 10px;
+                        padding_right: 10px;
+                        alignment: center;
+
+                        MaterialText {
+                            text: "Gateway (192.168.1.1)";
+                            style: MaterialTypography.label_medium;
+                            color: root.target_host == "192.168.1.1" ? MaterialPalette.on_secondary_container : MaterialPalette.on_surface_variant;
+                            vertical_alignment: center;
+                        }
+                    }
+
+                    StateLayerArea {
+                        clicked => {
+                            root.target_host = "192.168.1.1";
+                        }
+                    }
+                }
+
+                Rectangle {
+                    border-radius: 8px;
+                    background: root.target_host == "127.0.0.1" ? MaterialPalette.secondary_container : MaterialPalette.surface_container;
+                    border-width: 1px;
+                    border-color: root.target_host == "127.0.0.1" ? MaterialPalette.secondary : MaterialPalette.outline_variant;
+                    height: 32px;
+
+                    HorizontalLayout {
+                        padding_left: 10px;
+                        padding_right: 10px;
+                        alignment: center;
+
+                        MaterialText {
+                            text: "localhost";
+                            style: MaterialTypography.label_medium;
+                            color: root.target_host == "127.0.0.1" ? MaterialPalette.on_secondary_container : MaterialPalette.on_surface_variant;
+                            vertical_alignment: center;
+                        }
+                    }
+
+                    StateLayerArea {
+                        clicked => {
+                            root.target_host = "127.0.0.1";
+                        }
+                    }
+                }
+
+                Rectangle {
+                    border-radius: 8px;
+                    background: root.target_host == "10.0.2.2" ? MaterialPalette.secondary_container : MaterialPalette.surface_container;
+                    border-width: 1px;
+                    border-color: root.target_host == "10.0.2.2" ? MaterialPalette.secondary : MaterialPalette.outline_variant;
+                    height: 32px;
+
+                    HorizontalLayout {
+                        padding_left: 10px;
+                        padding_right: 10px;
+                        alignment: center;
+
+                        MaterialText {
+                            text: "Host (10.0.2.2)";
+                            style: MaterialTypography.label_medium;
+                            color: root.target_host == "10.0.2.2" ? MaterialPalette.on_secondary_container : MaterialPalette.on_surface_variant;
+                            vertical_alignment: center;
+                        }
+                    }
+
+                    StateLayerArea {
+                        clicked => {
+                            root.target_host = "10.0.2.2";
+                        }
+                    }
+                }
+            }
+
+            // Target IP Input Card
+            Rectangle {
+                background: MaterialPalette.surface_container_low;
+                border-radius: MaterialStyleMetrics.border_radius_12;
+                border-width: 1px;
+                border-color: MaterialPalette.outline_variant;
+
+                VerticalLayout {
+                    padding: MaterialStyleMetrics.padding_16;
+                    spacing: MaterialStyleMetrics.spacing_12;
+
+                    MaterialText {
+                        text: "Target IP or Hostname";
+                        style: MaterialTypography.title_small;
+                        color: MaterialPalette.on_surface;
+                    }
+
+                    TextField {
+                        text <=> root.target_host;
+                        placeholder_text: "e.g. 192.168.1.100 or myserver.local";
+                    }
+
+                    HorizontalLayout {
+                        spacing: MaterialStyleMetrics.spacing_8;
+                        alignment: start;
+
+                        MaterialText {
+                            text: "Timeout:";
+                            style: MaterialTypography.label_medium;
+                            color: MaterialPalette.on_surface_variant;
+                            vertical_alignment: center;
+                        }
+
+                        Rectangle {
+                            border-radius: 6px;
+                            background: root.selected_timeout_ms == 300 ? MaterialPalette.tertiary_container : MaterialPalette.surface_container;
+                            height: 26px;
+
+                            HorizontalLayout {
+                                padding_left: 8px;
+                                padding_right: 8px;
+                                alignment: center;
+
+                                MaterialText {
+                                    text: "Fast (300ms)";
+                                    style: MaterialTypography.label_small;
+                                    color: root.selected_timeout_ms == 300 ? MaterialPalette.on_tertiary_container : MaterialPalette.on_surface_variant;
+                                    vertical_alignment: center;
+                                }
+                            }
+                            StateLayerArea {
+                                clicked => { root.selected_timeout_ms = 300; }
+                            }
+                        }
+
+                        Rectangle {
+                            border-radius: 6px;
+                            background: root.selected_timeout_ms == 600 ? MaterialPalette.tertiary_container : MaterialPalette.surface_container;
+                            height: 26px;
+
+                            HorizontalLayout {
+                                padding_left: 8px;
+                                padding_right: 8px;
+                                alignment: center;
+
+                                MaterialText {
+                                    text: "Balanced (600ms)";
+                                    style: MaterialTypography.label_small;
+                                    color: root.selected_timeout_ms == 600 ? MaterialPalette.on_tertiary_container : MaterialPalette.on_surface_variant;
+                                    vertical_alignment: center;
+                                }
+                            }
+                            StateLayerArea {
+                                clicked => { root.selected_timeout_ms = 600; }
+                            }
+                        }
+
+                        Rectangle {
+                            border-radius: 6px;
+                            background: root.selected_timeout_ms == 1500 ? MaterialPalette.tertiary_container : MaterialPalette.surface_container;
+                            height: 26px;
+
+                            HorizontalLayout {
+                                padding_left: 8px;
+                                padding_right: 8px;
+                                alignment: center;
+
+                                MaterialText {
+                                    text: "Reliable (1.5s)";
+                                    style: MaterialTypography.label_small;
+                                    color: root.selected_timeout_ms == 1500 ? MaterialPalette.on_tertiary_container : MaterialPalette.on_surface_variant;
+                                    vertical_alignment: center;
+                                }
+                            }
+                            StateLayerArea {
+                                clicked => { root.selected_timeout_ms = 1500; }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Action Button
+            ToolActionButton {
+                text: root.is_scanning ? "Scanning Target Host..." : "Scan Known Services";
+                has_clear: false;
+                clicked => {
+                    if (!root.is_scanning) {
+                        root.scout-scan(root.target_host, root.selected_timeout_ms);
+                    }
+                }
+            }
+
+            // Results Header & Filter
+            if root.total_scanned_count > 0: HorizontalLayout {
+                spacing: MaterialStyleMetrics.spacing_8;
+                alignment: space-between;
+
+                HorizontalLayout {
+                    spacing: MaterialStyleMetrics.spacing_8;
+                    alignment: start;
+
+                    Rectangle {
+                        border-radius: 10px;
+                        background: root.open_ports_count > 0 ? MaterialPalette.primary_container : MaterialPalette.surface_container_highest;
+                        height: 24px;
+
+                        HorizontalLayout {
+                            padding_left: 8px;
+                            padding_right: 8px;
+                            alignment: center;
+
+                            MaterialText {
+                                text: root.open_ports_count + " Open";
+                                style: MaterialTypography.label_medium;
+                                color: root.open_ports_count > 0 ? MaterialPalette.on_primary_container : MaterialPalette.on_surface_variant;
+                                vertical_alignment: center;
+                            }
+                        }
+                    }
+
+                    Rectangle {
+                        border-radius: 10px;
+                        background: MaterialPalette.surface_container_highest;
+                        height: 24px;
+
+                        HorizontalLayout {
+                            padding_left: 8px;
+                            padding_right: 8px;
+                            alignment: center;
+
+                            MaterialText {
+                                text: root.total_scanned_count + " Probed";
+                                style: MaterialTypography.label_medium;
+                                color: MaterialPalette.on_surface_variant;
+                                vertical_alignment: center;
+                            }
+                        }
+                    }
+                }
+
+                // Filter button
+                Rectangle {
+                    border-radius: 6px;
+                    background: root.filter_only_open ? MaterialPalette.secondary_container : MaterialPalette.surface_container;
+                    border-width: 1px;
+                    border-color: root.filter_only_open ? MaterialPalette.secondary : MaterialPalette.outline_variant;
+                    height: 24px;
+
+                    HorizontalLayout {
+                        padding_left: 8px;
+                        padding_right: 8px;
+                        alignment: center;
+
+                        MaterialText {
+                            text: root.filter_only_open ? "Showing Open Only" : "Show All";
+                            style: MaterialTypography.label_small;
+                            color: root.filter_only_open ? MaterialPalette.on_secondary_container : MaterialPalette.on_surface_variant;
+                            vertical_alignment: center;
+                        }
+                    }
+
+                    StateLayerArea {
+                        clicked => {
+                            root.filter_only_open = !root.filter_only_open;
+                        }
+                    }
+                }
+            }
+
+            // Results Port Cards
+            for item in root.scan_results: Rectangle {
+                // If filter is active and port is closed, hide height
+                visible: !root.filter_only_open || item.is_open;
+                background: item.is_open ? MaterialPalette.surface_container : MaterialPalette.surface_container_lowest;
+                border-radius: MaterialStyleMetrics.border_radius_8;
+                border-width: 1px;
+                border-color: item.is_open ? MaterialPalette.primary : MaterialPalette.outline_variant;
+
+                HorizontalLayout {
+                    padding: MaterialStyleMetrics.padding_12;
+                    spacing: MaterialStyleMetrics.spacing_12;
+                    alignment: space-between;
+
+                    // Left side: Port and Service Info
+                    VerticalLayout {
+                        spacing: 2px;
+                        horizontal-stretch: 1;
+
+                        HorizontalLayout {
+                            spacing: MaterialStyleMetrics.spacing_8;
+                            alignment: start;
+
+                            MaterialText {
+                                text: ":" + item.port;
+                                style: MaterialTypography.title_medium;
+                                color: item.is_open ? MaterialPalette.primary : MaterialPalette.on_surface_variant;
+                            }
+
+                            Rectangle {
+                                border-radius: 4px;
+                                background: item.is_open ? MaterialPalette.tertiary_container : MaterialPalette.surface_container_highest;
+                                height: 20px;
+
+                                HorizontalLayout {
+                                    padding_left: 6px;
+                                    padding_right: 6px;
+                                    alignment: center;
+
+                                    MaterialText {
+                                        text: item.service_name;
+                                        style: MaterialTypography.label_small;
+                                        color: item.is_open ? MaterialPalette.on_tertiary_container : MaterialPalette.outline;
+                                        vertical_alignment: center;
+                                    }
+                                }
+                            }
+
+                            Rectangle {
+                                border-radius: 4px;
+                                background: MaterialPalette.surface_container_high;
+                                height: 20px;
+
+                                HorizontalLayout {
+                                    padding_left: 6px;
+                                    padding_right: 6px;
+                                    alignment: center;
+
+                                    MaterialText {
+                                        text: item.service_category;
+                                        style: MaterialTypography.label_small;
+                                        color: MaterialPalette.on_surface_variant;
+                                        vertical_alignment: center;
+                                    }
+                                }
+                            }
+                        }
+
+                        MaterialText {
+                            text: item.description;
+                            style: MaterialTypography.body_small;
+                            color: MaterialPalette.outline;
+                        }
+                    }
+
+                    // Right side: Status and Latency badge + copy button
+                    HorizontalLayout {
+                        spacing: MaterialStyleMetrics.spacing_8;
+                        alignment: end;
+
+                        Rectangle {
+                            border-radius: 12px;
+                            background: item.is_open ? MaterialPalette.primary_container : MaterialPalette.surface_container_highest;
+                            height: 24px;
+
+                            HorizontalLayout {
+                                padding_left: 8px;
+                                padding_right: 8px;
+                                alignment: center;
+
+                                MaterialText {
+                                    text: item.is_open ? (item.latency_ms + "ms") : "Closed";
+                                    style: MaterialTypography.label_small;
+                                    color: item.is_open ? MaterialPalette.on_primary_container : MaterialPalette.outline;
+                                    vertical_alignment: center;
+                                }
+                            }
+                        }
+
+                        if item.is_open: Rectangle {
+                            width: 28px;
+                            height: 28px;
+                            border-radius: 14px;
+                            background: MaterialPalette.surface_container_high;
+
+                            Icon {
+                                source: AppIcons.copy;
+                                width: 14px;
+                                height: 14px;
+                                colorize: MaterialPalette.on_surface_variant;
+                                x: (parent.width - self.width) / 2;
+                                y: (parent.height - self.height) / 2;
+                            }
+
+                            StateLayerArea {
+                                clicked => {
+                                    root.scout-copy("http://" + root.target_host + ":" + item.port);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

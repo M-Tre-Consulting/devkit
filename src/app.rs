@@ -46,7 +46,7 @@ pub fn run() -> Result<(), slint::PlatformError> {
 
 pub fn update_favorites(ui: &crate::AppWindow) {
     let favs = crate::storage::load_favorites();
-    let items: Vec<bool> = (0..=14).map(|i| i > 0 && favs.contains(&i)).collect();
+    let items: Vec<bool> = (0..=crate::storage::MAX_TOOL_ID).map(|i| i > 0 && favs.contains(&i)).collect();
     let model = ModelRc::new(VecModel::from(items));
     ui.set_tool_favorites(model);
 }
@@ -528,6 +528,204 @@ pub fn setup_tool_handlers(ui: &crate::AppWindow) {
                 algorithm: "".into(),
                 expiration_status: "".into(),
                 expiration_time: "".into(),
+                error_message: err.into(),
+            },
+        }
+    });
+
+    // 15. Diff Studio
+    ui.on_diff_compare(move |orig, modif, ignore_ws| {
+        crate::platform::android::haptic_tap();
+        match crate::tools::handlers::handle_diff(&orig, &modif, ignore_ws) {
+            Ok(out) => crate::DiffOutputResult {
+                additions: out.additions as i32,
+                deletions: out.deletions as i32,
+                unchanged: out.unchanged as i32,
+                unified_patch: out.unified_patch.into(),
+                error_message: "".into(),
+            },
+            Err(err) => crate::DiffOutputResult {
+                additions: 0,
+                deletions: 0,
+                unchanged: 0,
+                unified_patch: "".into(),
+                error_message: err.into(),
+            },
+        }
+    });
+
+    // 16. Developer QR Studio
+    ui.on_qrcode_generate_text(move |text| {
+        crate::platform::android::haptic_tap();
+        match crate::tools::handlers::handle_qrcode_text(&text) {
+            Ok(qr) => {
+                let img = crate::tools::handlers::qr_to_slint_image(&qr);
+                crate::QrOutputResult {
+                    qr_image: img,
+                    payload: qr.payload.into(),
+                    totp_code: "".into(),
+                    totp_remaining_secs: 0,
+                    error_message: "".into(),
+                }
+            }
+            Err(err) => crate::QrOutputResult {
+                qr_image: slint::Image::default(),
+                payload: "".into(),
+                totp_code: "".into(),
+                totp_remaining_secs: 0,
+                error_message: err.into(),
+            },
+        }
+    });
+
+    ui.on_qrcode_generate_wifi(move |ssid, pass, auth, hidden| {
+        crate::platform::android::haptic_tap();
+        match crate::tools::handlers::handle_qrcode_wifi(&ssid, &pass, auth, hidden) {
+            Ok(qr) => {
+                let img = crate::tools::handlers::qr_to_slint_image(&qr);
+                crate::QrOutputResult {
+                    qr_image: img,
+                    payload: qr.payload.into(),
+                    totp_code: "".into(),
+                    totp_remaining_secs: 0,
+                    error_message: "".into(),
+                }
+            }
+            Err(err) => crate::QrOutputResult {
+                qr_image: slint::Image::default(),
+                payload: "".into(),
+                totp_code: "".into(),
+                totp_remaining_secs: 0,
+                error_message: err.into(),
+            },
+        }
+    });
+
+    ui.on_qrcode_generate_totp(move |issuer, account, secret| {
+        crate::platform::android::haptic_tap();
+        match crate::tools::handlers::handle_qrcode_totp(&issuer, &account, &secret) {
+            Ok(qr) => {
+                let img = crate::tools::handlers::qr_to_slint_image(&qr);
+                crate::QrOutputResult {
+                    qr_image: img,
+                    payload: qr.payload.into(),
+                    totp_code: qr.totp_code.unwrap_or_default().into(),
+                    totp_remaining_secs: qr.totp_remaining_secs.unwrap_or(0) as i32,
+                    error_message: "".into(),
+                }
+            }
+            Err(err) => crate::QrOutputResult {
+                qr_image: slint::Image::default(),
+                payload: "".into(),
+                totp_code: "".into(),
+                totp_remaining_secs: 0,
+                error_message: err.into(),
+            },
+        }
+    });
+
+    // 17. HTTP & cURL Client
+    ui.on_http_send(move |method, url, headers, body| {
+        crate::platform::android::haptic_tap();
+        match crate::tools::handlers::handle_http_send(method, &url, &headers, &body) {
+            Ok(res) => {
+                let headers_str = res
+                    .headers
+                    .iter()
+                    .map(|(k, v)| format!("{}: {}", k, v))
+                    .collect::<Vec<_>>()
+                    .join("\n");
+                let body_content = if !res.pretty_body.is_empty() {
+                    res.pretty_body
+                } else {
+                    res.body
+                };
+                crate::HttpOutputResult {
+                    status: res.status_code as i32,
+                    status_text: res.status_text.into(),
+                    latency_ms: res.latency_ms as i32,
+                    size_bytes: res.content_length as i32,
+                    headers: headers_str.into(),
+                    body: body_content.into(),
+                    error_message: "".into(),
+                }
+            }
+            Err(err) => crate::HttpOutputResult {
+                status: 0,
+                status_text: "Failed".into(),
+                latency_ms: 0,
+                size_bytes: 0,
+                headers: "".into(),
+                body: "".into(),
+                error_message: err.into(),
+            },
+        }
+    });
+
+    ui.on_http_import_curl(move |cmd| {
+        crate::platform::android::haptic_tap();
+        match crate::tools::handlers::handle_http_import_curl(&cmd) {
+            Ok(req) => {
+                let method_idx = crate::tools::handlers::http_method_to_int(req.method);
+                let headers_str = req
+                    .headers
+                    .into_iter()
+                    .map(|(k, v)| format!("{}: {}", k, v))
+                    .collect::<Vec<_>>()
+                    .join("\n");
+                crate::HttpImportResult {
+                    method_idx,
+                    url: req.url.into(),
+                    headers: headers_str.into(),
+                    body: req.body.into(),
+                    error_message: "".into(),
+                }
+            }
+            Err(err) => crate::HttpImportResult {
+                method_idx: 0,
+                url: "".into(),
+                headers: "".into(),
+                body: "".into(),
+                error_message: err.into(),
+            },
+        }
+    });
+
+    ui.on_http_export_curl(move |method, url, headers, body| {
+        crate::platform::android::haptic_tap();
+        crate::tools::handlers::handle_http_export_curl(method, &url, &headers, &body).into()
+    });
+
+    // 18. LAN & Service Scout
+    ui.on_lan_scout_scan(move |host, timeout_ms| {
+        crate::platform::android::haptic_tap();
+        let timeout = if timeout_ms <= 0 { 600 } else { timeout_ms as u64 };
+        match crate::tools::handlers::handle_lan_scout(&host, timeout) {
+            Ok(results) => {
+                let open_count = results.iter().filter(|r| r.is_open).count() as i32;
+                let total_count = results.len() as i32;
+                let port_items: Vec<crate::PortItem> = results
+                    .into_iter()
+                    .map(|r| crate::PortItem {
+                        port: r.port as i32,
+                        is_open: r.is_open,
+                        service_name: r.service_name.into(),
+                        service_category: r.service_category.into(),
+                        description: r.description.into(),
+                        latency_ms: r.latency_ms as i32,
+                    })
+                    .collect();
+                crate::LanScoutOutputResult {
+                    open_count,
+                    total_count,
+                    ports: ModelRc::new(VecModel::from(port_items)),
+                    error_message: "".into(),
+                }
+            }
+            Err(err) => crate::LanScoutOutputResult {
+                open_count: 0,
+                total_count: 0,
+                ports: ModelRc::new(VecModel::from(Vec::new())),
                 error_message: err.into(),
             },
         }

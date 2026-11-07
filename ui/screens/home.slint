@@ -17,7 +17,7 @@ export component HomeScreen inherits VerticalLayout {
     in property <length> pill_height: 56px;
     in property <length> pill_bottom_margin: 28px;
     property <length> bottom_clearance: root.pill_height + root.pill_bottom_margin + root.nav_bar_inset + 24px;
-    in property <[bool]> tool_favorites: [false, false, false, false, false, false, false, false, false, false, false, false, false, false, false];
+    in property <[bool]> tool_favorites: [false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false];
     callback home-open-tool(int);
     callback home-toggle-favorite(int);
 
@@ -256,6 +256,62 @@ export component HomeScreen inherits VerticalLayout {
                         toggle_favorite => { root.home-toggle-favorite(14); }
                     }
                 }
+
+                HorizontalLayout {
+                    spacing: root.grid_gap;
+                    ToolCard {
+                        horizontal-stretch: 1;
+                        title: "Diff Studio";
+                        description: "Visual diff & code patches";
+                        icon: AppIcons.diff;
+                        accent_color: MaterialPalette.tertiary;
+                        entrance_index: 14;
+                        is_entered: root.is_entered;
+                        is_favorite: root.tool_favorites[15];
+                        clicked => { root.home-open-tool(15); }
+                        toggle_favorite => { root.home-toggle-favorite(15); }
+                    }
+                    ToolCard {
+                        horizontal-stretch: 1;
+                        title: "QR Code Studio";
+                        description: "Wi-Fi, URLs & live TOTP 2FA";
+                        icon: AppIcons.qr_code;
+                        accent_color: MaterialPalette.primary;
+                        entrance_index: 15;
+                        is_entered: root.is_entered;
+                        is_favorite: root.tool_favorites[16];
+                        clicked => { root.home-open-tool(16); }
+                        toggle_favorite => { root.home-toggle-favorite(16); }
+                    }
+                }
+
+                HorizontalLayout {
+                    spacing: root.grid_gap;
+                    ToolCard {
+                        horizontal-stretch: 1;
+                        title: "HTTP Client";
+                        description: "Pocket cURL & inspector";
+                        icon: AppIcons.http;
+                        accent_color: MaterialPalette.secondary;
+                        entrance_index: 16;
+                        is_entered: root.is_entered;
+                        is_favorite: root.tool_favorites[17];
+                        clicked => { root.home-open-tool(17); }
+                        toggle_favorite => { root.home-toggle-favorite(17); }
+                    }
+                    ToolCard {
+                        horizontal-stretch: 1;
+                        title: "LAN Scout";
+                        description: "Port & dev service probe";
+                        icon: AppIcons.radar;
+                        accent_color: MaterialPalette.tertiary;
+                        entrance_index: 17;
+                        is_entered: root.is_entered;
+                        is_favorite: root.tool_favorites[18];
+                        clicked => { root.home-open-tool(18); }
+                        toggle_favorite => { root.home-toggle-favorite(18); }
+                    }
+                }
             }
 
             // Tablet / medium width layout: 3 columns (560px <= width < 840px)
@@ -448,8 +504,57 @@ export component HomeScreen inherits VerticalLayout {
                         clicked => { root.home-open-tool(14); }
                         toggle_favorite => { root.home-toggle-favorite(14); }
                     }
-                    Rectangle {
+                    ToolCard {
                         horizontal-stretch: 1;
+                        title: "Diff Studio";
+                        description: "Visual diff & code patches";
+                        icon: AppIcons.diff;
+                        accent_color: MaterialPalette.tertiary;
+                        entrance_index: 14;
+                        is_entered: root.is_entered;
+                        is_favorite: root.tool_favorites[15];
+                        clicked => { root.home-open-tool(15); }
+                        toggle_favorite => { root.home-toggle-favorite(15); }
+                    }
+                }
+
+                HorizontalLayout {
+                    spacing: root.grid_gap;
+                    ToolCard {
+                        horizontal-stretch: 1;
+                        title: "QR Code Studio";
+                        description: "Wi-Fi, URLs & live TOTP 2FA";
+                        icon: AppIcons.qr_code;
+                        accent_color: MaterialPalette.primary;
+                        entrance_index: 15;
+                        is_entered: root.is_entered;
+                        is_favorite: root.tool_favorites[16];
+                        clicked => { root.home-open-tool(16); }
+                        toggle_favorite => { root.home-toggle-favorite(16); }
+                    }
+                    ToolCard {
+                        horizontal-stretch: 1;
+                        title: "HTTP Client";
+                        description: "Pocket cURL & inspector";
+                        icon: AppIcons.http;
+                        accent_color: MaterialPalette.secondary;
+                        entrance_index: 16;
+                        is_entered: root.is_entered;
+                        is_favorite: root.tool_favorites[17];
+                        clicked => { root.home-open-tool(17); }
+                        toggle_favorite => { root.home-toggle-favorite(17); }
+                    }
+                    ToolCard {
+                        horizontal-stretch: 1;
+                        title: "LAN Scout";
+                        description: "Port & dev service probe";
+                        icon: AppIcons.radar;
+                        accent_color: MaterialPalette.tertiary;
+                        entrance_index: 17;
+                        is_entered: root.is_entered;
+                        is_favorite: root.tool_favorites[18];
+                        clicked => { root.home-open-tool(18); }
+                        toggle_favorite => { root.home-toggle-favorite(18); }
                     }
                 }
             }
@@ -639,6 +744,58 @@ export component HomeScreen inherits VerticalLayout {
                         is_favorite: root.tool_favorites[14];
                         clicked => { root.home-open-tool(14); }
                         toggle_favorite => { root.home-toggle-favorite(14); }
+                    }
+                    ToolCard {
+                        horizontal-stretch: 1;
+                        title: "Diff Studio";
+                        description: "Visual diff & code patches";
+                        icon: AppIcons.diff;
+                        accent_color: MaterialPalette.tertiary;
+                        entrance_index: 14;
+                        is_entered: root.is_entered;
+                        is_favorite: root.tool_favorites[15];
+                        clicked => { root.home-open-tool(15); }
+                        toggle_favorite => { root.home-toggle-favorite(15); }
+                    }
+                    ToolCard {
+                        horizontal-stretch: 1;
+                        title: "QR Code Studio";
+                        description: "Wi-Fi, URLs & live TOTP 2FA";
+                        icon: AppIcons.qr_code;
+                        accent_color: MaterialPalette.primary;
+                        entrance_index: 15;
+                        is_entered: root.is_entered;
+                        is_favorite: root.tool_favorites[16];
+                        clicked => { root.home-open-tool(16); }
+                        toggle_favorite => { root.home-toggle-favorite(16); }
+                    }
+                }
+
+                HorizontalLayout {
+                    spacing: root.grid_gap;
+                    ToolCard {
+                        horizontal-stretch: 1;
+                        title: "HTTP Client";
+                        description: "Pocket cURL & inspector";
+                        icon: AppIcons.http;
+                        accent_color: MaterialPalette.secondary;
+                        entrance_index: 16;
+                        is_entered: root.is_entered;
+                        is_favorite: root.tool_favorites[17];
+                        clicked => { root.home-open-tool(17); }
+                        toggle_favorite => { root.home-toggle-favorite(17); }
+                    }
+                    ToolCard {
+                        horizontal-stretch: 1;
+                        title: "LAN Scout";
+                        description: "Port & dev service probe";
+                        icon: AppIcons.radar;
+                        accent_color: MaterialPalette.tertiary;
+                        entrance_index: 17;
+                        is_entered: root.is_entered;
+                        is_favorite: root.tool_favorites[18];
+                        clicked => { root.home-open-tool(18); }
+                        toggle_favorite => { root.home-toggle-favorite(18); }
                     }
                     Rectangle {
                         horizontal-stretch: 1;

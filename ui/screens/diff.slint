@@ -1,0 +1,328 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2026 M-Tre Consulting
+
+import { Icons, ScrollView, MaterialPalette, MaterialStyleMetrics, MaterialTypography, MaterialText, StateLayerArea, Icon, Switch } from "@material";
+import { TopBar } from "../components/top-bar.slint";
+import { ToolErrorBanner } from "../components/tool-error-banner.slint";
+import { ToolActionButton } from "../components/tool-action-button.slint";
+import { ToolOutputArea } from "../components/tool-output-area.slint";
+import { ToolTextArea } from "../components/tool-text-area.slint";
+import { AppIcons } from "../components/app-icons.slint";
+
+export component DiffScreen inherits VerticalLayout {
+    in property <length> status_bar_inset: 24px;
+    in property <length> nav_bar_inset: 16px;
+    callback diff-back();
+    callback diff-compare();
+    callback diff-swap();
+    callback diff-clear();
+    callback diff-sample();
+    callback diff-copy(string);
+
+    in-out property <string> original_text: "{\n  \"name\": \"DevKit\",\n  \"version\": \"0.2.2\",\n  \"active\": true\n}";
+    in-out property <string> modified_text: "{\n  \"name\": \"DevKit Mobile\",\n  \"version\": \"0.2.3\",\n  \"active\": true,\n  \"offline\": true\n}";
+    in-out property <bool> ignore_whitespace: false;
+    in-out property <int> additions_count: 0;
+    in-out property <int> deletions_count: 0;
+    in-out property <int> unchanged_count: 0;
+    in-out property <string> unified_patch: "";
+    in-out property <int> view_mode: 0; // 0: Inputs & Stats, 1: Unified Diff
+    in-out property <string> error_message: "";
+
+    property <bool> is_entered: false;
+    init => {
+        self.is_entered = true;
+        root.diff-compare();
+    }
+
+    TopBar {
+        title: "Text & Code Diff Studio";
+        has_back: true;
+        back => { root.diff-back(); }
+    }
+
+    ScrollView {
+        vertical-stretch: 1;
+        opacity: root.is_entered ? 1.0 : 0.0;
+
+        animate opacity {
+            duration: 200ms;
+            delay: 150ms;
+            easing: cubic-bezier(0.05, 0.7, 0.1, 1.0);
+        }
+
+        VerticalLayout {
+            padding_left: MaterialStyleMetrics.padding_16;
+            padding_right: MaterialStyleMetrics.padding_16;
+            padding_top: MaterialStyleMetrics.padding_16;
+            padding_bottom: 96px + root.nav_bar_inset;
+            spacing: MaterialStyleMetrics.spacing_16;
+            alignment: start;
+
+            ToolErrorBanner {
+                message: root.error_message;
+            }
+
+            // Stats Card (Additions, Deletions, Unchanged)
+            Rectangle {
+                border_radius: MaterialStyleMetrics.shape_medium;
+                background: MaterialPalette.surface_container_low;
+                border_width: 1px;
+                border_color: MaterialPalette.outline_variant.with_alpha(15%);
+
+                HorizontalLayout {
+                    padding: MaterialStyleMetrics.padding_12;
+                    spacing: MaterialStyleMetrics.spacing_12;
+                    alignment: space-between;
+
+                    // Additions Pill
+                    Rectangle {
+                        border_radius: MaterialStyleMetrics.shape_small;
+                        background: #2e7d32.with_alpha(18%);
+                        HorizontalLayout {
+                            padding_left: 10px;
+                            padding_right: 10px;
+                            padding_top: 6px;
+                            padding_bottom: 6px;
+                            spacing: 4px;
+                            alignment: center;
+                            MaterialText {
+                                text: "+" + root.additions_count + " additions";
+                                style: MaterialTypography.label_medium;
+                                color: #4caf50;
+                            }
+                        }
+                    }
+
+                    // Deletions Pill
+                    Rectangle {
+                        border_radius: MaterialStyleMetrics.shape_small;
+                        background: #c62828.with_alpha(18%);
+                        HorizontalLayout {
+                            padding_left: 10px;
+                            padding_right: 10px;
+                            padding_top: 6px;
+                            padding_bottom: 6px;
+                            spacing: 4px;
+                            alignment: center;
+                            MaterialText {
+                                text: "-" + root.deletions_count + " deletions";
+                                style: MaterialTypography.label_medium;
+                                color: #ef5350;
+                            }
+                        }
+                    }
+
+                    // Unchanged Pill
+                    Rectangle {
+                        border_radius: MaterialStyleMetrics.shape_small;
+                        background: MaterialPalette.surface_container_high;
+                        HorizontalLayout {
+                            padding_left: 10px;
+                            padding_right: 10px;
+                            padding_top: 6px;
+                            padding_bottom: 6px;
+                            spacing: 4px;
+                            alignment: center;
+                            MaterialText {
+                                text: root.unchanged_count + " matching";
+                                style: MaterialTypography.label_medium;
+                                color: MaterialPalette.on_surface_variant;
+                            }
+                        }
+                    }
+                }
+            }
+
+            // View Mode Tab Bar & Whitespace Toggle
+            HorizontalLayout {
+                alignment: space-between;
+                spacing: MaterialStyleMetrics.spacing_12;
+
+                // Mode Tabs (Inputs vs Unified)
+                Rectangle {
+                    border_radius: MaterialStyleMetrics.shape_full;
+                    background: MaterialPalette.surface_container_highest;
+                    height: 38px;
+
+                    HorizontalLayout {
+                        padding: 3px;
+                        spacing: 4px;
+
+                        Rectangle {
+                            border_radius: MaterialStyleMetrics.shape_full;
+                            background: root.view_mode == 0 ? MaterialPalette.primary : Colors.transparent;
+                            StateLayerArea {
+                                width: 100%;
+                                border_radius: parent.border_radius;
+                                clicked => { root.view_mode = 0; }
+                                HorizontalLayout {
+                                    padding_left: 14px;
+                                    padding_right: 14px;
+                                    alignment: center;
+                                    MaterialText {
+                                        text: "Compare Inputs";
+                                        style: MaterialTypography.label_medium;
+                                        color: root.view_mode == 0 ? MaterialPalette.on_primary : MaterialPalette.on_surface_variant;
+                                    }
+                                }
+                            }
+                        }
+
+                        Rectangle {
+                            border_radius: MaterialStyleMetrics.shape_full;
+                            background: root.view_mode == 1 ? MaterialPalette.primary : Colors.transparent;
+                            StateLayerArea {
+                                width: 100%;
+                                border_radius: parent.border_radius;
+                                clicked => {
+                                    root.view_mode = 1;
+                                    root.diff-compare();
+                                }
+                                HorizontalLayout {
+                                    padding_left: 14px;
+                                    padding_right: 14px;
+                                    alignment: center;
+                                    MaterialText {
+                                        text: "Unified Patch";
+                                        style: MaterialTypography.label_medium;
+                                        color: root.view_mode == 1 ? MaterialPalette.on_primary : MaterialPalette.on_surface_variant;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Ignore Whitespace Toggle
+                HorizontalLayout {
+                    spacing: 6px;
+                    alignment: end;
+                    VerticalLayout {
+                        alignment: center;
+                        MaterialText {
+                            text: "Ignore Spaces";
+                            style: MaterialTypography.label_small;
+                            color: MaterialPalette.on_surface_variant;
+                        }
+                    }
+                    VerticalLayout {
+                        alignment: center;
+                        Switch {
+                            checked: root.ignore_whitespace;
+                            checked_state_changed(checked) => {
+                                root.ignore_whitespace = checked;
+                                root.diff-compare();
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Quick Actions: Swap & Sample
+            HorizontalLayout {
+                spacing: MaterialStyleMetrics.spacing_12;
+                alignment: start;
+
+                Rectangle {
+                    border_radius: MaterialStyleMetrics.shape_full;
+                    background: MaterialPalette.surface_container;
+                    height: 36px;
+                    StateLayerArea {
+                        width: 100%;
+                        border_radius: parent.border_radius;
+                        clicked => {
+                            root.diff-swap();
+                            root.diff-compare();
+                        }
+                        HorizontalLayout {
+                            padding_left: 12px;
+                            padding_right: 12px;
+                            spacing: 6px;
+                            alignment: center;
+                            Icon {
+                                source: AppIcons.swap;
+                                colorize: MaterialPalette.primary;
+                                width: 16px;
+                                height: 16px;
+                            }
+                            MaterialText {
+                                text: "Swap (A ↔ B)";
+                                style: MaterialTypography.label_medium;
+                                color: MaterialPalette.primary;
+                            }
+                        }
+                    }
+                }
+
+                Rectangle {
+                    border_radius: MaterialStyleMetrics.shape_full;
+                    background: MaterialPalette.surface_container;
+                    height: 36px;
+                    StateLayerArea {
+                        width: 100%;
+                        border_radius: parent.border_radius;
+                        clicked => {
+                            root.diff-sample();
+                            root.diff-compare();
+                        }
+                        HorizontalLayout {
+                            padding_left: 12px;
+                            padding_right: 12px;
+                            alignment: center;
+                            MaterialText {
+                                text: "Load Sample";
+                                style: MaterialTypography.label_medium;
+                                color: MaterialPalette.on_surface_variant;
+                            }
+                        }
+                    }
+                }
+            }
+
+            // VIEW MODE 0: Dual Inputs
+            if root.view_mode == 0 : VerticalLayout {
+                spacing: MaterialStyleMetrics.spacing_16;
+
+                // Original Text (Left / Old)
+                ToolTextArea {
+                    label: "ORIGINAL (OLD / BEFORE)";
+                    placeholder_text: "Paste original code, JSON, or text here...";
+                    text <=> root.original_text;
+                    edited(txt) => { root.diff-compare(); }
+                }
+
+                // Modified Text (Right / New)
+                ToolTextArea {
+                    label: "MODIFIED (NEW / AFTER)";
+                    placeholder_text: "Paste modified code, JSON, or text here...";
+                    text <=> root.modified_text;
+                    edited(txt) => { root.diff-compare(); }
+                }
+            }
+
+            // VIEW MODE 1: Unified Diff Output
+            if root.view_mode == 1 : VerticalLayout {
+                spacing: MaterialStyleMetrics.spacing_12;
+
+                ToolOutputArea {
+                    title: "UNIFIED PATCH RESULT";
+                    text: root.unified_patch;
+                    copy(val) => { root.diff-copy(val); }
+                }
+            }
+
+            // Action button
+            ToolActionButton {
+                text: "Calculate Differences";
+                has_clear: true;
+                clicked => { root.diff-compare(); }
+                clear => {
+                    root.original_text = "";
+                    root.modified_text = "";
+                    root.diff-clear();
+                }
+            }
+        }
+    }
+}

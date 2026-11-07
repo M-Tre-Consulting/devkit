@@ -15,7 +15,7 @@ export component RecentScreen inherits VerticalLayout {
     in property <length> pill_bottom_margin: 28px;
     property <length> bottom_clearance: root.pill_height + root.pill_bottom_margin + root.nav_bar_inset + 24px;
     in property <[int]> recent_tools: [];
-    in property <[bool]> tool_favorites: [false, false, false, false, false, false, false, false, false, false, false, false, false, false, false];
+    in property <[bool]> tool_favorites: [false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false];
     callback recent-open-tool(int);
     callback recent-toggle-favorite(int);
 
@@ -275,6 +275,46 @@ export component RecentScreen inherits VerticalLayout {
                         is_favorite: root.tool_favorites[14];
                         clicked => { root.recent-open-tool(14); }
                         toggle_favorite => { root.recent-toggle-favorite(14); }
+                    }
+
+                    if tool_id == 15 : ToolCard {
+                        title: "Diff Studio";
+                        description: "Visual diff & code patches";
+                        icon: AppIcons.diff;
+                        accent_color: MaterialPalette.tertiary;
+                        is_favorite: root.tool_favorites[15];
+                        clicked => { root.recent-open-tool(15); }
+                        toggle_favorite => { root.recent-toggle-favorite(15); }
+                    }
+
+                    if tool_id == 16 : ToolCard {
+                        title: "QR Code Studio";
+                        description: "Wi-Fi, URLs & live TOTP 2FA";
+                        icon: AppIcons.qr_code;
+                        accent_color: MaterialPalette.primary;
+                        is_favorite: root.tool_favorites[16];
+                        clicked => { root.recent-open-tool(16); }
+                        toggle_favorite => { root.recent-toggle-favorite(16); }
+                    }
+
+                    if tool_id == 17 : ToolCard {
+                        title: "HTTP Client";
+                        description: "Pocket cURL & inspector";
+                        icon: AppIcons.http;
+                        accent_color: MaterialPalette.secondary;
+                        is_favorite: root.tool_favorites[17];
+                        clicked => { root.recent-open-tool(17); }
+                        toggle_favorite => { root.recent-toggle-favorite(17); }
+                    }
+
+                    if tool_id == 18 : ToolCard {
+                        title: "LAN Scout";
+                        description: "Port & dev service probe";
+                        icon: AppIcons.radar;
+                        accent_color: MaterialPalette.tertiary;
+                        is_favorite: root.tool_favorites[18];
+                        clicked => { root.recent-open-tool(18); }
+                        toggle_favorite => { root.recent-toggle-favorite(18); }
                     }
                 }
             }

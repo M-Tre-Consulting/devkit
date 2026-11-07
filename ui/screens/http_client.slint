@@ -1,0 +1,397 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2026 M-Tre Consulting
+
+import { Icons, ScrollView, MaterialPalette, MaterialStyleMetrics, MaterialTypography, MaterialText, StateLayerArea, Icon, TextField } from "@material";
+import { TopBar } from "../components/top-bar.slint";
+import { ToolErrorBanner } from "../components/tool-error-banner.slint";
+import { ToolActionButton } from "../components/tool-action-button.slint";
+import { ToolOutputArea } from "../components/tool-output-area.slint";
+import { ToolTextArea } from "../components/tool-text-area.slint";
+import { AppIcons } from "../components/app-icons.slint";
+
+export component HttpClientScreen inherits VerticalLayout {
+    in property <length> status_bar_inset: 24px;
+    in property <length> nav_bar_inset: 16px;
+    callback http-back();
+    callback http-send();
+    callback http-copy(string);
+    callback http-import-curl(string);
+    callback http-export-curl();
+
+    in-out property <int> selected_method: 0; // 0: GET, 1: POST, 2: PUT, 3: DELETE, 4: PATCH, 5: HEAD
+    in-out property <string> url: "https://httpbin.org/get";
+    in-out property <string> headers_text: "Accept: application/json\nUser-Agent: DevKit-Mobile/0.2.3";
+    in-out property <string> body_text: "{\n  \"message\": \"Hello from DevKit!\"\n}";
+    in-out property <int> active_tab: 0; // 0: Headers, 1: Body, 2: cURL
+    in-out property <string> curl_command: "curl -X GET \"https://httpbin.org/get\" -H \"Accept: application/json\"";
+
+    in-out property <bool> is_loading: false;
+    in-out property <int> response_status: 200;
+    in-out property <string> response_status_text: "OK";
+    in-out property <int> response_latency_ms: 0;
+    in-out property <int> response_size_bytes: 0;
+    in-out property <string> response_headers: "";
+    in-out property <string> response_body: "";
+    in-out property <string> error_message: "";
+
+    property <bool> is_entered: false;
+    init => {
+        self.is_entered = true;
+    }
+
+    TopBar {
+        title: "HTTP & cURL Client";
+        has_back: true;
+        back => { root.http-back(); }
+    }
+
+    ScrollView {
+        vertical-stretch: 1;
+        opacity: root.is_entered ? 1.0 : 0.0;
+
+        animate opacity {
+            duration: 200ms;
+            delay: 150ms;
+            easing: cubic-bezier(0.05, 0.7, 0.1, 1.0);
+        }
+
+        VerticalLayout {
+            padding_left: MaterialStyleMetrics.padding_16;
+            padding_right: MaterialStyleMetrics.padding_16;
+            padding_top: MaterialStyleMetrics.padding_16;
+            padding_bottom: 96px + root.nav_bar_inset;
+            spacing: MaterialStyleMetrics.spacing_16;
+            alignment: start;
+
+            ToolErrorBanner {
+                message: root.error_message;
+            }
+
+            // Method Selector Chips
+            HorizontalLayout {
+                spacing: 6px;
+                alignment: start;
+
+                // GET
+                Rectangle {
+                    border_radius: MaterialStyleMetrics.shape_small;
+                    background: root.selected_method == 0 ? #1976d2 : MaterialPalette.surface_container;
+                    height: 32px;
+                    StateLayerArea {
+                        width: 100%;
+                        border_radius: parent.border_radius;
+                        clicked => { root.selected_method = 0; }
+                        HorizontalLayout {
+                            padding_left: 10px;
+                            padding_right: 10px;
+                            alignment: center;
+                            MaterialText {
+                                text: "GET";
+                                style: MaterialTypography.label_medium;
+                                color: root.selected_method == 0 ? #ffffff : MaterialPalette.on_surface_variant;
+                            }
+                        }
+                    }
+                }
+
+                // POST
+                Rectangle {
+                    border_radius: MaterialStyleMetrics.shape_small;
+                    background: root.selected_method == 1 ? #388e3c : MaterialPalette.surface_container;
+                    height: 32px;
+                    StateLayerArea {
+                        width: 100%;
+                        border_radius: parent.border_radius;
+                        clicked => { root.selected_method = 1; }
+                        HorizontalLayout {
+                            padding_left: 10px;
+                            padding_right: 10px;
+                            alignment: center;
+                            MaterialText {
+                                text: "POST";
+                                style: MaterialTypography.label_medium;
+                                color: root.selected_method == 1 ? #ffffff : MaterialPalette.on_surface_variant;
+                            }
+                        }
+                    }
+                }
+
+                // PUT
+                Rectangle {
+                    border_radius: MaterialStyleMetrics.shape_small;
+                    background: root.selected_method == 2 ? #f57c00 : MaterialPalette.surface_container;
+                    height: 32px;
+                    StateLayerArea {
+                        width: 100%;
+                        border_radius: parent.border_radius;
+                        clicked => { root.selected_method = 2; }
+                        HorizontalLayout {
+                            padding_left: 10px;
+                            padding_right: 10px;
+                            alignment: center;
+                            MaterialText {
+                                text: "PUT";
+                                style: MaterialTypography.label_medium;
+                                color: root.selected_method == 2 ? #ffffff : MaterialPalette.on_surface_variant;
+                            }
+                        }
+                    }
+                }
+
+                // DELETE
+                Rectangle {
+                    border_radius: MaterialStyleMetrics.shape_small;
+                    background: root.selected_method == 3 ? #d32f2f : MaterialPalette.surface_container;
+                    height: 32px;
+                    StateLayerArea {
+                        width: 100%;
+                        border_radius: parent.border_radius;
+                        clicked => { root.selected_method = 3; }
+                        HorizontalLayout {
+                            padding_left: 10px;
+                            padding_right: 10px;
+                            alignment: center;
+                            MaterialText {
+                                text: "DEL";
+                                style: MaterialTypography.label_medium;
+                                color: root.selected_method == 3 ? #ffffff : MaterialPalette.on_surface_variant;
+                            }
+                        }
+                    }
+                }
+
+                // PATCH
+                Rectangle {
+                    border_radius: MaterialStyleMetrics.shape_small;
+                    background: root.selected_method == 4 ? #7b1fa2 : MaterialPalette.surface_container;
+                    height: 32px;
+                    StateLayerArea {
+                        width: 100%;
+                        border_radius: parent.border_radius;
+                        clicked => { root.selected_method = 4; }
+                        HorizontalLayout {
+                            padding_left: 10px;
+                            padding_right: 10px;
+                            alignment: center;
+                            MaterialText {
+                                text: "PATCH";
+                                style: MaterialTypography.label_medium;
+                                color: root.selected_method == 4 ? #ffffff : MaterialPalette.on_surface_variant;
+                            }
+                        }
+                    }
+                }
+            }
+
+            // URL Input Row
+            VerticalLayout {
+                spacing: 4px;
+                MaterialText {
+                    text: "REQUEST ENDPOINT URL";
+                    style: MaterialTypography.label_small;
+                    color: MaterialPalette.on_surface_variant;
+                }
+                TextField {
+                    text <=> root.url;
+                    placeholder_text: "https://api.example.com/endpoint";
+                }
+            }
+
+            // Tabs Bar: Headers, Body, cURL
+            Rectangle {
+                border_radius: MaterialStyleMetrics.shape_full;
+                background: MaterialPalette.surface_container_highest;
+                height: 38px;
+
+                HorizontalLayout {
+                    padding: 3px;
+                    spacing: 4px;
+
+                    // Tab 0: Headers
+                    Rectangle {
+                        border_radius: MaterialStyleMetrics.shape_full;
+                        background: root.active_tab == 0 ? MaterialPalette.primary : Colors.transparent;
+                        StateLayerArea {
+                            width: 100%;
+                            border_radius: parent.border_radius;
+                            clicked => { root.active_tab = 0; }
+                            HorizontalLayout {
+                                alignment: center;
+                                MaterialText {
+                                    text: "Headers";
+                                    style: MaterialTypography.label_medium;
+                                    color: root.active_tab == 0 ? MaterialPalette.on_primary : MaterialPalette.on_surface_variant;
+                                }
+                            }
+                        }
+                    }
+
+                    // Tab 1: Body
+                    Rectangle {
+                        border_radius: MaterialStyleMetrics.shape_full;
+                        background: root.active_tab == 1 ? MaterialPalette.primary : Colors.transparent;
+                        StateLayerArea {
+                            width: 100%;
+                            border_radius: parent.border_radius;
+                            clicked => { root.active_tab = 1; }
+                            HorizontalLayout {
+                                alignment: center;
+                                MaterialText {
+                                    text: "Request Body";
+                                    style: MaterialTypography.label_medium;
+                                    color: root.active_tab == 1 ? MaterialPalette.on_primary : MaterialPalette.on_surface_variant;
+                                }
+                            }
+                        }
+                    }
+
+                    // Tab 2: cURL
+                    Rectangle {
+                        border_radius: MaterialStyleMetrics.shape_full;
+                        background: root.active_tab == 2 ? MaterialPalette.primary : Colors.transparent;
+                        StateLayerArea {
+                            width: 100%;
+                            border_radius: parent.border_radius;
+                            clicked => {
+                                root.active_tab = 2;
+                                root.http-export-curl();
+                            }
+                            HorizontalLayout {
+                                alignment: center;
+                                MaterialText {
+                                    text: "cURL Command";
+                                    style: MaterialTypography.label_medium;
+                                    color: root.active_tab == 2 ? MaterialPalette.on_primary : MaterialPalette.on_surface_variant;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Tab 0 Content: Headers Text Area
+            if root.active_tab == 0 : VerticalLayout {
+                ToolTextArea {
+                    label: "HTTP REQUEST HEADERS (Key: Value)";
+                    placeholder_text: "Content-Type: application/json\nAuthorization: Bearer token";
+                    text <=> root.headers_text;
+                }
+            }
+
+            // Tab 1 Content: Body Text Area
+            if root.active_tab == 1 : VerticalLayout {
+                ToolTextArea {
+                    label: "HTTP REQUEST PAYLOAD";
+                    placeholder_text: "Enter JSON payload, form data, or raw text...";
+                    text <=> root.body_text;
+                }
+            }
+
+            // Tab 2 Content: cURL Import / Export
+            if root.active_tab == 2 : VerticalLayout {
+                spacing: MaterialStyleMetrics.spacing_12;
+                ToolTextArea {
+                    label: "CURL COMMAND CLI";
+                    placeholder_text: "Paste cURL command to import or copy generated...";
+                    text <=> root.curl_command;
+                }
+                HorizontalLayout {
+                    spacing: 8px;
+                    alignment: start;
+                    Rectangle {
+                        border_radius: MaterialStyleMetrics.shape_full;
+                        background: MaterialPalette.surface_container;
+                        height: 36px;
+                        StateLayerArea {
+                            width: 100%;
+                            border_radius: parent.border_radius;
+                            clicked => { root.http-import-curl(root.curl_command); }
+                            HorizontalLayout {
+                                padding_left: 12px;
+                                padding_right: 12px;
+                                alignment: center;
+                                MaterialText {
+                                    text: "Import from cURL";
+                                    style: MaterialTypography.label_medium;
+                                    color: MaterialPalette.primary;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Send Action Button
+            ToolActionButton {
+                text: root.is_loading ? "Sending Request..." : "Send HTTP Request";
+                enabled: !root.is_loading;
+                has_clear: false;
+                clicked => { root.http-send(); }
+            }
+
+            // Response Section
+            if root.response_body != "" || root.response_latency_ms > 0 : VerticalLayout {
+                spacing: MaterialStyleMetrics.spacing_12;
+
+                // Status & Metrics Row
+                Rectangle {
+                    border_radius: MaterialStyleMetrics.shape_medium;
+                    background: MaterialPalette.surface_container_low;
+
+                    HorizontalLayout {
+                        padding: MaterialStyleMetrics.padding_12;
+                        alignment: space-between;
+
+                        // Status Badge
+                        Rectangle {
+                            border_radius: MaterialStyleMetrics.shape_small;
+                            background: root.response_status < 400 ? #2e7d32.with_alpha(18%) : #c62828.with_alpha(18%);
+                            HorizontalLayout {
+                                padding_left: 10px;
+                                padding_right: 10px;
+                                padding_top: 4px;
+                                padding_bottom: 4px;
+                                alignment: center;
+                                MaterialText {
+                                    text: root.response_status + " " + root.response_status_text;
+                                    style: MaterialTypography.label_medium;
+                                    color: root.response_status < 400 ? #4caf50 : #ef5350;
+                                }
+                            }
+                        }
+
+                        // Latency & Size
+                        HorizontalLayout {
+                            spacing: 12px;
+                            alignment: end;
+                            MaterialText {
+                                text: root.response_latency_ms + " ms";
+                                style: MaterialTypography.label_medium;
+                                color: MaterialPalette.on_surface_variant;
+                            }
+                            MaterialText {
+                                text: root.response_size_bytes + " bytes";
+                                style: MaterialTypography.label_medium;
+                                color: MaterialPalette.on_surface_variant;
+                            }
+                        }
+                    }
+                }
+
+                // Response Body Display
+                ToolOutputArea {
+                    title: "RESPONSE BODY";
+                    text: root.response_body;
+                    copy(val) => { root.http-copy(val); }
+                }
+
+                // Response Headers
+                if root.response_headers != "" : ToolOutputArea {
+                    title: "RESPONSE HEADERS";
+                    text: root.response_headers;
+                    copy(val) => { root.http-copy(val); }
+                }
+            }
+        }
+    }
+}

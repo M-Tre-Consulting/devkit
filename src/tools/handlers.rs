@@ -346,3 +346,211 @@ pub fn handle_jwt(token: &str) -> Result<JwtOutput, String> {
         Err(_) => Err("JWT decoding not yet implemented (todo stub)".to_string()),
     }
 }
+
+/// Handler for Text & Code Diff.
+pub fn handle_diff(
+    original: &str,
+    modified: &str,
+    ignore_whitespace: bool,
+) -> Result<crate::tools::diff::DiffResult, String> {
+    let outcome = catch_unwind(AssertUnwindSafe(|| {
+        crate::tools::diff::compute_diff(original, modified, ignore_whitespace)
+    }));
+    match outcome {
+        Ok(res) => Ok(res),
+        Err(_) => Err("Diff calculation failed".to_string()),
+    }
+}
+
+/// Handler for Plain Text QR Code.
+pub fn handle_qrcode_text(text: &str) -> Result<crate::tools::qrcode_tool::QrResult, String> {
+    let outcome = catch_unwind(AssertUnwindSafe(|| {
+        crate::tools::qrcode_tool::generate_text_qr(text)
+    }));
+    match outcome {
+        Ok(Ok(res)) => Ok(res),
+        Ok(Err(err)) => Err(err),
+        Err(_) => Err("QR code generation panicked".to_string()),
+    }
+}
+
+/// Handler for Wi-Fi QR Code.
+pub fn handle_qrcode_wifi(
+    ssid: &str,
+    password: &str,
+    auth_idx: i32,
+    hidden: bool,
+) -> Result<crate::tools::qrcode_tool::QrResult, String> {
+    let auth = match auth_idx {
+        1 => crate::tools::qrcode_tool::WifiAuthType::Wep,
+        2 => crate::tools::qrcode_tool::WifiAuthType::NoPass,
+        _ => crate::tools::qrcode_tool::WifiAuthType::Wpa,
+    };
+    let outcome = catch_unwind(AssertUnwindSafe(|| {
+        crate::tools::qrcode_tool::generate_wifi_qr(ssid, password, auth, hidden)
+    }));
+    match outcome {
+        Ok(Ok(res)) => Ok(res),
+        Ok(Err(err)) => Err(err),
+        Err(_) => Err("Wi-Fi QR generation panicked".to_string()),
+    }
+}
+
+/// Handler for TOTP 2FA QR Code.
+pub fn handle_qrcode_totp(
+    issuer: &str,
+    account: &str,
+    secret: &str,
+) -> Result<crate::tools::qrcode_tool::QrResult, String> {
+    let now_secs = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap_or_default()
+        .as_secs();
+    let outcome = catch_unwind(AssertUnwindSafe(|| {
+        crate::tools::qrcode_tool::generate_totp_qr(issuer, account, secret, now_secs)
+    }));
+    match outcome {
+        Ok(Ok(res)) => Ok(res),
+        Ok(Err(err)) => Err(err),
+        Err(_) => Err("TOTP QR generation panicked".to_string()),
+    }
+}
+
+/// Convert QR bit matrix into Slint image.
+pub fn qr_to_slint_image(qr: &crate::tools::qrcode_tool::QrResult) -> slint::Image {
+    let module_count = qr.size;
+    if module_count == 0 {
+        return slint::Image::default();
+    }
+
+    let quiet_zone = 2;
+    let total_modules = module_count + quiet_zone * 2;
+    let scale = 6;
+    let img_size = (total_modules * scale) as u32;
+
+    let mut pixel_buffer = slint::SharedPixelBuffer::<slint::Rgba8Pixel>::new(img_size, img_size);
+    let pixels = pixel_buffer.make_mut_slice();
+
+    for p in pixels.iter_mut() {
+        *p = slint::Rgba8Pixel { r: 255, g: 255, b: 255, a: 255 };
+    }
+
+    for row in 0..module_count {
+        for col in 0..module_count {
+            if qr.modules[row * module_count + col] {
+                let start_y = (row + quiet_zone) * scale;
+                let start_x = (col + quiet_zone) * scale;
+                for py in start_y..(start_y + scale) {
+                    for px in start_x..(start_x + scale) {
+                        let idx = py * (img_size as usize) + px;
+                        if idx < pixels.len() {
+                            pixels[idx] = slint::Rgba8Pixel { r: 18, g: 18, b: 22, a: 255 };
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    slint::Image::from_rgba8(pixel_buffer)
+}
+
+/// Helper to parse method integer into HttpMethod.
+fn int_to_http_method(idx: i32) -> crate::tools::http_client::HttpMethod {
+    match idx {
+        1 => crate::tools::http_client::HttpMethod::Post,
+        2 => crate::tools::http_client::HttpMethod::Put,
+        3 => crate::tools::http_client::HttpMethod::Delete,
+        4 => crate::tools::http_client::HttpMethod::Patch,
+        5 => crate::tools::http_client::HttpMethod::Head,
+        _ => crate::tools::http_client::HttpMethod::Get,
+    }
+}
+
+/// Helper to convert HttpMethod into index.
+pub fn http_method_to_int(m: crate::tools::http_client::HttpMethod) -> i32 {
+    match m {
+        crate::tools::http_client::HttpMethod::Get => 0,
+        crate::tools::http_client::HttpMethod::Post => 1,
+        crate::tools::http_client::HttpMethod::Put => 2,
+        crate::tools::http_client::HttpMethod::Delete => 3,
+        crate::tools::http_client::HttpMethod::Patch => 4,
+        crate::tools::http_client::HttpMethod::Head => 5,
+    }
+}
+
+/// Handler for HTTP Request execution.
+pub fn handle_http_send(
+    method_idx: i32,
+    url: &str,
+    headers: &str,
+    body: &str,
+) -> Result<crate::tools::http_client::HttpResponse, String> {
+    let method = int_to_http_method(method_idx);
+    let parsed_headers = crate::tools::http_client::parse_headers_str(headers);
+
+    let req = crate::tools::http_client::HttpRequest {
+        method,
+        url: url.to_string(),
+        headers: parsed_headers,
+        body: body.to_string(),
+    };
+
+    let outcome = catch_unwind(AssertUnwindSafe(|| {
+        crate::tools::http_client::execute_request(&req)
+    }));
+    match outcome {
+        Ok(Ok(res)) => Ok(res),
+        Ok(Err(err)) => Err(err),
+        Err(_) => Err("HTTP request panicked".to_string()),
+    }
+}
+
+/// Handler for importing a cURL command.
+pub fn handle_http_import_curl(
+    curl_command: &str,
+) -> Result<crate::tools::http_client::HttpRequest, String> {
+    let outcome = catch_unwind(AssertUnwindSafe(|| {
+        crate::tools::http_client::parse_curl(curl_command)
+    }));
+    match outcome {
+        Ok(Ok(req)) => Ok(req),
+        Ok(Err(err)) => Err(err),
+        Err(_) => Err("Failed to parse cURL command".to_string()),
+    }
+}
+
+/// Handler for exporting to a cURL command.
+pub fn handle_http_export_curl(
+    method_idx: i32,
+    url: &str,
+    headers: &str,
+    body: &str,
+) -> String {
+    let method = int_to_http_method(method_idx);
+    let parsed_headers = crate::tools::http_client::parse_headers_str(headers);
+
+    let req = crate::tools::http_client::HttpRequest {
+        method,
+        url: url.to_string(),
+        headers: parsed_headers,
+        body: body.to_string(),
+    };
+
+    crate::tools::http_client::export_to_curl(&req)
+}
+
+/// Handler for LAN host port scan.
+pub fn handle_lan_scout(
+    host_ip: &str,
+    timeout_ms: u64,
+) -> Result<Vec<crate::tools::lan_scout::PortScanResult>, String> {
+    let outcome = catch_unwind(AssertUnwindSafe(|| {
+        crate::tools::lan_scout::scan_host(host_ip, timeout_ms)
+    }));
+    match outcome {
+        Ok(Ok(ports)) => Ok(ports),
+        Ok(Err(err)) => Err(err),
+        Err(_) => Err("LAN scout scan panicked".to_string()),
+    }
+}

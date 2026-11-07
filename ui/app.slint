@@ -22,6 +22,10 @@ import { ChmodScreen } from "./screens/chmod.slint";
 import { ColorScreen } from "./screens/color.slint";
 import { ContrastScreen } from "./screens/contrast.slint";
 import { JwtScreen } from "./screens/jwt.slint";
+import { DiffScreen } from "./screens/diff.slint";
+import { QrCodeScreen } from "./screens/qrcode.slint";
+import { HttpClientScreen } from "./screens/http_client.slint";
+import { LanScoutScreen, PortItem } from "./screens/lan_scout.slint";
 import { PillNavBar } from "./components/pill-nav-bar.slint";
 import { AppIcons } from "./components/app-icons.slint";
 export { MaterialWindowAdapter } from "@material";
@@ -141,6 +145,47 @@ export struct JwtResult {
     error_message: string,
 }
 
+export struct DiffOutputResult {
+    additions: int,
+    deletions: int,
+    unchanged: int,
+    unified_patch: string,
+    error_message: string,
+}
+
+export struct QrOutputResult {
+    qr_image: image,
+    payload: string,
+    totp_code: string,
+    totp_remaining_secs: int,
+    error_message: string,
+}
+
+export struct HttpOutputResult {
+    status: int,
+    status_text: string,
+    latency_ms: int,
+    size_bytes: int,
+    headers: string,
+    body: string,
+    error_message: string,
+}
+
+export struct HttpImportResult {
+    method_idx: int,
+    url: string,
+    headers: string,
+    body: string,
+    error_message: string,
+}
+
+export struct LanScoutOutputResult {
+    open_count: int,
+    total_count: int,
+    ports: [PortItem],
+    error_message: string,
+}
+
 export component AppWindow inherits Window {
     title: "DevKit";
     min_width: 360px;
@@ -154,7 +199,7 @@ export component AppWindow inherits Window {
     property <length> pill_bottom_margin: 24px;
     in-out property <length> keyboard_height: root.virtual-keyboard-size.height;
     in-out property <bool> keyboard_open: root.keyboard_height > 20px;
-    in-out property <[bool]> tool_favorites: [false, false, false, false, false, false, false, false, false, false, false, false, false, false, false];
+    in-out property <[bool]> tool_favorites: [false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false];
     in-out property <[int]> recent_tools: [];
     in-out property <bool> modal_open: false;
     in-out property <bool> about_open: false;
@@ -214,6 +259,14 @@ export component AppWindow inherits Window {
     callback color-convert(string, int) -> ColorResult;
     callback contrast-check(string, string) -> ContrastCheckResult;
     callback jwt-decode(string) -> JwtResult;
+    callback diff-compare(string, string, bool) -> DiffOutputResult;
+    callback qrcode-generate-text(string) -> QrOutputResult;
+    callback qrcode-generate-wifi(string, string, int, bool) -> QrOutputResult;
+    callback qrcode-generate-totp(string, string, string) -> QrOutputResult;
+    callback http-send(int, string, string, string) -> HttpOutputResult;
+    callback http-import-curl(string) -> HttpImportResult;
+    callback http-export-curl(int, string, string, string) -> string;
+    callback lan-scout-scan(string, int) -> LanScoutOutputResult;
 
     property <int> last_tool: 1;
     changed active_tool => {
@@ -786,6 +839,108 @@ export component AppWindow inherits Window {
                 jwt-copy(val) => { root.copy_text(val); }
                 jwt-copy-header(val) => { root.copy_text(val); }
                 jwt-copy-payload(val) => { root.copy_text(val); }
+            }
+
+            if root.displayed_tool == 15 : DiffScreen {
+                x: 0px;
+                y: 0px;
+                width: 100%;
+                height: 100%;
+                nav_bar_inset: root.nav_bar_inset;
+                diff-back => { root.back(); }
+                diff-compare => {
+                    let res = root.diff-compare(self.original_text, self.modified_text, self.ignore_whitespace);
+                    self.additions_count = res.additions;
+                    self.deletions_count = res.deletions;
+                    self.unchanged_count = res.unchanged;
+                    self.unified_patch = res.unified_patch;
+                    self.error_message = res.error_message;
+                }
+                diff-copy(val) => { root.copy_text(val); }
+            }
+
+            if root.displayed_tool == 16 : QrCodeScreen {
+                x: 0px;
+                y: 0px;
+                width: 100%;
+                height: 100%;
+                nav_bar_inset: root.nav_bar_inset;
+                qrcode-back => { root.back(); }
+                qrcode-generate => {
+                    if self.selected_type == 0 {
+                        let res = root.qrcode-generate-text(self.text_payload);
+                        self.qr_image = res.qr_image;
+                        self.encoded_payload = res.payload;
+                        self.error_message = res.error_message;
+                    } else if self.selected_type == 1 {
+                        let res = root.qrcode-generate-wifi(self.wifi_ssid, self.wifi_password, self.wifi_auth, self.wifi_hidden);
+                        self.qr_image = res.qr_image;
+                        self.encoded_payload = res.payload;
+                        self.error_message = res.error_message;
+                    } else {
+                        let res = root.qrcode-generate-totp(self.totp_issuer, self.totp_account, self.totp_secret);
+                        self.qr_image = res.qr_image;
+                        self.encoded_payload = res.payload;
+                        self.live_totp_code = res.totp_code;
+                        self.totp_remaining_secs = res.totp_remaining_secs;
+                        self.error_message = res.error_message;
+                    }
+                }
+                qrcode-copy(val) => { root.copy_text(val); }
+            }
+
+            if root.displayed_tool == 17 : HttpClientScreen {
+                x: 0px;
+                y: 0px;
+                width: 100%;
+                height: 100%;
+                nav_bar_inset: root.nav_bar_inset;
+                http-back => { root.back(); }
+                http-send => {
+                    self.is_loading = true;
+                    let res = root.http-send(self.selected_method, self.url, self.headers_text, self.body_text);
+                    self.is_loading = false;
+                    self.response_status = res.status;
+                    self.response_status_text = res.status_text;
+                    self.response_latency_ms = res.latency_ms;
+                    self.response_size_bytes = res.size_bytes;
+                    self.response_headers = res.headers;
+                    self.response_body = res.body;
+                    self.error_message = res.error_message;
+                }
+                http-copy(val) => { root.copy_text(val); }
+                http-import-curl(cmd) => {
+                    let res = root.http-import-curl(cmd);
+                    if res.error_message == "" {
+                        self.selected_method = res.method_idx;
+                        self.url = res.url;
+                        self.headers_text = res.headers;
+                        self.body_text = res.body;
+                    }
+                    self.error_message = res.error_message;
+                }
+                http-export-curl => {
+                    self.curl_command = root.http-export-curl(self.selected_method, self.url, self.headers_text, self.body_text);
+                }
+            }
+
+            if root.displayed_tool == 18 : LanScoutScreen {
+                x: 0px;
+                y: 0px;
+                width: 100%;
+                height: 100%;
+                nav_bar_inset: root.nav_bar_inset;
+                scout-back => { root.back(); }
+                scout-scan(host, timeout_ms) => {
+                    self.is_scanning = true;
+                    let res = root.lan-scout-scan(host, timeout_ms);
+                    self.is_scanning = false;
+                    self.open_ports_count = res.open_count;
+                    self.total_scanned_count = res.total_count;
+                    self.scan_results = res.ports;
+                    self.error_message = res.error_message;
+                }
+                scout-copy(val) => { root.copy_text(val); }
             }
         }
 

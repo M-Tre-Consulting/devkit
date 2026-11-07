@@ -61,10 +61,14 @@ pub enum Screen {
     Color,
     Contrast,
     Jwt,
+    Diff,
+    QrCode,
+    HttpClient,
+    LanScout,
 }
 
 impl Screen {
-    pub const ALL: [Screen; 15] = [
+    pub const ALL: [Screen; 19] = [
         Screen::Home,
         Screen::Subnet,
         Screen::Hash,
@@ -80,6 +84,10 @@ impl Screen {
         Screen::Color,
         Screen::Contrast,
         Screen::Jwt,
+        Screen::Diff,
+        Screen::QrCode,
+        Screen::HttpClient,
+        Screen::LanScout,
     ];
 
     pub fn title(&self) -> &'static str {
@@ -99,6 +107,10 @@ impl Screen {
             Screen::Color => "Color Converter",
             Screen::Contrast => "Contrast Checker",
             Screen::Jwt => "JWT Decoder",
+            Screen::Diff => "Text & Code Diff",
+            Screen::QrCode => "QR Code Studio",
+            Screen::HttpClient => "HTTP & cURL Client",
+            Screen::LanScout => "LAN & Service Scout",
         }
     }
 
@@ -119,6 +131,10 @@ impl Screen {
             Screen::Color => 12,
             Screen::Contrast => 13,
             Screen::Jwt => 14,
+            Screen::Diff => 15,
+            Screen::QrCode => 16,
+            Screen::HttpClient => 17,
+            Screen::LanScout => 18,
         }
     }
 
@@ -138,6 +154,10 @@ impl Screen {
             12 => Screen::Color,
             13 => Screen::Contrast,
             14 => Screen::Jwt,
+            15 => Screen::Diff,
+            16 => Screen::QrCode,
+            17 => Screen::HttpClient,
+            18 => Screen::LanScout,
             _ => Screen::Home,
         }
     }

@@ -1,0 +1,322 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2026 M-Tre Consulting
+
+import { Icons, ScrollView, MaterialPalette, MaterialStyleMetrics, MaterialTypography, MaterialText, StateLayerArea, Icon, Switch, TextField } from "@material";
+import { TopBar } from "../components/top-bar.slint";
+import { ToolErrorBanner } from "../components/tool-error-banner.slint";
+import { ToolActionButton } from "../components/tool-action-button.slint";
+import { ToolOutputArea } from "../components/tool-output-area.slint";
+import { ToolTextArea } from "../components/tool-text-area.slint";
+import { AppIcons } from "../components/app-icons.slint";
+
+export component QrCodeScreen inherits VerticalLayout {
+    in property <length> status_bar_inset: 24px;
+    in property <length> nav_bar_inset: 16px;
+    callback qrcode-back();
+    callback qrcode-generate();
+    callback qrcode-copy(string);
+
+    in-out property <int> selected_type: 0; // 0: Text/URL, 1: Wi-Fi, 2: TOTP
+    in-out property <string> text_payload: "https://github.com/M-Tre-Consulting/devkit";
+    in-out property <string> wifi_ssid: "DevNet-5G";
+    in-out property <string> wifi_password: "supersecretdevpass";
+    in-out property <int> wifi_auth: 0; // 0: WPA/WPA2/WPA3, 1: WEP, 2: Open
+    in-out property <bool> wifi_hidden: false;
+    in-out property <string> totp_issuer: "DevKit";
+    in-out property <string> totp_account: "admin@devkit.app";
+    in-out property <string> totp_secret: "JBSWY3DPEHPK3PXP";
+    in-out property <string> live_totp_code: "123456";
+    in-out property <int> totp_remaining_secs: 30;
+    in-out property <image> qr_image;
+    in-out property <string> encoded_payload: "";
+    in-out property <string> error_message: "";
+
+    property <bool> is_entered: false;
+    init => {
+        self.is_entered = true;
+        root.qrcode-generate();
+    }
+
+    TopBar {
+        title: "Developer QR Studio";
+        has_back: true;
+        back => { root.qrcode-back(); }
+    }
+
+    ScrollView {
+        vertical-stretch: 1;
+        opacity: root.is_entered ? 1.0 : 0.0;
+
+        animate opacity {
+            duration: 200ms;
+            delay: 150ms;
+            easing: cubic-bezier(0.05, 0.7, 0.1, 1.0);
+        }
+
+        VerticalLayout {
+            padding_left: MaterialStyleMetrics.padding_16;
+            padding_right: MaterialStyleMetrics.padding_16;
+            padding_top: MaterialStyleMetrics.padding_16;
+            padding_bottom: 96px + root.nav_bar_inset;
+            spacing: MaterialStyleMetrics.spacing_16;
+            alignment: start;
+
+            ToolErrorBanner {
+                message: root.error_message;
+            }
+
+            // Mode Selector Pill
+            Rectangle {
+                border_radius: MaterialStyleMetrics.shape_full;
+                background: MaterialPalette.surface_container_highest;
+                height: 42px;
+
+                HorizontalLayout {
+                    padding: 3px;
+                    spacing: 4px;
+
+                    // Text / URL Tab
+                    Rectangle {
+                        border_radius: MaterialStyleMetrics.shape_full;
+                        background: root.selected_type == 0 ? MaterialPalette.primary : Colors.transparent;
+                        StateLayerArea {
+                            width: 100%;
+                            border_radius: parent.border_radius;
+                            clicked => {
+                                root.selected_type = 0;
+                                root.qrcode-generate();
+                            }
+                            HorizontalLayout {
+                                alignment: center;
+                                MaterialText {
+                                    text: "Text / URL";
+                                    style: MaterialTypography.label_medium;
+                                    color: root.selected_type == 0 ? MaterialPalette.on_primary : MaterialPalette.on_surface_variant;
+                                }
+                            }
+                        }
+                    }
+
+                    // Wi-Fi Config Tab
+                    Rectangle {
+                        border_radius: MaterialStyleMetrics.shape_full;
+                        background: root.selected_type == 1 ? MaterialPalette.primary : Colors.transparent;
+                        StateLayerArea {
+                            width: 100%;
+                            border_radius: parent.border_radius;
+                            clicked => {
+                                root.selected_type = 1;
+                                root.qrcode-generate();
+                            }
+                            HorizontalLayout {
+                                alignment: center;
+                                MaterialText {
+                                    text: "Wi-Fi Config";
+                                    style: MaterialTypography.label_medium;
+                                    color: root.selected_type == 1 ? MaterialPalette.on_primary : MaterialPalette.on_surface_variant;
+                                }
+                            }
+                        }
+                    }
+
+                    // TOTP 2FA Tab
+                    Rectangle {
+                        border_radius: MaterialStyleMetrics.shape_full;
+                        background: root.selected_type == 2 ? MaterialPalette.primary : Colors.transparent;
+                        StateLayerArea {
+                            width: 100%;
+                            border_radius: parent.border_radius;
+                            clicked => {
+                                root.selected_type = 2;
+                                root.qrcode-generate();
+                            }
+                            HorizontalLayout {
+                                alignment: center;
+                                MaterialText {
+                                    text: "TOTP 2FA";
+                                    style: MaterialTypography.label_medium;
+                                    color: root.selected_type == 2 ? MaterialPalette.on_primary : MaterialPalette.on_surface_variant;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // QR Code Presentation Card
+            Rectangle {
+                border_radius: MaterialStyleMetrics.shape_large;
+                background: MaterialPalette.surface_container_low;
+                border_width: 1px;
+                border_color: MaterialPalette.outline_variant.with_alpha(20%);
+
+                VerticalLayout {
+                    padding: MaterialStyleMetrics.padding_16;
+                    spacing: 12px;
+                    alignment: center;
+
+                    HorizontalLayout {
+                        alignment: center;
+                        Rectangle {
+                            width: 220px;
+                            height: 220px;
+                            background: #ffffff;
+                            border_radius: MaterialStyleMetrics.shape_medium;
+                            border_width: 4px;
+                            border_color: #ffffff;
+
+                            Image {
+                                width: 100%;
+                                height: 100%;
+                                source: root.qr_image;
+                                image_fit: contain;
+                            }
+                        }
+                    }
+
+                    // If TOTP mode, show live code badge
+                    if root.selected_type == 2 : Rectangle {
+                        border_radius: MaterialStyleMetrics.shape_medium;
+                        background: MaterialPalette.tertiary_container;
+
+                        VerticalLayout {
+                            padding: MaterialStyleMetrics.padding_12;
+                            spacing: 4px;
+                            alignment: center;
+                            MaterialText {
+                                text: "LIVE AUTHENTICATOR CODE";
+                                style: MaterialTypography.label_small;
+                                color: MaterialPalette.on_tertiary_container.with_alpha(70%);
+                                horizontal_alignment: center;
+                            }
+                            MaterialText {
+                                text: root.live_totp_code;
+                                style: MaterialTypography.headline_medium;
+                                color: MaterialPalette.on_tertiary_container;
+                                horizontal_alignment: center;
+                            }
+                            MaterialText {
+                                text: "Expires in " + root.totp_remaining_secs + "s";
+                                style: MaterialTypography.label_small;
+                                color: MaterialPalette.on_tertiary_container;
+                                horizontal_alignment: center;
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Dynamic Form Fields: Mode 0 (Text / URL)
+            if root.selected_type == 0 : VerticalLayout {
+                spacing: MaterialStyleMetrics.spacing_12;
+                ToolTextArea {
+                    label: "TEXT OR URL TO ENCODE";
+                    placeholder_text: "Enter URL, token, Base64, or text payload...";
+                    text <=> root.text_payload;
+                    edited(txt) => { root.qrcode-generate(); }
+                }
+            }
+
+            // Dynamic Form Fields: Mode 1 (Wi-Fi)
+            if root.selected_type == 1 : VerticalLayout {
+                spacing: MaterialStyleMetrics.spacing_12;
+
+                MaterialText {
+                    text: "NETWORK SSID";
+                    style: MaterialTypography.label_small;
+                    color: MaterialPalette.on_surface_variant;
+                }
+                TextField {
+                    text <=> root.wifi_ssid;
+                    placeholder_text: "Wi-Fi network name";
+                    edited => { root.qrcode-generate(); }
+                }
+
+                MaterialText {
+                    text: "SECURITY PASSWORD";
+                    style: MaterialTypography.label_small;
+                    color: MaterialPalette.on_surface_variant;
+                }
+                TextField {
+                    text <=> root.wifi_password;
+                    placeholder_text: "WPA2/WPA3 password";
+                    edited => { root.qrcode-generate(); }
+                }
+
+                HorizontalLayout {
+                    alignment: space-between;
+                    VerticalLayout {
+                        alignment: center;
+                        MaterialText {
+                            text: "Hidden Network";
+                            style: MaterialTypography.body_medium;
+                            color: MaterialPalette.on_surface;
+                        }
+                    }
+                    VerticalLayout {
+                        alignment: center;
+                        Switch {
+                            checked: root.wifi_hidden;
+                            checked_state_changed(checked) => {
+                                root.wifi_hidden = checked;
+                                root.qrcode-generate();
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Dynamic Form Fields: Mode 2 (TOTP 2FA)
+            if root.selected_type == 2 : VerticalLayout {
+                spacing: MaterialStyleMetrics.spacing_12;
+
+                MaterialText {
+                    text: "ISSUER (SERVICE / COMPANY)";
+                    style: MaterialTypography.label_small;
+                    color: MaterialPalette.on_surface_variant;
+                }
+                TextField {
+                    text <=> root.totp_issuer;
+                    placeholder_text: "e.g. GitHub, AWS, DevKit";
+                    edited => { root.qrcode-generate(); }
+                }
+
+                MaterialText {
+                    text: "ACCOUNT / USERNAME";
+                    style: MaterialTypography.label_small;
+                    color: MaterialPalette.on_surface_variant;
+                }
+                TextField {
+                    text <=> root.totp_account;
+                    placeholder_text: "e.g. admin@example.com";
+                    edited => { root.qrcode-generate(); }
+                }
+
+                MaterialText {
+                    text: "SECRET KEY (BASE32)";
+                    style: MaterialTypography.label_small;
+                    color: MaterialPalette.on_surface_variant;
+                }
+                TextField {
+                    text <=> root.totp_secret;
+                    placeholder_text: "e.g. JBSWY3DPEHPK3PXP";
+                    edited => { root.qrcode-generate(); }
+                }
+            }
+
+            // Encoded URI / Payload Display
+            ToolOutputArea {
+                title: "ENCODED URI STRING";
+                text: root.encoded_payload;
+                copy(val) => { root.qrcode-copy(val); }
+            }
+
+            // Action Button
+            ToolActionButton {
+                text: "Refresh QR Code";
+                has_clear: false;
+                clicked => { root.qrcode-generate(); }
+            }
+        }
+    }
+}

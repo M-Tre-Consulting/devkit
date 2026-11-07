@@ -14,11 +14,11 @@ export component FavoritesScreen inherits VerticalLayout {
     in property <length> pill_height: 56px;
     in property <length> pill_bottom_margin: 28px;
     property <length> bottom_clearance: root.pill_height + root.pill_bottom_margin + root.nav_bar_inset + 24px;
-    in property <[bool]> tool_favorites: [false, false, false, false, false, false, false, false, false, false, false, false, false, false, false];
+    in property <[bool]> tool_favorites: [false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false];
     callback favorites-open-tool(int);
     callback favorites-toggle-favorite(int);
 
-    property <bool> has_favorites: root.tool_favorites[1] || root.tool_favorites[2] || root.tool_favorites[3] || root.tool_favorites[4] || root.tool_favorites[5] || root.tool_favorites[6] || root.tool_favorites[7] || root.tool_favorites[8] || root.tool_favorites[9] || root.tool_favorites[10] || root.tool_favorites[11] || root.tool_favorites[12] || root.tool_favorites[13] || root.tool_favorites[14];
+    property <bool> has_favorites: root.tool_favorites[1] || root.tool_favorites[2] || root.tool_favorites[3] || root.tool_favorites[4] || root.tool_favorites[5] || root.tool_favorites[6] || root.tool_favorites[7] || root.tool_favorites[8] || root.tool_favorites[9] || root.tool_favorites[10] || root.tool_favorites[11] || root.tool_favorites[12] || root.tool_favorites[13] || root.tool_favorites[14] || root.tool_favorites[15] || root.tool_favorites[16] || root.tool_favorites[17] || root.tool_favorites[18];
 
     // Status bar clearance
     Rectangle {
@@ -273,6 +273,46 @@ export component FavoritesScreen inherits VerticalLayout {
                     is_favorite: true;
                     clicked => { root.favorites-open-tool(14); }
                     toggle_favorite => { root.favorites-toggle-favorite(14); }
+                }
+
+                if root.tool_favorites[15] : ToolCard {
+                    title: "Diff Studio";
+                    description: "Visual diff & code patches";
+                    icon: AppIcons.diff;
+                    accent_color: MaterialPalette.tertiary;
+                    is_favorite: true;
+                    clicked => { root.favorites-open-tool(15); }
+                    toggle_favorite => { root.favorites-toggle-favorite(15); }
+                }
+
+                if root.tool_favorites[16] : ToolCard {
+                    title: "QR Code Studio";
+                    description: "Wi-Fi, URLs & live TOTP 2FA";
+                    icon: AppIcons.qr_code;
+                    accent_color: MaterialPalette.primary;
+                    is_favorite: true;
+                    clicked => { root.favorites-open-tool(16); }
+                    toggle_favorite => { root.favorites-toggle-favorite(16); }
+                }
+
+                if root.tool_favorites[17] : ToolCard {
+                    title: "HTTP Client";
+                    description: "Pocket cURL & inspector";
+                    icon: AppIcons.http;
+                    accent_color: MaterialPalette.secondary;
+                    is_favorite: true;
+                    clicked => { root.favorites-open-tool(17); }
+                    toggle_favorite => { root.favorites-toggle-favorite(17); }
+                }
+
+                if root.tool_favorites[18] : ToolCard {
+                    title: "LAN Scout";
+                    description: "Port & dev service probe";
+                    icon: AppIcons.radar;
+                    accent_color: MaterialPalette.tertiary;
+                    is_favorite: true;
+                    clicked => { root.favorites-open-tool(18); }
+                    toggle_favorite => { root.favorites-toggle-favorite(18); }
                 }
             }
         }
