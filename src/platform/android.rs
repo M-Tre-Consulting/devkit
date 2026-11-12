@@ -420,6 +420,33 @@ mod imp {
         });
     }
 
+    /// `Settings.Secure.ANDROID_ID`, cached after the first successful query.
+    pub fn get_android_id() -> Result<String, String> {
+        static CACHED_ID: OnceLock<String> = OnceLock::new();
+        if let Some(id) = CACHED_ID.get() {
+            return Ok(id.clone());
+        }
+        let id = with_activity(|env, act| {
+            let resolver = env
+                .call_method(act, "getContentResolver", "()Landroid/content/ContentResolver;", &[])?
+                .l()?;
+            let key = env.new_string("android_id")?;
+            let value = env
+                .call_static_method(
+                    "android/provider/Settings$Secure",
+                    "getString",
+                    "(Landroid/content/ContentResolver;Ljava/lang/String;)Ljava/lang/String;",
+                    &[(&resolver).into(), (&key).into()],
+                )?
+                .l()?;
+            get_string(env, value)
+        })
+        .flatten()
+        .filter(|id| !id.is_empty())
+        .ok_or_else(|| "Could not query ANDROID_ID".to_string())?;
+        Ok(CACHED_ID.get_or_init(|| id).clone())
+    }
+
     pub fn haptic_tap() {
         with_activity(|env, act| {
             let window = env.call_method(act, "getWindow", "()Landroid/view/Window;", &[])?.l()?;
@@ -591,7 +618,7 @@ mod imp {
 #[cfg(target_os = "android")]
 pub use imp::{
     apply_refresh_rate_setting, configure_window_soft_input_mode, copy_to_clipboard,
-    get_system_monet_colors, haptic_tap, init, is_tensor_g5_or_newer, query_navigation_bar_inset,
+    get_android_id, get_system_monet_colors, haptic_tap, init, is_tensor_g5_or_newer, query_navigation_bar_inset,
     query_network_info, query_status_bar_inset, read_clipboard, with_activity,
 };
 
@@ -615,6 +642,9 @@ mod desktop {
         false
     }
     pub fn haptic_tap() {}
+    pub fn get_android_id() -> Result<String, String> {
+        Err("Android ID is only available on Android".to_string())
+    }
     pub fn copy_to_clipboard(text: &str) -> Result<(), String> {
         if let Ok(mut c) = CLIPBOARD.lock() {
             *c = Some(text.to_string());
