@@ -1,587 +1,50 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2026 M-Tre Consulting
 
-//! Android JNI bridge stubs and helpers.
+//! Android JNI bridge and platform helpers.
 //!
-//! Provides native integration with Android system APIs such as Material You
-//! dynamic colors (Monet), accessibility font scaling, and WindowInsets (status bar height).
+//! All JNI access goes through [`with_activity`], which:
+//! - reuses one cached `JavaVM` instead of re-wrapping the raw pointer on every call,
+//! - attaches the calling thread once (permanently) instead of attach/detach churn,
+//! - runs every call inside a JNI local frame, so local references are released
+//!   immediately. The UI thread never returns to Java, so without a frame every
+//!   `getWindow()`, `getDecorView()`, ... result would leak for the app's lifetime,
+//!   growing the local reference table and slowing down the GC.
 
-#[cfg(target_os = "android")]
-use std::sync::atomic::AtomicPtr;
 use std::sync::atomic::{AtomicU32, Ordering};
 
 static STATUS_BAR_INSET: AtomicU32 = AtomicU32::new(0);
 static NAVIGATION_BAR_INSET: AtomicU32 = AtomicU32::new(0);
-static KEYBOARD_INSET: AtomicU32 = AtomicU32::new(0);
-#[cfg(target_os = "android")]
-static CACHED_DENSITY: AtomicU32 = AtomicU32::new(0);
-#[cfg(target_os = "android")]
-static VM_PTR: AtomicPtr<std::ffi::c_void> = AtomicPtr::new(std::ptr::null_mut());
-#[cfg(target_os = "android")]
-static ACTIVITY_PTR: AtomicPtr<std::ffi::c_void> = AtomicPtr::new(std::ptr::null_mut());
-
-/// Set the cached keyboard inset.
-pub fn set_keyboard_inset(inset: f32) {
-    KEYBOARD_INSET.store(inset.to_bits(), Ordering::SeqCst);
-}
-
-/// Get the system keyboard inset in logical pixels (dp).
-pub fn get_keyboard_inset() -> f32 {
-    let bits = KEYBOARD_INSET.load(Ordering::SeqCst);
-    f32::from_bits(bits)
-}
 
 /// Set the cached status bar inset.
 pub fn set_status_bar_inset(inset: f32) {
-    STATUS_BAR_INSET.store(inset.to_bits(), Ordering::SeqCst);
+    STATUS_BAR_INSET.store(inset.to_bits(), Ordering::Relaxed);
 }
 
 /// Set the cached navigation bar / gesture inset.
 pub fn set_navigation_bar_inset(inset: f32) {
-    NAVIGATION_BAR_INSET.store(inset.to_bits(), Ordering::SeqCst);
+    NAVIGATION_BAR_INSET.store(inset.to_bits(), Ordering::Relaxed);
 }
 
-/// Get the system status bar inset in logical pixels (dp).
+fn inset_or(bits: &AtomicU32, android_fallback: f32) -> f32 {
+    let val = f32::from_bits(bits.load(Ordering::Relaxed));
+    if val > 0.0 {
+        val
+    } else if cfg!(target_os = "android") {
+        android_fallback
+    } else {
+        0.0
+    }
+}
+
+/// System status bar inset in logical pixels (dp).
 pub fn get_status_bar_inset() -> f32 {
-    let bits = STATUS_BAR_INSET.load(Ordering::SeqCst);
-    let val = f32::from_bits(bits);
-    if val > 0.0 {
-        val
-    } else {
-        #[cfg(target_os = "android")]
-        {
-            24.0 // Standard fallback on Android mobile devices
-        }
-        #[cfg(not(target_os = "android"))]
-        {
-            0.0 // Non-mobile desktop has no status bar overlay
-        }
-    }
+    inset_or(&STATUS_BAR_INSET, 24.0)
 }
 
-/// Get the system navigation bar / gesture inset in logical pixels (dp).
+/// System navigation bar / gesture inset in logical pixels (dp).
 pub fn get_navigation_bar_inset() -> f32 {
-    let bits = NAVIGATION_BAR_INSET.load(Ordering::SeqCst);
-    let val = f32::from_bits(bits);
-    if val > 0.0 {
-        val
-    } else {
-        #[cfg(target_os = "android")]
-        {
-            16.0 // Standard fallback on Android devices with gesture navigation
-        }
-        #[cfg(not(target_os = "android"))]
-        {
-            0.0 // Non-mobile desktop has no navigation bar overlay
-        }
-    }
-}
-
-/// Query the Android system status bar height via JNI.
-#[cfg(target_os = "android")]
-pub fn query_status_bar_inset(app: &slint::android::AndroidApp) -> f32 {
-    let vm_ptr = app.vm_as_ptr();
-    let activity_ptr = app.activity_as_ptr();
-    if vm_ptr.is_null() || activity_ptr.is_null() {
-        return 24.0;
-    }
-
-    unsafe {
-        let vm = match jni::JavaVM::from_raw(vm_ptr as *mut _) {
-            Ok(v) => v,
-            Err(_) => return 24.0,
-        };
-        let mut env = match vm.attach_current_thread() {
-            Ok(e) => e,
-            Err(_) => return 24.0,
-        };
-
-        let activity = jni::objects::JObject::from_raw(activity_ptr as _);
-
-        let resources = match env.call_method(
-            &activity,
-            "getResources",
-            "()Landroid/content/res/Resources;",
-            &[],
-        ) {
-            Ok(r) => match r.l() {
-                Ok(obj) => obj,
-                Err(_) => return 24.0,
-            },
-            Err(_) => return 24.0,
-        };
-
-        let res_name = match env.new_string("status_bar_height") {
-            Ok(s) => s,
-            Err(_) => return 24.0,
-        };
-        let def_type = match env.new_string("dimen") {
-            Ok(s) => s,
-            Err(_) => return 24.0,
-        };
-        let def_package = match env.new_string("android") {
-            Ok(s) => s,
-            Err(_) => return 24.0,
-        };
-
-        let id_val = match env.call_method(
-            &resources,
-            "getIdentifier",
-            "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)I",
-            &[
-                (&res_name).into(),
-                (&def_type).into(),
-                (&def_package).into(),
-            ],
-        ) {
-            Ok(v) => v.i().unwrap_or(0),
-            Err(_) => 0,
-        };
-
-        if id_val <= 0 {
-            return 24.0;
-        }
-
-        let px = match env.call_method(
-            &resources,
-            "getDimensionPixelSize",
-            "(I)I",
-            &[id_val.into()],
-        ) {
-            Ok(v) => v.i().unwrap_or(0),
-            Err(_) => return 24.0,
-        };
-
-        let metrics = match env.call_method(
-            &resources,
-            "getDisplayMetrics",
-            "()Landroid/util/DisplayMetrics;",
-            &[],
-        ) {
-            Ok(m) => match m.l() {
-                Ok(obj) => obj,
-                Err(_) => return px as f32,
-            },
-            Err(_) => return px as f32,
-        };
-
-        let density = match env.get_field(&metrics, "density", "F") {
-            Ok(d) => d.f().unwrap_or(1.0),
-            Err(_) => 1.0,
-        };
-
-        if density > 0.0 {
-            (px as f32) / density
-        } else {
-            px as f32
-        }
-    }
-}
-
-/// Query the Android system navigation bar / gesture inset height via JNI.
-#[cfg(target_os = "android")]
-pub fn query_navigation_bar_inset(app: &slint::android::AndroidApp) -> f32 {
-    let vm_ptr = app.vm_as_ptr();
-    let activity_ptr = app.activity_as_ptr();
-    if vm_ptr.is_null() || activity_ptr.is_null() {
-        return 16.0;
-    }
-
-    unsafe {
-        let vm = match jni::JavaVM::from_raw(vm_ptr as *mut _) {
-            Ok(v) => v,
-            Err(_) => return 16.0,
-        };
-        let mut env = match vm.attach_current_thread() {
-            Ok(e) => e,
-            Err(_) => return 16.0,
-        };
-
-        let activity = jni::objects::JObject::from_raw(activity_ptr as _);
-
-        let mut inset_px = 0;
-
-        // Attempt 1: Modern Android 11+ (API 30+) WindowMetrics API
-        if let Ok(wm) = env.call_method(
-            &activity,
-            "getWindowManager",
-            "()Landroid/view/WindowManager;",
-            &[],
-        ) {
-            if let Ok(wm_obj) = wm.l() {
-                if let Ok(metrics) = env.call_method(
-                    &wm_obj,
-                    "getCurrentWindowMetrics",
-                    "()Landroid/view/WindowMetrics;",
-                    &[],
-                ) {
-                    if let Ok(metrics_obj) = metrics.l() {
-                        if let Ok(window_insets) = env.call_method(
-                            &metrics_obj,
-                            "getWindowInsets",
-                            "()Landroid/view/WindowInsets;",
-                            &[],
-                        ) {
-                            if let Ok(winsets_obj) = window_insets.l() {
-                                // 2 = WindowInsets.Type.navigationBars()
-                                if let Ok(insets) = env.call_method(
-                                    &winsets_obj,
-                                    "getInsets",
-                                    "(I)Landroid/graphics/Insets;",
-                                    &[2i32.into()],
-                                ) {
-                                    if let Ok(insets_obj) = insets.l() {
-                                        if let Ok(bottom_val) =
-                                            env.get_field(&insets_obj, "bottom", "I")
-                                        {
-                                            inset_px = bottom_val.i().unwrap_or(0);
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        let _ = env.exception_clear();
-
-        // Attempt 2: Query WindowInsets from DecorView (API 20+)
-        if inset_px <= 0 {
-            if let Ok(window) =
-                env.call_method(&activity, "getWindow", "()Landroid/view/Window;", &[])
-            {
-                if let Ok(window_obj) = window.l() {
-                    if let Ok(decor_view) =
-                        env.call_method(&window_obj, "getDecorView", "()Landroid/view/View;", &[])
-                    {
-                        if let Ok(decor_obj) = decor_view.l() {
-                            if let Ok(insets) = env.call_method(
-                                &decor_obj,
-                                "getRootWindowInsets",
-                                "()Landroid/view/WindowInsets;",
-                                &[],
-                            ) {
-                                if let Ok(insets_obj) = insets.l() {
-                                    if !insets_obj.as_raw().is_null() {
-                                        if let Ok(b) = env.call_method(
-                                            &insets_obj,
-                                            "getSystemWindowInsetBottom",
-                                            "()I",
-                                            &[],
-                                        ) {
-                                            inset_px = b.i().unwrap_or(0);
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-            let _ = env.exception_clear();
-        }
-
-        let resources = match env.call_method(
-            &activity,
-            "getResources",
-            "()Landroid/content/res/Resources;",
-            &[],
-        ) {
-            Ok(r) => match r.l() {
-                Ok(obj) => obj,
-                Err(_) => {
-                    let _ = env.exception_clear();
-                    return 16.0;
-                }
-            },
-            Err(_) => {
-                let _ = env.exception_clear();
-                return 16.0;
-            }
-        };
-
-        // Attempt 3: Fallback to system dimension resource "navigation_bar_height"
-        if inset_px <= 0 {
-            let res_name = match env.new_string("navigation_bar_height") {
-                Ok(s) => s,
-                Err(_) => return 16.0,
-            };
-            let def_type = match env.new_string("dimen") {
-                Ok(s) => s,
-                Err(_) => return 16.0,
-            };
-            let def_package = match env.new_string("android") {
-                Ok(s) => s,
-                Err(_) => return 16.0,
-            };
-
-            let id_val = match env.call_method(
-                &resources,
-                "getIdentifier",
-                "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)I",
-                &[
-                    (&res_name).into(),
-                    (&def_type).into(),
-                    (&def_package).into(),
-                ],
-            ) {
-                Ok(v) => v.i().unwrap_or(0),
-                Err(_) => 0,
-            };
-
-            if id_val > 0 {
-                inset_px = match env.call_method(
-                    &resources,
-                    "getDimensionPixelSize",
-                    "(I)I",
-                    &[id_val.into()],
-                ) {
-                    Ok(v) => v.i().unwrap_or(0),
-                    Err(_) => 0,
-                };
-            }
-            let _ = env.exception_clear();
-        }
-
-        if inset_px <= 0 {
-            return 16.0;
-        }
-
-        let metrics = match env.call_method(
-            &resources,
-            "getDisplayMetrics",
-            "()Landroid/util/DisplayMetrics;",
-            &[],
-        ) {
-            Ok(m) => match m.l() {
-                Ok(obj) => obj,
-                Err(_) => return inset_px as f32,
-            },
-            Err(_) => return inset_px as f32,
-        };
-
-        let density = match env.get_field(&metrics, "density", "F") {
-            Ok(d) => d.f().unwrap_or(1.0),
-            Err(_) => 1.0,
-        };
-
-        if density > 0.0 {
-            (inset_px as f32) / density
-        } else {
-            inset_px as f32
-        }
-    }
-}
-
-/// Configure the window soft input mode to adjustResize (0x10) so Android notifies
-/// the window of IME insets and resizes the content area.
-#[cfg(target_os = "android")]
-pub fn configure_window_soft_input_mode(app: &slint::android::AndroidApp) {
-    let vm_ptr = app.vm_as_ptr();
-    let activity_ptr = app.activity_as_ptr();
-    VM_PTR.store(vm_ptr as *mut _, Ordering::SeqCst);
-    ACTIVITY_PTR.store(activity_ptr as *mut _, Ordering::SeqCst);
-    if vm_ptr.is_null() || activity_ptr.is_null() {
-        return;
-    }
-
-    unsafe {
-        let vm = match jni::JavaVM::from_raw(vm_ptr as *mut _) {
-            Ok(v) => v,
-            Err(_) => return,
-        };
-        let mut env = match vm.attach_current_thread() {
-            Ok(e) => e,
-            Err(_) => return,
-        };
-
-        let activity = jni::objects::JObject::from_raw(activity_ptr as _);
-        if let Ok(window) = env.call_method(&activity, "getWindow", "()Landroid/view/Window;", &[])
-        {
-            if let Ok(window_obj) = window.l() {
-                // WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE = 0x10 (16)
-                let _ = env.call_method(&window_obj, "setSoftInputMode", "(I)V", &[16i32.into()]);
-            }
-        }
-        let _ = env.exception_clear();
-    }
-}
-
-/// Query the Android system keyboard (IME) inset height in logical pixels (dp) via JNI.
-#[cfg(target_os = "android")]
-pub fn query_keyboard_inset() -> f32 {
-    let vm_ptr = VM_PTR.load(Ordering::SeqCst);
-    let activity_ptr = ACTIVITY_PTR.load(Ordering::SeqCst);
-    if vm_ptr.is_null() || activity_ptr.is_null() {
-        return get_keyboard_inset();
-    }
-
-    unsafe {
-        let vm = match jni::JavaVM::from_raw(vm_ptr as *mut _) {
-            Ok(v) => v,
-            Err(_) => return get_keyboard_inset(),
-        };
-        let mut env = match vm.attach_current_thread() {
-            Ok(e) => e,
-            Err(_) => return get_keyboard_inset(),
-        };
-
-        let activity = jni::objects::JObject::from_raw(activity_ptr as _);
-
-        let window = match env.call_method(&activity, "getWindow", "()Landroid/view/Window;", &[]) {
-            Ok(w) => match w.l() {
-                Ok(obj) => obj,
-                Err(_) => {
-                    let _ = env.exception_clear();
-                    return get_keyboard_inset();
-                }
-            },
-            Err(_) => {
-                let _ = env.exception_clear();
-                return get_keyboard_inset();
-            }
-        };
-
-        let decor_view =
-            match env.call_method(&window, "getDecorView", "()Landroid/view/View;", &[]) {
-                Ok(d) => match d.l() {
-                    Ok(obj) => obj,
-                    Err(_) => {
-                        let _ = env.exception_clear();
-                        return get_keyboard_inset();
-                    }
-                },
-                Err(_) => {
-                    let _ = env.exception_clear();
-                    return get_keyboard_inset();
-                }
-            };
-
-        let insets = match env.call_method(
-            &decor_view,
-            "getRootWindowInsets",
-            "()Landroid/view/WindowInsets;",
-            &[],
-        ) {
-            Ok(i) => match i.l() {
-                Ok(obj) => obj,
-                Err(_) => {
-                    let _ = env.exception_clear();
-                    return get_keyboard_inset();
-                }
-            },
-            Err(_) => {
-                let _ = env.exception_clear();
-                return get_keyboard_inset();
-            }
-        };
-
-        if insets.as_raw().is_null() {
-            return get_keyboard_inset();
-        }
-
-        let mut ime_bottom_px = 0;
-
-        // WindowInsets.Type.ime() = 8 (API 30+)
-        if let Ok(ime_insets) = env.call_method(
-            &insets,
-            "getInsets",
-            "(I)Landroid/graphics/Insets;",
-            &[8i32.into()],
-        ) {
-            if let Ok(ime_obj) = ime_insets.l() {
-                if !ime_obj.as_raw().is_null() {
-                    if let Ok(bottom_val) = env.get_field(&ime_obj, "bottom", "I") {
-                        ime_bottom_px = bottom_val.i().unwrap_or(0);
-                    }
-                }
-            }
-        }
-        let _ = env.exception_clear();
-
-        // Fallback for API < 30: compare getSystemWindowInsetBottom with navigation bar inset
-        if ime_bottom_px <= 0 {
-            if let Ok(bottom_val) =
-                env.call_method(&insets, "getSystemWindowInsetBottom", "()I", &[])
-            {
-                let total_bottom = bottom_val.i().unwrap_or(0);
-                let nav_px = (get_navigation_bar_inset() * 2.625) as i32;
-                if total_bottom > nav_px + 50 {
-                    ime_bottom_px = total_bottom - nav_px;
-                }
-            }
-            let _ = env.exception_clear();
-        }
-
-        let resources = match env.call_method(
-            &activity,
-            "getResources",
-            "()Landroid/content/res/Resources;",
-            &[],
-        ) {
-            Ok(r) => match r.l() {
-                Ok(obj) => obj,
-                Err(_) => {
-                    let _ = env.exception_clear();
-                    return 0.0;
-                }
-            },
-            Err(_) => {
-                let _ = env.exception_clear();
-                return 0.0;
-            }
-        };
-
-        let cached_bits = CACHED_DENSITY.load(Ordering::Relaxed);
-        let density = if cached_bits != 0 {
-            f32::from_bits(cached_bits)
-        } else {
-            let metrics = match env.call_method(
-                &resources,
-                "getDisplayMetrics",
-                "()Landroid/util/DisplayMetrics;",
-                &[],
-            ) {
-                Ok(m) => match m.l() {
-                    Ok(obj) => obj,
-                    Err(_) => {
-                        let _ = env.exception_clear();
-                        return ime_bottom_px as f32;
-                    }
-                },
-                Err(_) => {
-                    let _ = env.exception_clear();
-                    return ime_bottom_px as f32;
-                }
-            };
-
-            let d = match env.get_field(&metrics, "density", "F") {
-                Ok(val) => val.f().unwrap_or(1.0),
-                Err(_) => {
-                    let _ = env.exception_clear();
-                    1.0
-                }
-            };
-            if d > 0.0 {
-                CACHED_DENSITY.store(d.to_bits(), Ordering::Relaxed);
-            }
-            d
-        };
-
-        let dp = if density > 0.0 && ime_bottom_px > 0 {
-            (ime_bottom_px as f32) / density
-        } else {
-            0.0
-        };
-        set_keyboard_inset(dp);
-        dp
-    }
-}
-
-#[cfg(not(target_os = "android"))]
-pub fn query_keyboard_inset() -> f32 {
-    get_keyboard_inset()
+    inset_or(&NAVIGATION_BAR_INSET, 16.0)
 }
 
 /// Extracted Android Material You (Monet) system dynamic palette colors.
@@ -599,686 +62,597 @@ pub struct MonetColors {
     pub surface_dark: (u8, u8, u8),
 }
 
-/// Query the Android system Material You / Monet colors from wallpaper via JNI.
+/// Which GPU API the renderer should use.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum GraphicsApi {
+    /// Skia over Vulkan (through WGPU), falls back to OpenGL ES automatically.
+    Vulkan,
+    /// Skia over OpenGL ES.
+    OpenGlEs,
+}
+
+impl GraphicsApi {
+    pub fn label(&self) -> &'static str {
+        match self {
+            GraphicsApi::Vulkan => "Vulkan",
+            GraphicsApi::OpenGlEs => "OpenGL ES",
+        }
+    }
+}
+
+/// Resolve the user preference (0 = auto, 1 = Vulkan, 2 = OpenGL ES) to a concrete API.
+///
+/// In auto mode, Tensor G5/G6 (Imagination DXT GPU) get OpenGL ES: Skia's Vulkan path on
+/// that driver shows pipeline-compile hitches and uneven frame pacing. Everything else
+/// keeps Vulkan.
+pub fn resolve_graphics_api(preference: i32) -> GraphicsApi {
+    match preference {
+        1 => GraphicsApi::Vulkan,
+        2 => GraphicsApi::OpenGlEs,
+        _ => {
+            if is_tensor_g5_or_newer() {
+                GraphicsApi::OpenGlEs
+            } else {
+                GraphicsApi::Vulkan
+            }
+        }
+    }
+}
+
+/// Snapshot of the active network as reported by the OS.
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
+pub struct NetworkInfo {
+    pub interface: Option<String>,
+    pub device_ip: Option<String>,
+    pub prefix_len: Option<u8>,
+    pub gateway: Option<String>,
+    pub dns_servers: Vec<String>,
+}
+
+/// Classify a `Build.SOC_MODEL` / `Build.HARDWARE` style string.
+///
+/// Returns true for Google Tensor G5 and later ("laguna", "malibu", "Tensor G5", ...) and
+/// for Imagination PowerVR based hardware strings.
+pub fn soc_strings_indicate_tensor_g5_plus(fields: &[&str]) -> bool {
+    for raw in fields {
+        let f = raw.to_ascii_lowercase();
+        if f.contains("laguna") || f.contains("malibu") || f.contains("powervr") {
+            return true;
+        }
+        // "tensor g5", "tensor-g5", "tensor_g5", "tensorg6", ...
+        if let Some(pos) = f.find("tensor") {
+            let rest = f[pos + "tensor".len()..].trim_start_matches([' ', '-', '_']);
+            if let Some(num) = rest.strip_prefix('g') {
+                let digits: String = num.chars().take_while(|c| c.is_ascii_digit()).collect();
+                if digits.parse::<u32>().map(|n| n >= 5).unwrap_or(false) {
+                    return true;
+                }
+            }
+        }
+    }
+    false
+}
+
+// ---------------------------------------------------------------------------
+// Android implementation
+// ---------------------------------------------------------------------------
+
 #[cfg(target_os = "android")]
-pub fn get_system_monet_colors() -> Option<MonetColors> {
-    let vm_ptr = VM_PTR.load(Ordering::SeqCst);
-    let activity_ptr = ACTIVITY_PTR.load(Ordering::SeqCst);
-    if vm_ptr.is_null() || activity_ptr.is_null() {
-        return None;
+mod imp {
+    use super::*;
+    use jni::objects::{JObject, JString, JValue};
+    use jni::JNIEnv;
+    use std::sync::atomic::AtomicPtr;
+    use std::sync::OnceLock;
+
+    static VM: OnceLock<jni::JavaVM> = OnceLock::new();
+    static ACTIVITY: AtomicPtr<std::ffi::c_void> = AtomicPtr::new(std::ptr::null_mut());
+    static DENSITY: AtomicU32 = AtomicU32::new(0);
+    static IS_TENSOR_G5: OnceLock<bool> = OnceLock::new();
+
+    /// Cache the VM and activity handles. Must be called first, from `android_main`.
+    pub fn init(app: &slint::android::AndroidApp) {
+        let vm_ptr = app.vm_as_ptr();
+        let activity_ptr = app.activity_as_ptr();
+        if vm_ptr.is_null() || activity_ptr.is_null() {
+            return;
+        }
+        if let Ok(vm) = unsafe { jni::JavaVM::from_raw(vm_ptr as *mut _) } {
+            let _ = VM.set(vm);
+        }
+        ACTIVITY.store(activity_ptr as *mut _, Ordering::SeqCst);
     }
 
-    unsafe {
-        let vm = jni::JavaVM::from_raw(vm_ptr as *mut _).ok()?;
-        let mut env = vm.attach_current_thread().ok()?;
-        let activity = jni::objects::JObject::from_raw(activity_ptr as _);
-        let resources = env
-            .call_method(&activity, "getResources", "()Landroid/content/res/Resources;", &[])
-            .ok()?
-            .l()
-            .ok()?;
+    /// Run `f` with an attached JNIEnv and the activity, inside a local reference frame.
+    pub fn with_activity<R>(
+        f: impl for<'a> FnOnce(&mut JNIEnv<'a>, &JObject<'static>) -> jni::errors::Result<R>,
+    ) -> Option<R> {
+        let vm = VM.get()?;
+        let act = ACTIVITY.load(Ordering::SeqCst);
+        if act.is_null() {
+            return None;
+        }
+        let mut env = vm.attach_current_thread_permanently().ok()?;
+        let activity: JObject<'static> = unsafe { JObject::from_raw(act as jni::sys::jobject) };
+        let result = env.with_local_frame(32, |env| f(env, &activity));
+        if env.exception_check().unwrap_or(false) {
+            let _ = env.exception_clear();
+        }
+        result.ok()
+    }
 
-        let mut query_color = |name: &str| -> Option<(u8, u8, u8)> {
-            let res_name = env.new_string(name).ok()?;
-            let def_type = env.new_string("color").ok()?;
-            let def_package = env.new_string("android").ok()?;
-            let id_val = env
-                .call_method(
-                    &resources,
-                    "getIdentifier",
-                    "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)I",
-                    &[(&res_name).into(), (&def_type).into(), (&def_package).into()],
-                )
-                .ok()?
-                .i()
-                .ok()?;
+    fn get_string(env: &mut JNIEnv, obj: JObject) -> jni::errors::Result<Option<String>> {
+        if obj.is_null() {
+            return Ok(None);
+        }
+        let s = JString::from(obj);
+        let out: String = env.get_string(&s)?.into();
+        Ok(Some(out))
+    }
 
-            if id_val <= 0 {
-                return None;
-            }
+    fn density(env: &mut JNIEnv, activity: &JObject) -> jni::errors::Result<f32> {
+        let cached = DENSITY.load(Ordering::Relaxed);
+        if cached != 0 {
+            return Ok(f32::from_bits(cached));
+        }
+        let res = env
+            .call_method(activity, "getResources", "()Landroid/content/res/Resources;", &[])?
+            .l()?;
+        let metrics = env
+            .call_method(&res, "getDisplayMetrics", "()Landroid/util/DisplayMetrics;", &[])?
+            .l()?;
+        let d = env.get_field(&metrics, "density", "F")?.f()?;
+        let d = if d > 0.0 { d } else { 1.0 };
+        DENSITY.store(d.to_bits(), Ordering::Relaxed);
+        Ok(d)
+    }
 
-            let color_val = env
-                .call_method(&activity, "getColor", "(I)I", &[id_val.into()])
-                .ok()?
-                .i()
-                .ok()?;
+    fn system_dimen_px(env: &mut JNIEnv, activity: &JObject, name: &str) -> jni::errors::Result<i32> {
+        let res = env
+            .call_method(activity, "getResources", "()Landroid/content/res/Resources;", &[])?
+            .l()?;
+        let jname = env.new_string(name)?;
+        let jtype = env.new_string("dimen")?;
+        let jpkg = env.new_string("android")?;
+        let id = env
+            .call_method(
+                &res,
+                "getIdentifier",
+                "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)I",
+                &[(&jname).into(), (&jtype).into(), (&jpkg).into()],
+            )?
+            .i()?;
+        if id <= 0 {
+            return Ok(0);
+        }
+        env.call_method(&res, "getDimensionPixelSize", "(I)I", &[id.into()])?.i()
+    }
 
-            let r = ((color_val >> 16) & 0xFF) as u8;
-            let g = ((color_val >> 8) & 0xFF) as u8;
-            let b = (color_val & 0xFF) as u8;
-            Some((r, g, b))
-        };
+    /// WindowInsets bottom for the given `WindowInsets.Type` mask (API 30+), in px.
+    fn window_insets_bottom(env: &mut JNIEnv, activity: &JObject, type_mask: i32) -> jni::errors::Result<i32> {
+        let wm = env
+            .call_method(activity, "getWindowManager", "()Landroid/view/WindowManager;", &[])?
+            .l()?;
+        let metrics = env
+            .call_method(&wm, "getCurrentWindowMetrics", "()Landroid/view/WindowMetrics;", &[])?
+            .l()?;
+        let insets = env
+            .call_method(&metrics, "getWindowInsets", "()Landroid/view/WindowInsets;", &[])?
+            .l()?;
+        let typed = env
+            .call_method(&insets, "getInsets", "(I)Landroid/graphics/Insets;", &[type_mask.into()])?
+            .l()?;
+        env.get_field(&typed, "bottom", "I")?.i()
+    }
 
-        let primary_light = query_color("system_accent1_600")
-            .or_else(|| query_color("system_accent1_500"))?;
-        let primary_dark = query_color("system_accent1_200")
-            .or_else(|| query_color("system_accent1_300"))
-            .unwrap_or(primary_light);
-        let primary_container_light = query_color("system_accent1_100")
-            .unwrap_or(primary_dark);
-        let primary_container_dark = query_color("system_accent1_700")
-            .unwrap_or(primary_light);
-
-        let secondary_light = query_color("system_accent2_600")
-            .or_else(|| query_color("system_accent2_500"))
-            .unwrap_or(primary_light);
-        let secondary_dark = query_color("system_accent2_200")
-            .unwrap_or(secondary_light);
-
-        let tertiary_light = query_color("system_accent3_600")
-            .or_else(|| query_color("system_accent3_500"))
-            .unwrap_or(primary_light);
-        let tertiary_dark = query_color("system_accent3_200")
-            .unwrap_or(tertiary_light);
-
-        let surface_light = query_color("system_neutral1_10")
-            .or_else(|| query_color("system_neutral1_50"))
-            .unwrap_or((249, 249, 255));
-        let surface_dark = query_color("system_neutral1_900")
-            .unwrap_or((17, 19, 24));
-
-        let _ = env.exception_clear();
-
-        Some(MonetColors {
-            primary_light,
-            primary_dark,
-            primary_container_light,
-            primary_container_dark,
-            secondary_light,
-            secondary_dark,
-            tertiary_light,
-            tertiary_dark,
-            surface_light,
-            surface_dark,
+    pub fn query_status_bar_inset() -> f32 {
+        with_activity(|env, act| {
+            let px = system_dimen_px(env, act, "status_bar_height")?;
+            let d = density(env, act)?;
+            Ok(px as f32 / d)
         })
-    }
-}
-
-/// Fallback for non-Android targets.
-#[cfg(not(target_os = "android"))]
-pub fn get_system_monet_colors() -> Option<MonetColors> {
-    None
-}
-
-/// Get the Android system accent color (Material You / Monet dynamic theming).
-pub fn get_system_accent_color() -> Option<(u8, u8, u8)> {
-    get_system_monet_colors().map(|c| c.primary_light)
-}
-
-/// Get the system font scaling factor configured by the user in Android Settings.
-pub fn get_font_scale() -> f32 {
-    1.0
-}
-
-/// Request the display's maximum supported refresh rate (e.g., 90 Hz or 120 Hz).
-#[cfg(target_os = "android")]
-pub fn apply_refresh_rate_setting(enabled: bool) {
-    let vm_ptr = VM_PTR.load(Ordering::SeqCst);
-    let activity_ptr = ACTIVITY_PTR.load(Ordering::SeqCst);
-    if vm_ptr.is_null() || activity_ptr.is_null() {
-        return;
+        .filter(|v| *v > 0.0)
+        .unwrap_or(24.0)
     }
 
-    unsafe {
-        let vm = match jni::JavaVM::from_raw(vm_ptr as *mut _) {
-            Ok(v) => v,
-            Err(_) => return,
-        };
-        let mut env = match vm.attach_current_thread() {
-            Ok(e) => e,
-            Err(_) => return,
-        };
-
-        let activity = jni::objects::JObject::from_raw(activity_ptr as _);
-        let window = match env.call_method(&activity, "getWindow", "()Landroid/view/Window;", &[]) {
-            Ok(w) => match w.l() {
-                Ok(obj) => obj,
-                Err(_) => {
-                    let _ = env.exception_clear();
-                    return;
-                }
-            },
-            Err(_) => {
-                let _ = env.exception_clear();
-                return;
+    pub fn query_navigation_bar_inset() -> f32 {
+        with_activity(|env, act| {
+            // 2 = WindowInsets.Type.navigationBars()
+            let mut px = window_insets_bottom(env, act, 2).unwrap_or(0);
+            if env.exception_check().unwrap_or(false) {
+                env.exception_clear()?;
             }
-        };
-
-        let window_manager = match env.call_method(
-            &activity,
-            "getWindowManager",
-            "()Landroid/view/WindowManager;",
-            &[],
-        ) {
-            Ok(r) => match r.l() {
-                Ok(wm) => wm,
-                Err(_) => {
-                    let _ = env.exception_clear();
-                    return;
+            if px <= 0 {
+                px = system_dimen_px(env, act, "navigation_bar_height").unwrap_or(0);
+                if env.exception_check().unwrap_or(false) {
+                    env.exception_clear()?;
                 }
-            },
-            Err(_) => {
-                let _ = env.exception_clear();
-                return;
             }
-        };
+            let d = density(env, act)?;
+            Ok(px as f32 / d)
+        })
+        .filter(|v| *v > 0.0)
+        .unwrap_or(16.0)
+    }
 
-        let display = match env.call_method(
-            &window_manager,
-            "getDefaultDisplay",
-            "()Landroid/view/Display;",
-            &[],
-        ) {
-            Ok(r) => match r.l() {
-                Ok(d) => d,
-                Err(_) => {
-                    let _ = env.exception_clear();
-                    return;
-                }
-            },
-            Err(_) => {
-                let _ = env.exception_clear();
-                return;
-            }
-        };
+    pub fn configure_window_soft_input_mode() {
+        with_activity(|env, act| {
+            let window = env.call_method(act, "getWindow", "()Landroid/view/Window;", &[])?.l()?;
+            // WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE = 0x10
+            env.call_method(&window, "setSoftInputMode", "(I)V", &[16i32.into()])?;
+            Ok(())
+        });
+    }
 
-        let mut best_mode_id = 0i32;
-        let mut max_rate = 0.0f32;
+    fn build_string(env: &mut JNIEnv, field: &str) -> jni::errors::Result<String> {
+        let class = env.find_class("android/os/Build")?;
+        let val = env.get_static_field(class, field, "Ljava/lang/String;")?.l()?;
+        Ok(get_string(env, val)?.unwrap_or_default())
+    }
 
-        if enabled {
-            if let Ok(modes_val) = env.call_method(
-                &display,
-                "getSupportedModes",
-                "()[Landroid/view/Display$Mode;",
-                &[],
-            ) {
-                if let Ok(arr) = modes_val.l() {
-                    let modes_array = jni::objects::JObjectArray::from_raw(arr.as_raw());
-                    let count = env.get_array_length(&modes_array).unwrap_or(0);
-                    for i in 0..count {
-                        if let Ok(mode) = env.get_object_array_element(&modes_array, i) {
-                            let rate = env
-                                .call_method(&mode, "getRefreshRate", "()F", &[])
-                                .and_then(|r| r.f())
-                                .unwrap_or(0.0);
-                            let mode_id = env
-                                .call_method(&mode, "getModeId", "()I", &[])
-                                .and_then(|r| r.i())
-                                .unwrap_or(0);
-                            if rate > max_rate {
-                                max_rate = rate;
-                                best_mode_id = mode_id;
+    pub fn is_tensor_g5_or_newer() -> bool {
+        *IS_TENSOR_G5.get_or_init(|| {
+            with_activity(|env, _| {
+                let mut fields = Vec::new();
+                for name in ["SOC_MODEL", "HARDWARE", "BOARD", "DEVICE"] {
+                    // SOC_MODEL only exists on API 31+; ignore missing fields.
+                    match build_string(env, name) {
+                        Ok(v) => fields.push(v),
+                        Err(_) => {
+                            if env.exception_check().unwrap_or(false) {
+                                env.exception_clear()?;
                             }
                         }
                     }
                 }
-            }
-            let _ = env.exception_clear();
-        }
-
-        // Set WindowManager.LayoutParams.preferredDisplayModeId and preferredRefreshRate
-        if let Ok(attrs) = env.call_method(
-            &window,
-            "getAttributes",
-            "()Landroid/view/WindowManager$LayoutParams;",
-            &[],
-        ) {
-            if let Ok(attrs_obj) = attrs.l() {
-                let _ = env.set_field(&attrs_obj, "preferredDisplayModeId", "I", best_mode_id.into());
-                let _ = env.set_field(&attrs_obj, "preferredRefreshRate", "F", max_rate.into());
-                let _ = env.call_method(
-                    &window,
-                    "setAttributes",
-                    "(Landroid/view/WindowManager$LayoutParams;)V",
-                    &[(&attrs_obj).into()],
-                );
-            }
-        }
-        let _ = env.exception_clear();
-    }
-}
-
-/// Fallback for non-Android platforms.
-#[cfg(not(target_os = "android"))]
-pub fn apply_refresh_rate_setting(_enabled: bool) {}
-
-/// Query whether the device display hardware supports high refresh rates (>= 90 Hz).
-///
-/// On Android, queries Display.getSupportedModes() via JNI and checks if any available
-/// mode supports a refresh rate >= 89.0 Hz.
-/// Returns false on 60 Hz devices, on non-Android platforms, or if JNI query fails.
-#[cfg(target_os = "android")]
-pub fn is_high_refresh_rate_supported() -> bool {
-    let vm_ptr = VM_PTR.load(Ordering::SeqCst);
-    let activity_ptr = ACTIVITY_PTR.load(Ordering::SeqCst);
-    if vm_ptr.is_null() || activity_ptr.is_null() {
-        return false;
+                let refs: Vec<&str> = fields.iter().map(|s| s.as_str()).collect();
+                Ok(soc_strings_indicate_tensor_g5_plus(&refs))
+            })
+            .unwrap_or(false)
+        })
     }
 
-    unsafe {
-        let vm = match jni::JavaVM::from_raw(vm_ptr as *mut _) {
-            Ok(v) => v,
-            Err(_) => return false,
-        };
-        let mut env = match vm.attach_current_thread() {
-            Ok(e) => e,
-            Err(_) => return false,
-        };
+    pub fn get_system_monet_colors() -> Option<MonetColors> {
+        with_activity(|env, act| {
+            let res = env
+                .call_method(act, "getResources", "()Landroid/content/res/Resources;", &[])?
+                .l()?;
+            let jtype = env.new_string("color")?;
+            let jpkg = env.new_string("android")?;
 
-        let activity = jni::objects::JObject::from_raw(activity_ptr as _);
-        let window_manager = match env.call_method(
-            &activity,
-            "getWindowManager",
-            "()Landroid/view/WindowManager;",
-            &[],
-        ) {
-            Ok(r) => match r.l() {
-                Ok(wm) => wm,
-                Err(_) => {
-                    let _ = env.exception_clear();
-                    return false;
+            let mut query = |name: &str| -> Option<(u8, u8, u8)> {
+                let jname = env.new_string(name).ok()?;
+                let id = env
+                    .call_method(
+                        &res,
+                        "getIdentifier",
+                        "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)I",
+                        &[(&jname).into(), (&jtype).into(), (&jpkg).into()],
+                    )
+                    .ok()?
+                    .i()
+                    .ok()?;
+                if id <= 0 {
+                    return None;
                 }
-            },
-            Err(_) => {
-                let _ = env.exception_clear();
-                return false;
-            }
-        };
+                let c = env.call_method(act, "getColor", "(I)I", &[id.into()]).ok()?.i().ok()?;
+                Some((((c >> 16) & 0xFF) as u8, ((c >> 8) & 0xFF) as u8, (c & 0xFF) as u8))
+            };
 
-        let display = match env.call_method(
-            &window_manager,
-            "getDefaultDisplay",
-            "()Landroid/view/Display;",
-            &[],
-        ) {
-            Ok(r) => match r.l() {
-                Ok(d) => d,
-                Err(_) => {
-                    let _ = env.exception_clear();
-                    return false;
-                }
-            },
-            Err(_) => {
-                let _ = env.exception_clear();
-                return false;
-            }
-        };
+            let Some(primary_light) = query("system_accent1_600").or_else(|| query("system_accent1_500")) else {
+                return Ok(None);
+            };
+            let primary_dark = query("system_accent1_200")
+                .or_else(|| query("system_accent1_300"))
+                .unwrap_or(primary_light);
+            let colors = MonetColors {
+                primary_light,
+                primary_dark,
+                primary_container_light: query("system_accent1_100").unwrap_or(primary_dark),
+                primary_container_dark: query("system_accent1_700").unwrap_or(primary_light),
+                secondary_light: query("system_accent2_600")
+                    .or_else(|| query("system_accent2_500"))
+                    .unwrap_or(primary_light),
+                secondary_dark: query("system_accent2_200").unwrap_or(primary_dark),
+                tertiary_light: query("system_accent3_600")
+                    .or_else(|| query("system_accent3_500"))
+                    .unwrap_or(primary_light),
+                tertiary_dark: query("system_accent3_200").unwrap_or(primary_dark),
+                surface_light: query("system_neutral1_10")
+                    .or_else(|| query("system_neutral1_50"))
+                    .unwrap_or((249, 249, 255)),
+                surface_dark: query("system_neutral1_900").unwrap_or((17, 19, 24)),
+            };
+            Ok(Some(colors))
+        })
+        .flatten()
+    }
 
-        let modes_val = match env.call_method(
-            &display,
-            "getSupportedModes",
-            "()[Landroid/view/Display$Mode;",
-            &[],
-        ) {
-            Ok(r) => match r.l() {
-                Ok(arr) => arr,
-                Err(_) => {
-                    let _ = env.exception_clear();
-                    return false;
-                }
-            },
-            Err(_) => {
-                let _ = env.exception_clear();
-                return false;
-            }
-        };
+    /// Pin the display to its highest refresh rate *at the current resolution*, or hand
+    /// control back to the system when `enabled` is false.
+    ///
+    /// Picking a mode purely by refresh rate (as before) could select a mode with a
+    /// different resolution, forcing a mode switch and a blurry or janky first frames.
+    pub fn apply_refresh_rate_setting(enabled: bool) {
+        with_activity(|env, act| {
+            let window = env.call_method(act, "getWindow", "()Landroid/view/Window;", &[])?.l()?;
+            let mut best_mode_id = 0i32;
 
-        let modes_array = jni::objects::JObjectArray::from_raw(modes_val.as_raw());
-        let count = env.get_array_length(&modes_array).unwrap_or(0);
-        let mut max_rate = 0.0f32;
+            if enabled {
+                let wm = env
+                    .call_method(act, "getWindowManager", "()Landroid/view/WindowManager;", &[])?
+                    .l()?;
+                let display = env.call_method(&wm, "getDefaultDisplay", "()Landroid/view/Display;", &[])?.l()?;
+                let current = env.call_method(&display, "getMode", "()Landroid/view/Display$Mode;", &[])?.l()?;
+                let cur_w = env.call_method(&current, "getPhysicalWidth", "()I", &[])?.i()?;
+                let cur_h = env.call_method(&current, "getPhysicalHeight", "()I", &[])?.i()?;
 
-        for i in 0..count {
-            if let Ok(mode) = env.get_object_array_element(&modes_array, i) {
-                let rate = env
-                    .call_method(&mode, "getRefreshRate", "()F", &[])
-                    .and_then(|r| r.f())
-                    .unwrap_or(0.0);
-                if rate > max_rate {
-                    max_rate = rate;
+                let modes = env
+                    .call_method(&display, "getSupportedModes", "()[Landroid/view/Display$Mode;", &[])?
+                    .l()?;
+                let modes = jni::objects::JObjectArray::from(modes);
+                let count = env.get_array_length(&modes)?;
+                let mut max_rate = 0.0f32;
+                for i in 0..count {
+                    let mode = env.get_object_array_element(&modes, i)?;
+                    let w = env.call_method(&mode, "getPhysicalWidth", "()I", &[])?.i()?;
+                    let h = env.call_method(&mode, "getPhysicalHeight", "()I", &[])?.i()?;
+                    let rate = env.call_method(&mode, "getRefreshRate", "()F", &[])?.f()?;
+                    if w == cur_w && h == cur_h && rate > max_rate {
+                        max_rate = rate;
+                        best_mode_id = env.call_method(&mode, "getModeId", "()I", &[])?.i()?;
+                    }
+                    env.delete_local_ref(mode)?;
                 }
             }
-        }
-        let _ = env.exception_clear();
 
-        // Only supported if at least 90Hz (89.0 to account for ~89.9Hz modes)
-        max_rate >= 89.0
-    }
-}
-
-/// Fallback for non-Android platforms.
-#[cfg(not(target_os = "android"))]
-pub fn is_high_refresh_rate_supported() -> bool {
-    false
-}
-
-/// Detects whether the current device is a Google Tensor G5 / G6 or utilizes an
-/// Imagination Technologies GPU (IMG DXT / C-Series) where Vulkan exhibits pipeline
-/// compile micro-stuttering with Skia.
-#[cfg(target_os = "android")]
-pub fn is_tensor_g5_or_g6() -> bool {
-    let vm_ptr = VM_PTR.load(Ordering::SeqCst);
-    if vm_ptr.is_null() {
-        return false;
+            let attrs = env
+                .call_method(&window, "getAttributes", "()Landroid/view/WindowManager$LayoutParams;", &[])?
+                .l()?;
+            env.set_field(&attrs, "preferredDisplayModeId", "I", JValue::Int(best_mode_id))?;
+            env.call_method(
+                &window,
+                "setAttributes",
+                "(Landroid/view/WindowManager$LayoutParams;)V",
+                &[(&attrs).into()],
+            )?;
+            Ok(())
+        });
     }
 
-    unsafe {
-        let vm = match jni::JavaVM::from_raw(vm_ptr as *mut _) {
-            Ok(v) => v,
-            Err(_) => return false,
-        };
-        let mut env = match vm.attach_current_thread() {
-            Ok(e) => e,
-            Err(_) => return false,
-        };
+    pub fn haptic_tap() {
+        with_activity(|env, act| {
+            let window = env.call_method(act, "getWindow", "()Landroid/view/Window;", &[])?.l()?;
+            let decor = env.call_method(&window, "getDecorView", "()Landroid/view/View;", &[])?.l()?;
+            // HapticFeedbackConstants.KEYBOARD_TAP = 3 (honours the system haptics setting)
+            env.call_method(&decor, "performHapticFeedback", "(I)Z", &[3i32.into()])?;
+            Ok(())
+        });
+    }
 
-        let check_field = |env: &mut jni::JNIEnv, field: &str| -> Option<String> {
-            let class = env.find_class("android/os/Build").ok()?;
-            let val = env.get_static_field(class, field, "Ljava/lang/String;").ok()?;
-            let obj = val.l().ok()?;
-            if obj.as_raw().is_null() {
-                return None;
+    fn clipboard_manager<'a>(env: &mut JNIEnv<'a>, act: &JObject) -> jni::errors::Result<JObject<'a>> {
+        let name = env.new_string("clipboard")?;
+        env.call_method(act, "getSystemService", "(Ljava/lang/String;)Ljava/lang/Object;", &[(&name).into()])?
+            .l()
+    }
+
+    pub fn copy_to_clipboard(text: &str) -> Result<(), String> {
+        with_activity(|env, act| {
+            let cm = clipboard_manager(env, act)?;
+            if cm.is_null() {
+                return Ok(false);
             }
-            let jstr: jni::objects::JString = obj.into();
-            env.get_string(&jstr).ok().map(|s| s.to_string_lossy().into_owned())
-        };
-
-        let hardware = check_field(&mut env, "HARDWARE").unwrap_or_default().to_lowercase();
-        let board = check_field(&mut env, "BOARD").unwrap_or_default().to_lowercase();
-        let soc_model = check_field(&mut env, "SOC_MODEL").unwrap_or_default().to_lowercase();
-        let device = check_field(&mut env, "DEVICE").unwrap_or_default().to_lowercase();
-
-        let _ = env.exception_clear();
-
-        // Tensor G5 ("laguna") / Tensor G6 ("malibu") / IMG PowerVR GPUs
-        hardware.contains("laguna")
-            || board.contains("laguna")
-            || hardware.contains("malibu")
-            || board.contains("malibu")
-            || device.contains("laguna")
-            || device.contains("malibu")
-            || soc_model.contains("tensor g5")
-            || soc_model.contains("tensor-g5")
-            || soc_model.contains("tensor_g5")
-            || soc_model.contains("tensor g6")
-            || soc_model.contains("tensor-g6")
-            || soc_model.contains("tensor_g6")
-            || hardware.contains("powervr")
-            || hardware.contains("img")
+            let label = env.new_string("DevKit")?;
+            let clip_text = env.new_string(text)?;
+            let clip = env
+                .call_static_method(
+                    "android/content/ClipData",
+                    "newPlainText",
+                    "(Ljava/lang/CharSequence;Ljava/lang/CharSequence;)Landroid/content/ClipData;",
+                    &[(&label).into(), (&clip_text).into()],
+                )?
+                .l()?;
+            env.call_method(&cm, "setPrimaryClip", "(Landroid/content/ClipData;)V", &[(&clip).into()])?;
+            Ok(true)
+        })
+        .filter(|ok| *ok)
+        .map(|_| ())
+        .ok_or_else(|| "Clipboard unavailable".to_string())
     }
-}
 
-#[cfg(not(target_os = "android"))]
-pub fn is_tensor_g5_or_g6() -> bool {
-    false
-}
+    pub fn read_clipboard() -> Option<String> {
+        with_activity(|env, act| {
+            let cm = clipboard_manager(env, act)?;
+            if cm.is_null() {
+                return Ok(None);
+            }
+            let clip = env.call_method(&cm, "getPrimaryClip", "()Landroid/content/ClipData;", &[])?.l()?;
+            if clip.is_null() {
+                return Ok(None);
+            }
+            let count = env.call_method(&clip, "getItemCount", "()I", &[])?.i()?;
+            if count <= 0 {
+                return Ok(None);
+            }
+            let item = env
+                .call_method(&clip, "getItemAt", "(I)Landroid/content/ClipData$Item;", &[0i32.into()])?
+                .l()?;
+            let seq = env
+                .call_method(
+                    &item,
+                    "coerceToText",
+                    "(Landroid/content/Context;)Ljava/lang/CharSequence;",
+                    &[act.into()],
+                )?
+                .l()?;
+            if seq.is_null() {
+                return Ok(None);
+            }
+            let s = env.call_method(&seq, "toString", "()Ljava/lang/String;", &[])?.l()?;
+            get_string(env, s)
+        })
+        .flatten()
+    }
 
-/// Returns the optimal graphics backend based on hardware detection.
-/// Tensor G5 and G6 use Skia OpenGL ES to eliminate driver presentation micro-stutters,
-/// whereas Snapdragon, Exynos, Dimensity, and Tensor G1-G4 use Skia Vulkan.
-pub fn get_optimal_graphics_backend() -> &'static str {
-    #[cfg(target_os = "android")]
-    {
-        if is_tensor_g5_or_g6() {
-            "android-skia-opengl"
-        } else {
-            "android-skia-vulkan"
+    fn inet_host(env: &mut JNIEnv, addr: &JObject) -> jni::errors::Result<Option<String>> {
+        if addr.is_null() {
+            return Ok(None);
         }
-    }
-    #[cfg(not(target_os = "android"))]
-    {
-        "winit-skia-opengl"
-    }
-}
-
-/// Perform a subtle haptic tap (KEYBOARD_TAP) via JNI on Android.
-///
-/// Respects the user's system haptic feedback setting (Settings.System.HAPTIC_FEEDBACK_ENABLED).
-#[cfg(target_os = "android")]
-pub fn haptic_tap() {
-    let vm_ptr = VM_PTR.load(Ordering::SeqCst);
-    let activity_ptr = ACTIVITY_PTR.load(Ordering::SeqCst);
-    if vm_ptr.is_null() || activity_ptr.is_null() {
-        return;
+        let s = env.call_method(addr, "getHostAddress", "()Ljava/lang/String;", &[])?.l()?;
+        get_string(env, s)
     }
 
-    unsafe {
-        let vm = match jni::JavaVM::from_raw(vm_ptr as *mut _) {
-            Ok(v) => v,
-            Err(_) => return,
-        };
-        let mut env = match vm.attach_current_thread() {
-            Ok(e) => e,
-            Err(_) => return,
-        };
+    fn list_len(env: &mut JNIEnv, list: &JObject) -> jni::errors::Result<i32> {
+        if list.is_null() {
+            return Ok(0);
+        }
+        env.call_method(list, "size", "()I", &[])?.i()
+    }
 
-        let activity = jni::objects::JObject::from_raw(activity_ptr as _);
-        if let Ok(window) = env.call_method(&activity, "getWindow", "()Landroid/view/Window;", &[])
-        {
-            if let Ok(window_obj) = window.l() {
-                if let Ok(decor) =
-                    env.call_method(&window_obj, "getDecorView", "()Landroid/view/View;", &[])
-                {
-                    if let Ok(decor_obj) = decor.l() {
-                        // HapticFeedbackConstants.KEYBOARD_TAP = 3
-                        // Automatically checks and respects system haptic feedback settings
-                        let _ = env.call_method(
-                            &decor_obj,
-                            "performHapticFeedback",
-                            "(I)Z",
-                            &[3i32.into()],
-                        );
+    fn list_get<'a>(env: &mut JNIEnv<'a>, list: &JObject, i: i32) -> jni::errors::Result<JObject<'a>> {
+        env.call_method(list, "get", "(I)Ljava/lang/Object;", &[i.into()])?.l()
+    }
+
+    /// Query the active network through ConnectivityManager / LinkProperties.
+    ///
+    /// Works on Android 10+, where `/proc/net/route` is no longer readable by apps.
+    pub fn query_network_info() -> Option<NetworkInfo> {
+        with_activity(|env, act| {
+            let name = env.new_string("connectivity")?;
+            let cm = env
+                .call_method(act, "getSystemService", "(Ljava/lang/String;)Ljava/lang/Object;", &[(&name).into()])?
+                .l()?;
+            if cm.is_null() {
+                return Ok(None);
+            }
+            let net = env.call_method(&cm, "getActiveNetwork", "()Landroid/net/Network;", &[])?.l()?;
+            if net.is_null() {
+                return Ok(None);
+            }
+            let lp = env
+                .call_method(
+                    &cm,
+                    "getLinkProperties",
+                    "(Landroid/net/Network;)Landroid/net/LinkProperties;",
+                    &[(&net).into()],
+                )?
+                .l()?;
+            if lp.is_null() {
+                return Ok(None);
+            }
+
+            let mut info = NetworkInfo::default();
+            let iface = env.call_method(&lp, "getInterfaceName", "()Ljava/lang/String;", &[])?.l()?;
+            info.interface = get_string(env, iface)?;
+
+            let addrs = env.call_method(&lp, "getLinkAddresses", "()Ljava/util/List;", &[])?.l()?;
+            for i in 0..list_len(env, &addrs)? {
+                let la = list_get(env, &addrs, i)?;
+                let addr = env.call_method(&la, "getAddress", "()Ljava/net/InetAddress;", &[])?.l()?;
+                if let Some(host) = inet_host(env, &addr)? {
+                    if !host.contains(':') {
+                        let prefix = env.call_method(&la, "getPrefixLength", "()I", &[])?.i()?;
+                        info.device_ip = Some(host);
+                        info.prefix_len = u8::try_from(prefix).ok();
+                        break;
                     }
                 }
             }
-        }
-        let _ = env.exception_clear();
+
+            let routes = env.call_method(&lp, "getRoutes", "()Ljava/util/List;", &[])?.l()?;
+            for i in 0..list_len(env, &routes)? {
+                let route = list_get(env, &routes, i)?;
+                let is_default = env.call_method(&route, "isDefaultRoute", "()Z", &[])?.z()?;
+                if !is_default {
+                    continue;
+                }
+                let gw = env.call_method(&route, "getGateway", "()Ljava/net/InetAddress;", &[])?.l()?;
+                if let Some(host) = inet_host(env, &gw)? {
+                    if !host.contains(':') && host != "0.0.0.0" {
+                        info.gateway = Some(host);
+                        break;
+                    }
+                }
+            }
+
+            let dns = env.call_method(&lp, "getDnsServers", "()Ljava/util/List;", &[])?.l()?;
+            for i in 0..list_len(env, &dns)? {
+                let a = list_get(env, &dns, i)?;
+                if let Some(host) = inet_host(env, &a)? {
+                    info.dns_servers.push(host);
+                }
+            }
+            Ok(Some(info))
+        })
+        .flatten()
     }
 }
 
-/// Fallback for non-Android targets.
-#[cfg(not(target_os = "android"))]
-pub fn haptic_tap() {}
-
-/// Query the Android system device ID (Settings.Secure.ANDROID_ID) via JNI.
 #[cfg(target_os = "android")]
-pub fn get_android_id() -> Result<String, String> {
-    static CACHED_ID: std::sync::OnceLock<String> = std::sync::OnceLock::new();
+pub use imp::{
+    apply_refresh_rate_setting, configure_window_soft_input_mode, copy_to_clipboard,
+    get_system_monet_colors, haptic_tap, init, is_tensor_g5_or_newer, query_navigation_bar_inset,
+    query_network_info, query_status_bar_inset, read_clipboard, with_activity,
+};
 
-    if let Some(cached) = CACHED_ID.get() {
-        return Ok(cached.clone());
-    }
+// ---------------------------------------------------------------------------
+// Desktop fallbacks
+// ---------------------------------------------------------------------------
 
-    let vm_ptr = VM_PTR.load(Ordering::SeqCst);
-    let activity_ptr = ACTIVITY_PTR.load(Ordering::SeqCst);
-    if vm_ptr.is_null() || activity_ptr.is_null() {
-        return Err("Android VM or Activity pointer is null".to_string());
-    }
-
-    unsafe {
-        let vm = match jni::JavaVM::from_raw(vm_ptr as *mut _) {
-            Ok(v) => v,
-            Err(e) => return Err(format!("JavaVM::from_raw failed: {e}")),
-        };
-        let mut env = match vm.attach_current_thread() {
-            Ok(e) => e,
-            Err(e) => return Err(format!("attach_current_thread failed: {e}")),
-        };
-
-        let activity = jni::objects::JObject::from_raw(activity_ptr as _);
-
-        let resolver = match env.call_method(
-            &activity,
-            "getContentResolver",
-            "()Landroid/content/ContentResolver;",
-            &[],
-        ) {
-            Ok(r) => match r.l() {
-                Ok(obj) => obj,
-                Err(e) => {
-                    let _ = env.exception_clear();
-                    return Err(format!("getContentResolver return object failed: {e}"));
-                }
-            },
-            Err(e) => {
-                let _ = env.exception_clear();
-                return Err(format!("getContentResolver call failed: {e}"));
-            }
-        };
-
-        let id_name = match env.new_string("android_id") {
-            Ok(s) => s,
-            Err(e) => {
-                let _ = env.exception_clear();
-                return Err(format!("new_string failed: {e}"));
-            }
-        };
-
-        let res = match env.call_static_method(
-            "android/provider/Settings$Secure",
-            "getString",
-            "(Landroid/content/ContentResolver;Ljava/lang/String;)Ljava/lang/String;",
-            &[(&resolver).into(), (&id_name).into()],
-        ) {
-            Ok(r) => match r.l() {
-                Ok(obj) => obj,
-                Err(e) => {
-                    let _ = env.exception_clear();
-                    return Err(format!("Settings.Secure.getString result object failed: {e}"));
-                }
-            },
-            Err(e) => {
-                let _ = env.exception_clear();
-                return Err(format!("Settings.Secure.getString call failed: {e}"));
-            }
-        };
-
-        if res.as_raw().is_null() {
-            return Err("Settings.Secure.ANDROID_ID returned null".to_string());
-        }
-
-        let jstr = jni::objects::JString::from(res);
-        let id_str: String = match env.get_string(&jstr) {
-            Ok(s) => s.into(),
-            Err(e) => {
-                let _ = env.exception_clear();
-                return Err(format!("get_string failed: {e}"));
-            }
-        };
-
-        let _ = CACHED_ID.set(id_str.clone());
-        Ok(id_str)
-    }
-}
-
-/// Fallback for non-Android targets.
 #[cfg(not(target_os = "android"))]
-pub fn get_android_id() -> Result<String, String> {
-    Err("Android ID is only available on Android".to_string())
-}
+mod desktop {
+    use super::*;
+    use std::sync::Mutex;
 
-/// Copies the given text to the Android system clipboard via JNI ClipboardManager.
-#[cfg(target_os = "android")]
-pub fn copy_to_clipboard(text: &str) -> Result<(), String> {
-    let vm_ptr = VM_PTR.load(Ordering::SeqCst);
-    let activity_ptr = ACTIVITY_PTR.load(Ordering::SeqCst);
-    if vm_ptr.is_null() || activity_ptr.is_null() {
-        return Err("Android VM or Activity pointer is null".to_string());
+    /// In-process clipboard so copy/paste round-trips work while developing on desktop.
+    static CLIPBOARD: Mutex<Option<String>> = Mutex::new(None);
+
+    pub fn get_system_monet_colors() -> Option<MonetColors> {
+        None
     }
-
-    unsafe {
-        let vm = match jni::JavaVM::from_raw(vm_ptr as *mut _) {
-            Ok(v) => v,
-            Err(e) => return Err(format!("JavaVM::from_raw failed: {e}")),
-        };
-        let mut env = match vm.attach_current_thread() {
-            Ok(e) => e,
-            Err(e) => return Err(format!("attach_current_thread failed: {e}")),
-        };
-
-        let activity = jni::objects::JObject::from_raw(activity_ptr as _);
-
-        let service_name = match env.new_string("clipboard") {
-            Ok(s) => s,
-            Err(e) => {
-                let _ = env.exception_clear();
-                return Err(format!("new_string clipboard failed: {e}"));
-            }
-        };
-
-        let clipboard_mgr = match env.call_method(
-            &activity,
-            "getSystemService",
-            "(Ljava/lang/String;)Ljava/lang/Object;",
-            &[(&service_name).into()],
-        ) {
-            Ok(r) => match r.l() {
-                Ok(obj) => obj,
-                Err(e) => {
-                    let _ = env.exception_clear();
-                    return Err(format!("getSystemService return object failed: {e}"));
-                }
-            },
-            Err(e) => {
-                let _ = env.exception_clear();
-                return Err(format!("getSystemService failed: {e}"));
-            }
-        };
-
-        if clipboard_mgr.as_raw().is_null() {
-            return Err("ClipboardManager is null".to_string());
+    pub fn apply_refresh_rate_setting(_enabled: bool) {}
+    pub fn is_tensor_g5_or_newer() -> bool {
+        false
+    }
+    pub fn haptic_tap() {}
+    pub fn copy_to_clipboard(text: &str) -> Result<(), String> {
+        if let Ok(mut c) = CLIPBOARD.lock() {
+            *c = Some(text.to_string());
         }
-
-        let label = match env.new_string("DevKit") {
-            Ok(s) => s,
-            Err(e) => {
-                let _ = env.exception_clear();
-                return Err(format!("new_string label failed: {e}"));
-            }
-        };
-
-        let clip_text = match env.new_string(text) {
-            Ok(s) => s,
-            Err(e) => {
-                let _ = env.exception_clear();
-                return Err(format!("new_string clip_text failed: {e}"));
-            }
-        };
-
-        let clip_data = match env.call_static_method(
-            "android/content/ClipData",
-            "newPlainText",
-            "(Ljava/lang/CharSequence;Ljava/lang/CharSequence;)Landroid/content/ClipData;",
-            &[(&label).into(), (&clip_text).into()],
-        ) {
-            Ok(r) => match r.l() {
-                Ok(obj) => obj,
-                Err(e) => {
-                    let _ = env.exception_clear();
-                    return Err(format!("ClipData.newPlainText return object failed: {e}"));
-                }
-            },
-            Err(e) => {
-                let _ = env.exception_clear();
-                return Err(format!("ClipData.newPlainText failed: {e}"));
-            }
-        };
-
-        if let Err(e) = env.call_method(
-            &clipboard_mgr,
-            "setPrimaryClip",
-            "(Landroid/content/ClipData;)V",
-            &[(&clip_data).into()],
-        ) {
-            let _ = env.exception_clear();
-            return Err(format!("setPrimaryClip failed: {e}"));
-        }
-
         Ok(())
     }
+    pub fn read_clipboard() -> Option<String> {
+        CLIPBOARD.lock().ok().and_then(|c| c.clone())
+    }
+    pub fn query_network_info() -> Option<NetworkInfo> {
+        None
+    }
 }
 
-/// Fallback for non-Android targets.
 #[cfg(not(target_os = "android"))]
-pub fn copy_to_clipboard(_text: &str) -> Result<(), String> {
-    Ok(())
+pub use desktop::*;
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn detects_tensor_generations() {
+        assert!(soc_strings_indicate_tensor_g5_plus(&["Tensor G5"]));
+        assert!(soc_strings_indicate_tensor_g5_plus(&["tensor-g6"]));
+        assert!(soc_strings_indicate_tensor_g5_plus(&["", "laguna"]));
+        assert!(soc_strings_indicate_tensor_g5_plus(&["malibu"]));
+        assert!(!soc_strings_indicate_tensor_g5_plus(&["Tensor G4", "caiman"]));
+        assert!(!soc_strings_indicate_tensor_g5_plus(&["Tensor G3"]));
+        assert!(!soc_strings_indicate_tensor_g5_plus(&["SM8650", "pineapple"]));
+        // "img" used to match anything containing those letters (e.g. "pilgrim").
+        assert!(!soc_strings_indicate_tensor_g5_plus(&["pilgrim"]));
+    }
+
+    #[test]
+    fn auto_resolves_to_vulkan_on_desktop() {
+        assert_eq!(resolve_graphics_api(0), GraphicsApi::Vulkan);
+        assert_eq!(resolve_graphics_api(2), GraphicsApi::OpenGlEs);
+        assert_eq!(resolve_graphics_api(1), GraphicsApi::Vulkan);
+    }
 }

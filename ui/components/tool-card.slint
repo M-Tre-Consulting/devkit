@@ -11,47 +11,49 @@ export component ToolCard inherits Rectangle {
     in property <int> entrance_index: 0;
     in property <bool> is_entered: true;
     in property <bool> is_favorite: false;
-    in property <color> accent_color: MaterialPalette.primary;
+    // 0 = primary, 1 = secondary, 2 = tertiary
+    in property <int> accent: 0;
+    in property <color> accent_color: root.accent == 1 ? MaterialPalette.secondary : (root.accent == 2 ? MaterialPalette.tertiary : MaterialPalette.primary);
 
     callback clicked();
     callback toggle_favorite();
 
-    min_height: 148px;
+    min_height: 168px;
 
-    // Staggered entrance animation (Material 3 Expressive entrance: 500ms)
+    // Staggered entrance (opacity + translation only: no relayout while animating).
     property <float> enter_opacity: root.is_entered ? 1.0 : 0.0;
     property <length> enter_y_offset: root.is_entered ? 0px : 16px;
 
     animate enter_opacity {
-        duration: 500ms;
-        delay: root.entrance_index * 40ms;
+        duration: 420ms;
+        delay: min(root.entrance_index, 12) * 30ms;
         easing: cubic-bezier(0.05, 0.7, 0.1, 1.0);
     }
     animate enter_y_offset {
-        duration: 500ms;
-        delay: root.entrance_index * 40ms;
+        duration: 420ms;
+        delay: min(root.entrance_index, 12) * 30ms;
         easing: cubic-bezier(0.05, 0.7, 0.1, 1.0);
     }
 
-    // Touch press scale animation (Material 3 standard press feedback: subtle 0.98 scale, smooth release)
-    property <float> press_scale: touch_area.pressed ? 0.98 : 1.0;
+    // Press feedback as a render transform: the layout inside the card is untouched.
+    property <float> press_scale: touch_area.pressed ? 0.97 : 1.0;
     animate press_scale {
         duration: touch_area.pressed ? 80ms : 180ms;
         easing: cubic-bezier(0.2, 0, 0, 1);
     }
 
     card_body := Rectangle {
-        x: (parent.width - self.width) / 2;
-        y: (parent.height - self.height) / 2 + root.enter_y_offset;
-        width: parent.width * root.press_scale;
-        height: parent.height * root.press_scale;
+        y: root.enter_y_offset;
+        width: 100%;
+        height: 100%;
         opacity: root.enter_opacity;
+        transform-scale: root.press_scale;
         border_radius: MaterialStyleMetrics.shape_large;
         background: MaterialPalette.surface_container_low;
-
-        // Subtle outline for tonal contrast
         border_width: 1px;
         border_color: MaterialPalette.outline_variant.with_alpha(15%);
+        // Long titles / descriptions on narrow phones must never paint past the card edge.
+        clip: true;
 
         touch_area := StateLayerArea {
             width: 100%;
@@ -65,14 +67,16 @@ export component ToolCard inherits Rectangle {
 
             VerticalLayout {
                 padding: MaterialStyleMetrics.padding_16;
+                // Keep text clear of the star target in the top-right corner.
+                padding_right: MaterialStyleMetrics.padding_16;
                 spacing: 12px;
                 alignment: start;
 
                 HorizontalLayout {
                     alignment: start;
                     Rectangle {
-                        width: 48px;
-                        height: 48px;
+                        width: 44px;
+                        height: 44px;
                         border_radius: MaterialStyleMetrics.shape_medium;
                         background: root.accent_color.with_alpha(18%);
 
@@ -112,39 +116,43 @@ export component ToolCard inherits Rectangle {
             }
         }
 
-        // Star favorite button in top-right corner
-        star_btn := Rectangle {
-            x: parent.width - self.width - 12px;
-            y: 12px;
-            width: 36px;
-            height: 36px;
-            border_radius: MaterialStyleMetrics.shape_full;
+        // Favorite toggle. Declared after the card's touch area so it sits on top, with a
+        // full 48dp target (Material minimum) so taps near the glyph never fall through
+        // and open the tool instead.
+        star_touch := TouchArea {
+            x: parent.width - self.width - 2px;
+            y: 2px;
+            width: 52px;
+            height: 52px;
 
-            star_touch := StateLayerArea {
-                width: 100%;
-                height: 100%;
-                border_radius: parent.border_radius;
-                color: MaterialPalette.tertiary;
+            clicked => {
+                root.toggle_favorite();
+            }
 
-                clicked => {
-                    root.toggle_favorite();
-                }
+            star_bg := Rectangle {
+                x: (parent.width - self.width) / 2;
+                y: (parent.height - self.height) / 2;
+                width: 36px;
+                height: 36px;
+                border_radius: 18px;
+                background: star_touch.pressed ? MaterialPalette.tertiary.with_alpha(16%) : transparent;
 
-                VerticalLayout {
-                    alignment: center;
-                    HorizontalLayout {
-                        alignment: center;
-                        Icon {
-                            source: root.is_favorite ? AppIcons.star : AppIcons.star_outline;
-                            colorize: root.is_favorite ? MaterialPalette.tertiary : MaterialPalette.on_surface_variant.with_alpha(45%);
-                            width: 22px;
-                            height: 22px;
+                Icon {
+                    x: (parent.width - self.width) / 2;
+                    y: (parent.height - self.height) / 2;
+                    source: root.is_favorite ? AppIcons.star : AppIcons.star_outline;
+                    colorize: root.is_favorite ? MaterialPalette.tertiary : MaterialPalette.on_surface_variant.with_alpha(55%);
+                    width: 22px;
+                    height: 22px;
+                    transform-scale: star_touch.pressed ? 0.85 : 1.0;
 
-                            animate colorize {
-                                duration: 200ms;
-                                easing: cubic-bezier(0.05, 0.7, 0.1, 1.0);
-                            }
-                        }
+                    animate colorize {
+                        duration: 200ms;
+                        easing: cubic-bezier(0.05, 0.7, 0.1, 1.0);
+                    }
+                    animate transform-scale {
+                        duration: 160ms;
+                        easing: cubic-bezier(0.2, 0, 0, 1);
                     }
                 }
             }

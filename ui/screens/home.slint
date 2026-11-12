@@ -1,14 +1,108 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2026 M-Tre Consulting
 
-import { Icons, ScrollView, MaterialPalette, MaterialStyleMetrics, MaterialTypography, MaterialText } from "@material";
-import { ToolCard } from "../components/tool-card.slint";
+import { ScrollView, MaterialPalette, MaterialStyleMetrics, MaterialTypography, MaterialText, Icon, StateLayerArea } from "@material";
+import { ToolGrid } from "../components/tool-grid.slint";
 import { SectionHeader } from "../components/section-header.slint";
-import { AppIcons } from "../components/app-icons.slint";
+import { AppIcons, ToolInfo } from "../components/app-icons.slint";
 import { TopBar } from "../components/top-bar.slint";
 
+export struct SmartSuggestion {
+    tool_id: int,
+    tool_title: string,
+    kind: string,
+}
+
+component SuggestionRow inherits Rectangle {
+    in property <SmartSuggestion> item;
+    in property <bool> primary;
+    callback clicked();
+
+    height: 56px;
+    border_radius: MaterialStyleMetrics.border_radius_12;
+    background: root.primary ? MaterialPalette.primary_container : MaterialPalette.surface_container_high;
+
+    StateLayerArea {
+        width: 100%;
+        height: 100%;
+        border_radius: parent.border_radius;
+        color: root.primary ? MaterialPalette.on_primary_container : MaterialPalette.on_surface;
+        clicked => { root.clicked(); }
+
+        HorizontalLayout {
+            padding_left: 12px;
+            padding_right: 12px;
+            spacing: 12px;
+
+            VerticalLayout {
+                alignment: center;
+                Icon {
+                    source: AppIcons.tool_icon(root.item.tool_id);
+                    colorize: root.primary ? MaterialPalette.on_primary_container : MaterialPalette.primary;
+                    width: 22px;
+                    height: 22px;
+                }
+            }
+
+            VerticalLayout {
+                alignment: center;
+                horizontal-stretch: 1;
+                spacing: 2px;
+                MaterialText {
+                    text: root.item.tool_title;
+                    style: MaterialTypography.title_small;
+                    color: root.primary ? MaterialPalette.on_primary_container : MaterialPalette.on_surface;
+                    overflow: elide;
+                }
+                MaterialText {
+                    text: root.item.kind;
+                    style: MaterialTypography.body_small;
+                    color: root.primary ? MaterialPalette.on_primary_container.with_alpha(80%) : MaterialPalette.on_surface_variant;
+                    overflow: elide;
+                }
+            }
+
+            VerticalLayout {
+                alignment: center;
+                Icon {
+                    source: AppIcons.arrow_forward;
+                    colorize: root.primary ? MaterialPalette.on_primary_container : MaterialPalette.on_surface_variant;
+                    width: 20px;
+                    height: 20px;
+                }
+            }
+        }
+    }
+}
+
+component RoundIconButton inherits Rectangle {
+    in property <image> icon;
+    in property <color> tint: MaterialPalette.on_surface_variant;
+    callback clicked();
+
+    width: 44px;
+    height: 44px;
+    border_radius: 22px;
+
+    StateLayerArea {
+        width: 100%;
+        height: 100%;
+        border_radius: parent.border_radius;
+        color: root.tint;
+        clicked => { root.clicked(); }
+
+        Icon {
+            x: (parent.width - self.width) / 2;
+            y: (parent.height - self.height) / 2;
+            source: root.icon;
+            colorize: root.tint;
+            width: 22px;
+            height: 22px;
+        }
+    }
+}
+
 export component HomeScreen inherits VerticalLayout {
-    in property <bool> is_wide: root.width >= 600px;
     property <int> columns: root.width >= 840px ? 4 : (root.width >= 560px ? 3 : 2);
     property <length> screen_margin: root.width >= 600px ? 24px : 16px;
     property <length> grid_gap: root.width >= 600px ? 16px : 12px;
@@ -17,9 +111,19 @@ export component HomeScreen inherits VerticalLayout {
     in property <length> pill_height: 56px;
     in property <length> pill_bottom_margin: 28px;
     property <length> bottom_clearance: root.pill_height + root.pill_bottom_margin + root.nav_bar_inset + 24px;
-    in property <[bool]> tool_favorites: [false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false];
+
+    in property <[ToolInfo]> tools;
+    in-out property <string> search_query;
+    in property <[SmartSuggestion]> suggestions;
+    in property <string> suggestion_source;
+    in property <string> paste_feedback;
+
     callback home-open-tool(int);
     callback home-toggle-favorite(int);
+    callback search-edited(string);
+    callback smart-paste();
+    callback open-suggestion(int);
+    callback clear-search();
 
     property <bool> is_entered: false;
     init => { self.is_entered = true; }
@@ -29,13 +133,11 @@ export component HomeScreen inherits VerticalLayout {
         height: root.status_bar_inset;
     }
 
-    // Material 3 Small App Bar (56dp height, aligned on 28dp centerline)
     TopBar {
         title: "DevKit";
         has_back: false;
     }
 
-    // Scrollable Tool Grid
     ScrollView {
         vertical-stretch: 1;
 
@@ -48,764 +150,147 @@ export component HomeScreen inherits VerticalLayout {
                 width: 100%;
                 padding_left: root.screen_margin;
                 padding_right: root.screen_margin;
-                padding_top: MaterialStyleMetrics.padding_8;
+                padding_top: MaterialStyleMetrics.padding_4;
                 padding_bottom: root.bottom_clearance;
                 spacing: MaterialStyleMetrics.spacing_16;
                 alignment: start;
 
+                // Omnibox: filter tools by name, or paste any data to get routed.
+                omnibox := Rectangle {
+                    height: 56px;
+                    border_radius: 28px;
+                    background: MaterialPalette.surface_container_high;
+                    border_width: search_input.has-focus ? 2px : 1px;
+                    border_color: search_input.has-focus ? MaterialPalette.primary : MaterialPalette.outline_variant.with_alpha(30%);
+
+                    HorizontalLayout {
+                        padding_left: 16px;
+                        padding_right: 6px;
+                        spacing: 10px;
+
+                        VerticalLayout {
+                            alignment: center;
+                            Icon {
+                                source: AppIcons.search;
+                                colorize: MaterialPalette.on_surface_variant;
+                                width: 22px;
+                                height: 22px;
+                            }
+                        }
+
+                        Rectangle {
+                            horizontal-stretch: 1;
+
+                            if root.search_query == "" : MaterialText {
+                                width: 100%;
+                                height: 100%;
+                                vertical_alignment: center;
+                                text: "Search tools or paste anything…";
+                                style: MaterialTypography.body_large;
+                                color: MaterialPalette.on_surface_variant;
+                                overflow: elide;
+                            }
+
+                            search_input := TextInput {
+                                width: 100%;
+                                height: 100%;
+                                vertical-alignment: center;
+                                single-line: true;
+                                text <=> root.search_query;
+                                font-size: MaterialTypography.body_large.font_size;
+                                color: MaterialPalette.on_surface;
+                                selection-background-color: MaterialPalette.primary.with_alpha(35%);
+                                selection-foreground-color: MaterialPalette.on_surface;
+                                edited => { root.search-edited(self.text); }
+                                accepted => {
+                                    if root.suggestions.length > 0 {
+                                        root.open-suggestion(0);
+                                    } else if root.tools.length == 1 {
+                                        root.home-open-tool(root.tools[0].id);
+                                    }
+                                }
+                            }
+                        }
+
+                        VerticalLayout {
+                            alignment: center;
+                            if root.search_query != "" : RoundIconButton {
+                                icon: AppIcons.close;
+                                clicked => {
+                                    root.clear-search();
+                                    search_input.clear-focus();
+                                }
+                            }
+                            if root.search_query == "" : RoundIconButton {
+                                icon: AppIcons.paste;
+                                tint: MaterialPalette.primary;
+                                clicked => { root.smart-paste(); }
+                            }
+                        }
+                    }
+                }
+
+                if root.paste_feedback != "" : MaterialText {
+                    text: root.paste_feedback;
+                    style: MaterialTypography.body_small;
+                    color: MaterialPalette.on_surface_variant;
+                    horizontal_alignment: center;
+                }
+
+                // Smart Paste suggestions
+                if root.suggestions.length > 0 : Rectangle {
+                    border_radius: MaterialStyleMetrics.border_radius_16;
+                    background: MaterialPalette.surface_container;
+                    border_width: 1px;
+                    border_color: MaterialPalette.primary.with_alpha(25%);
+
+                    VerticalLayout {
+                        padding: 12px;
+                        spacing: 8px;
+
+                        HorizontalLayout {
+                            spacing: 8px;
+                            padding_left: 4px;
+                            VerticalLayout {
+                                alignment: center;
+                                Icon {
+                                    source: AppIcons.sparkle;
+                                    colorize: MaterialPalette.primary;
+                                    width: 18px;
+                                    height: 18px;
+                                }
+                            }
+                            MaterialText {
+                                horizontal-stretch: 1;
+                                text: "Smart Paste · " + root.suggestion_source;
+                                style: MaterialTypography.label_large;
+                                color: MaterialPalette.primary;
+                                vertical_alignment: center;
+                                overflow: elide;
+                            }
+                        }
+
+                        for s[i] in root.suggestions : SuggestionRow {
+                            item: s;
+                            primary: i == 0;
+                            clicked => { root.open-suggestion(i); }
+                        }
+                    }
+                }
+
                 SectionHeader {
-                    title: "DEVELOPER TOOLS";
+                    title: root.search_query == "" ? "DEVELOPER TOOLS" : (root.tools.length == 0 ? "NO MATCHING TOOLS" : "MATCHING TOOLS");
                 }
 
-                // Phone width layout: 2 columns (< 560px)
-                if root.columns == 2 : VerticalLayout {
-                    spacing: root.grid_gap;
-
-                HorizontalLayout {
-                    spacing: root.grid_gap;
-                    ToolCard {
-                        horizontal-stretch: 1;
-                        title: "Subnet Calculator";
-                        description: "IPv4 CIDR, netmask & range";
-                        icon: AppIcons.lan;
-                        accent_color: MaterialPalette.primary;
-                        entrance_index: 0;
-                        is_entered: root.is_entered;
-                        is_favorite: root.tool_favorites[1];
-                        clicked => { root.home-open-tool(1); }
-                        toggle_favorite => { root.home-toggle-favorite(1); }
-                    }
-                    ToolCard {
-                        horizontal-stretch: 1;
-                        title: "Hash Calculator";
-                        description: "MD5, SHA-256 checksums";
-                        icon: AppIcons.lock;
-                        accent_color: MaterialPalette.secondary;
-                        entrance_index: 1;
-                        is_entered: root.is_entered;
-                        is_favorite: root.tool_favorites[2];
-                        clicked => { root.home-open-tool(2); }
-                        toggle_favorite => { root.home-toggle-favorite(2); }
-                    }
-                }
-
-                HorizontalLayout {
-                    spacing: root.grid_gap;
-                    ToolCard {
-                        horizontal-stretch: 1;
-                        title: "Base64";
-                        description: "Encode & decode strings";
-                        icon: AppIcons.code;
-                        accent_color: MaterialPalette.tertiary;
-                        entrance_index: 2;
-                        is_entered: root.is_entered;
-                        is_favorite: root.tool_favorites[3];
-                        clicked => { root.home-open-tool(3); }
-                        toggle_favorite => { root.home-toggle-favorite(3); }
-                    }
-                    ToolCard {
-                        horizontal-stretch: 1;
-                        title: "UUID Generator";
-                        description: "Generate unique identifiers";
-                        icon: AppIcons.fingerprint;
-                        accent_color: MaterialPalette.primary;
-                        entrance_index: 3;
-                        is_entered: root.is_entered;
-                        is_favorite: root.tool_favorites[4];
-                        clicked => { root.home-open-tool(4); }
-                        toggle_favorite => { root.home-toggle-favorite(4); }
-                    }
-                }
-
-                HorizontalLayout {
-                    spacing: root.grid_gap;
-                    ToolCard {
-                        horizontal-stretch: 1;
-                        title: "Timestamp";
-                        description: "Epoch & date conversions";
-                        icon: AppIcons.timer;
-                        accent_color: MaterialPalette.secondary;
-                        entrance_index: 4;
-                        is_entered: root.is_entered;
-                        is_favorite: root.tool_favorites[5];
-                        clicked => { root.home-open-tool(5); }
-                        toggle_favorite => { root.home-toggle-favorite(5); }
-                    }
-                    ToolCard {
-                        horizontal-stretch: 1;
-                        title: "Regex Tester";
-                        description: "Evaluate pattern matches";
-                        icon: AppIcons.regex;
-                        accent_color: MaterialPalette.tertiary;
-                        entrance_index: 5;
-                        is_entered: root.is_entered;
-                        is_favorite: root.tool_favorites[6];
-                        clicked => { root.home-open-tool(6); }
-                        toggle_favorite => { root.home-toggle-favorite(6); }
-                    }
-                }
-
-                HorizontalLayout {
-                    spacing: root.grid_gap;
-                    ToolCard {
-                        horizontal-stretch: 1;
-                        title: "JSON ↔ YAML";
-                        description: "Convert between formats";
-                        icon: AppIcons.swap;
-                        accent_color: MaterialPalette.primary;
-                        entrance_index: 6;
-                        is_entered: root.is_entered;
-                        is_favorite: root.tool_favorites[7];
-                        clicked => { root.home-open-tool(7); }
-                        toggle_favorite => { root.home-toggle-favorite(7); }
-                    }
-                    ToolCard {
-                        horizontal-stretch: 1;
-                        title: "CRON Parser";
-                        description: "Parse schedule syntax";
-                        icon: AppIcons.schedule;
-                        accent_color: MaterialPalette.secondary;
-                        entrance_index: 7;
-                        is_entered: root.is_entered;
-                        is_favorite: root.tool_favorites[8];
-                        clicked => { root.home-open-tool(8); }
-                        toggle_favorite => { root.home-toggle-favorite(8); }
-                    }
-                }
-
-                HorizontalLayout {
-                    spacing: root.grid_gap;
-                    ToolCard {
-                        horizontal-stretch: 1;
-                        title: "GZip";
-                        description: "Compress & decompress";
-                        icon: AppIcons.archive;
-                        accent_color: MaterialPalette.tertiary;
-                        entrance_index: 8;
-                        is_entered: root.is_entered;
-                        is_favorite: root.tool_favorites[9];
-                        clicked => { root.home-open-tool(9); }
-                        toggle_favorite => { root.home-toggle-favorite(9); }
-                    }
-                    ToolCard {
-                        horizontal-stretch: 1;
-                        title: "Code Formatter";
-                        description: "Format code syntax";
-                        icon: AppIcons.formatter;
-                        accent_color: MaterialPalette.primary;
-                        entrance_index: 9;
-                        is_entered: root.is_entered;
-                        is_favorite: root.tool_favorites[10];
-                        clicked => { root.home-open-tool(10); }
-                        toggle_favorite => { root.home-toggle-favorite(10); }
-                    }
-                }
-
-                HorizontalLayout {
-                    spacing: root.grid_gap;
-                    ToolCard {
-                        horizontal-stretch: 1;
-                        title: "Chmod Calculator";
-                        description: "Octal & symbolic bits";
-                        icon: AppIcons.security;
-                        accent_color: MaterialPalette.secondary;
-                        entrance_index: 10;
-                        is_entered: root.is_entered;
-                        is_favorite: root.tool_favorites[11];
-                        clicked => { root.home-open-tool(11); }
-                        toggle_favorite => { root.home-toggle-favorite(11); }
-                    }
-                    ToolCard {
-                        horizontal-stretch: 1;
-                        title: "Color Converter";
-                        description: "HEX, RGB, HSL values";
-                        icon: AppIcons.palette;
-                        accent_color: MaterialPalette.tertiary;
-                        entrance_index: 11;
-                        is_entered: root.is_entered;
-                        is_favorite: root.tool_favorites[12];
-                        clicked => { root.home-open-tool(12); }
-                        toggle_favorite => { root.home-toggle-favorite(12); }
-                    }
-                }
-
-                HorizontalLayout {
-                    spacing: root.grid_gap;
-                    ToolCard {
-                        horizontal-stretch: 1;
-                        title: "Contrast Checker";
-                        description: "WCAG contrast ratio";
-                        icon: AppIcons.contrast;
-                        accent_color: MaterialPalette.primary;
-                        entrance_index: 12;
-                        is_entered: root.is_entered;
-                        is_favorite: root.tool_favorites[13];
-                        clicked => { root.home-open-tool(13); }
-                        toggle_favorite => { root.home-toggle-favorite(13); }
-                    }
-                    ToolCard {
-                        horizontal-stretch: 1;
-                        title: "JWT Decoder";
-                        description: "Decode headers & claims";
-                        icon: AppIcons.key;
-                        accent_color: MaterialPalette.secondary;
-                        entrance_index: 13;
-                        is_entered: root.is_entered;
-                        is_favorite: root.tool_favorites[14];
-                        clicked => { root.home-open-tool(14); }
-                        toggle_favorite => { root.home-toggle-favorite(14); }
-                    }
-                }
-
-                HorizontalLayout {
-                    spacing: root.grid_gap;
-                    ToolCard {
-                        horizontal-stretch: 1;
-                        title: "Diff Studio";
-                        description: "Visual diff & code patches";
-                        icon: AppIcons.diff;
-                        accent_color: MaterialPalette.tertiary;
-                        entrance_index: 14;
-                        is_entered: root.is_entered;
-                        is_favorite: root.tool_favorites[15];
-                        clicked => { root.home-open-tool(15); }
-                        toggle_favorite => { root.home-toggle-favorite(15); }
-                    }
-                    ToolCard {
-                        horizontal-stretch: 1;
-                        title: "QR Code Studio";
-                        description: "Wi-Fi, URLs & live TOTP 2FA";
-                        icon: AppIcons.qr_code;
-                        accent_color: MaterialPalette.primary;
-                        entrance_index: 15;
-                        is_entered: root.is_entered;
-                        is_favorite: root.tool_favorites[16];
-                        clicked => { root.home-open-tool(16); }
-                        toggle_favorite => { root.home-toggle-favorite(16); }
-                    }
-                }
-
-                HorizontalLayout {
-                    spacing: root.grid_gap;
-                    ToolCard {
-                        horizontal-stretch: 1;
-                        title: "HTTP Client";
-                        description: "Pocket cURL & inspector";
-                        icon: AppIcons.http;
-                        accent_color: MaterialPalette.secondary;
-                        entrance_index: 16;
-                        is_entered: root.is_entered;
-                        is_favorite: root.tool_favorites[17];
-                        clicked => { root.home-open-tool(17); }
-                        toggle_favorite => { root.home-toggle-favorite(17); }
-                    }
-                    ToolCard {
-                        horizontal-stretch: 1;
-                        title: "LAN Scout";
-                        description: "Port & dev service probe";
-                        icon: AppIcons.radar;
-                        accent_color: MaterialPalette.tertiary;
-                        entrance_index: 17;
-                        is_entered: root.is_entered;
-                        is_favorite: root.tool_favorites[18];
-                        clicked => { root.home-open-tool(18); }
-                        toggle_favorite => { root.home-toggle-favorite(18); }
-                    }
-                }
-            }
-
-            // Tablet / medium width layout: 3 columns (560px <= width < 840px)
-            if root.columns == 3 : VerticalLayout {
-                spacing: root.grid_gap;
-
-                HorizontalLayout {
-                    spacing: root.grid_gap;
-                    ToolCard {
-                        horizontal-stretch: 1;
-                        title: "Subnet Calculator";
-                        description: "IPv4 CIDR, netmask & range";
-                        icon: AppIcons.lan;
-                        accent_color: MaterialPalette.primary;
-                        entrance_index: 0;
-                        is_entered: root.is_entered;
-                        is_favorite: root.tool_favorites[1];
-                        clicked => { root.home-open-tool(1); }
-                        toggle_favorite => { root.home-toggle-favorite(1); }
-                    }
-                    ToolCard {
-                        horizontal-stretch: 1;
-                        title: "Hash Calculator";
-                        description: "MD5, SHA-256 checksums";
-                        icon: AppIcons.lock;
-                        accent_color: MaterialPalette.secondary;
-                        entrance_index: 1;
-                        is_entered: root.is_entered;
-                        is_favorite: root.tool_favorites[2];
-                        clicked => { root.home-open-tool(2); }
-                        toggle_favorite => { root.home-toggle-favorite(2); }
-                    }
-                    ToolCard {
-                        horizontal-stretch: 1;
-                        title: "Base64";
-                        description: "Encode & decode strings";
-                        icon: AppIcons.code;
-                        accent_color: MaterialPalette.tertiary;
-                        entrance_index: 2;
-                        is_entered: root.is_entered;
-                        is_favorite: root.tool_favorites[3];
-                        clicked => { root.home-open-tool(3); }
-                        toggle_favorite => { root.home-toggle-favorite(3); }
-                    }
-                }
-
-                HorizontalLayout {
-                    spacing: root.grid_gap;
-                    ToolCard {
-                        horizontal-stretch: 1;
-                        title: "UUID Generator";
-                        description: "Generate unique identifiers";
-                        icon: AppIcons.fingerprint;
-                        accent_color: MaterialPalette.primary;
-                        entrance_index: 3;
-                        is_entered: root.is_entered;
-                        is_favorite: root.tool_favorites[4];
-                        clicked => { root.home-open-tool(4); }
-                        toggle_favorite => { root.home-toggle-favorite(4); }
-                    }
-                    ToolCard {
-                        horizontal-stretch: 1;
-                        title: "Timestamp";
-                        description: "Epoch & date conversions";
-                        icon: AppIcons.timer;
-                        accent_color: MaterialPalette.secondary;
-                        entrance_index: 4;
-                        is_entered: root.is_entered;
-                        is_favorite: root.tool_favorites[5];
-                        clicked => { root.home-open-tool(5); }
-                        toggle_favorite => { root.home-toggle-favorite(5); }
-                    }
-                    ToolCard {
-                        horizontal-stretch: 1;
-                        title: "Regex Tester";
-                        description: "Evaluate pattern matches";
-                        icon: AppIcons.regex;
-                        accent_color: MaterialPalette.tertiary;
-                        entrance_index: 5;
-                        is_entered: root.is_entered;
-                        is_favorite: root.tool_favorites[6];
-                        clicked => { root.home-open-tool(6); }
-                        toggle_favorite => { root.home-toggle-favorite(6); }
-                    }
-                }
-
-                HorizontalLayout {
-                    spacing: root.grid_gap;
-                    ToolCard {
-                        horizontal-stretch: 1;
-                        title: "JSON ↔ YAML";
-                        description: "Convert between formats";
-                        icon: AppIcons.swap;
-                        accent_color: MaterialPalette.primary;
-                        entrance_index: 6;
-                        is_entered: root.is_entered;
-                        is_favorite: root.tool_favorites[7];
-                        clicked => { root.home-open-tool(7); }
-                        toggle_favorite => { root.home-toggle-favorite(7); }
-                    }
-                    ToolCard {
-                        horizontal-stretch: 1;
-                        title: "CRON Parser";
-                        description: "Parse schedule syntax";
-                        icon: AppIcons.schedule;
-                        accent_color: MaterialPalette.secondary;
-                        entrance_index: 7;
-                        is_entered: root.is_entered;
-                        is_favorite: root.tool_favorites[8];
-                        clicked => { root.home-open-tool(8); }
-                        toggle_favorite => { root.home-toggle-favorite(8); }
-                    }
-                    ToolCard {
-                        horizontal-stretch: 1;
-                        title: "GZip";
-                        description: "Compress & decompress";
-                        icon: AppIcons.archive;
-                        accent_color: MaterialPalette.tertiary;
-                        entrance_index: 8;
-                        is_entered: root.is_entered;
-                        is_favorite: root.tool_favorites[9];
-                        clicked => { root.home-open-tool(9); }
-                        toggle_favorite => { root.home-toggle-favorite(9); }
-                    }
-                }
-
-                HorizontalLayout {
-                    spacing: root.grid_gap;
-                    ToolCard {
-                        horizontal-stretch: 1;
-                        title: "Code Formatter";
-                        description: "Format code syntax";
-                        icon: AppIcons.formatter;
-                        accent_color: MaterialPalette.primary;
-                        entrance_index: 9;
-                        is_entered: root.is_entered;
-                        is_favorite: root.tool_favorites[10];
-                        clicked => { root.home-open-tool(10); }
-                        toggle_favorite => { root.home-toggle-favorite(10); }
-                    }
-                    ToolCard {
-                        horizontal-stretch: 1;
-                        title: "Chmod Calculator";
-                        description: "Octal & symbolic bits";
-                        icon: AppIcons.security;
-                        accent_color: MaterialPalette.secondary;
-                        entrance_index: 10;
-                        is_entered: root.is_entered;
-                        is_favorite: root.tool_favorites[11];
-                        clicked => { root.home-open-tool(11); }
-                        toggle_favorite => { root.home-toggle-favorite(11); }
-                    }
-                    ToolCard {
-                        horizontal-stretch: 1;
-                        title: "Color Converter";
-                        description: "HEX, RGB, HSL values";
-                        icon: AppIcons.palette;
-                        accent_color: MaterialPalette.tertiary;
-                        entrance_index: 11;
-                        is_entered: root.is_entered;
-                        is_favorite: root.tool_favorites[12];
-                        clicked => { root.home-open-tool(12); }
-                        toggle_favorite => { root.home-toggle-favorite(12); }
-                    }
-                }
-
-                HorizontalLayout {
-                    spacing: root.grid_gap;
-                    ToolCard {
-                        horizontal-stretch: 1;
-                        title: "Contrast Checker";
-                        description: "WCAG contrast ratio";
-                        icon: AppIcons.contrast;
-                        accent_color: MaterialPalette.primary;
-                        entrance_index: 12;
-                        is_entered: root.is_entered;
-                        is_favorite: root.tool_favorites[13];
-                        clicked => { root.home-open-tool(13); }
-                        toggle_favorite => { root.home-toggle-favorite(13); }
-                    }
-                    ToolCard {
-                        horizontal-stretch: 1;
-                        title: "JWT Decoder";
-                        description: "Decode headers & claims";
-                        icon: AppIcons.key;
-                        accent_color: MaterialPalette.secondary;
-                        entrance_index: 13;
-                        is_entered: root.is_entered;
-                        is_favorite: root.tool_favorites[14];
-                        clicked => { root.home-open-tool(14); }
-                        toggle_favorite => { root.home-toggle-favorite(14); }
-                    }
-                    ToolCard {
-                        horizontal-stretch: 1;
-                        title: "Diff Studio";
-                        description: "Visual diff & code patches";
-                        icon: AppIcons.diff;
-                        accent_color: MaterialPalette.tertiary;
-                        entrance_index: 14;
-                        is_entered: root.is_entered;
-                        is_favorite: root.tool_favorites[15];
-                        clicked => { root.home-open-tool(15); }
-                        toggle_favorite => { root.home-toggle-favorite(15); }
-                    }
-                }
-
-                HorizontalLayout {
-                    spacing: root.grid_gap;
-                    ToolCard {
-                        horizontal-stretch: 1;
-                        title: "QR Code Studio";
-                        description: "Wi-Fi, URLs & live TOTP 2FA";
-                        icon: AppIcons.qr_code;
-                        accent_color: MaterialPalette.primary;
-                        entrance_index: 15;
-                        is_entered: root.is_entered;
-                        is_favorite: root.tool_favorites[16];
-                        clicked => { root.home-open-tool(16); }
-                        toggle_favorite => { root.home-toggle-favorite(16); }
-                    }
-                    ToolCard {
-                        horizontal-stretch: 1;
-                        title: "HTTP Client";
-                        description: "Pocket cURL & inspector";
-                        icon: AppIcons.http;
-                        accent_color: MaterialPalette.secondary;
-                        entrance_index: 16;
-                        is_entered: root.is_entered;
-                        is_favorite: root.tool_favorites[17];
-                        clicked => { root.home-open-tool(17); }
-                        toggle_favorite => { root.home-toggle-favorite(17); }
-                    }
-                    ToolCard {
-                        horizontal-stretch: 1;
-                        title: "LAN Scout";
-                        description: "Port & dev service probe";
-                        icon: AppIcons.radar;
-                        accent_color: MaterialPalette.tertiary;
-                        entrance_index: 17;
-                        is_entered: root.is_entered;
-                        is_favorite: root.tool_favorites[18];
-                        clicked => { root.home-open-tool(18); }
-                        toggle_favorite => { root.home-toggle-favorite(18); }
-                    }
-                }
-            }
-
-            // Large tablet / wide desktop: 4 columns (width >= 840px)
-            if root.columns == 4 : VerticalLayout {
-                spacing: root.grid_gap;
-
-                HorizontalLayout {
-                    spacing: root.grid_gap;
-                    ToolCard {
-                        horizontal-stretch: 1;
-                        title: "Subnet Calculator";
-                        description: "IPv4 CIDR, netmask & range";
-                        icon: AppIcons.lan;
-                        accent_color: MaterialPalette.primary;
-                        entrance_index: 0;
-                        is_entered: root.is_entered;
-                        is_favorite: root.tool_favorites[1];
-                        clicked => { root.home-open-tool(1); }
-                        toggle_favorite => { root.home-toggle-favorite(1); }
-                    }
-                    ToolCard {
-                        horizontal-stretch: 1;
-                        title: "Hash Calculator";
-                        description: "MD5, SHA-256 checksums";
-                        icon: AppIcons.lock;
-                        accent_color: MaterialPalette.secondary;
-                        entrance_index: 1;
-                        is_entered: root.is_entered;
-                        is_favorite: root.tool_favorites[2];
-                        clicked => { root.home-open-tool(2); }
-                        toggle_favorite => { root.home-toggle-favorite(2); }
-                    }
-                    ToolCard {
-                        horizontal-stretch: 1;
-                        title: "Base64";
-                        description: "Encode & decode strings";
-                        icon: AppIcons.code;
-                        accent_color: MaterialPalette.tertiary;
-                        entrance_index: 2;
-                        is_entered: root.is_entered;
-                        is_favorite: root.tool_favorites[3];
-                        clicked => { root.home-open-tool(3); }
-                        toggle_favorite => { root.home-toggle-favorite(3); }
-                    }
-                    ToolCard {
-                        horizontal-stretch: 1;
-                        title: "UUID Generator";
-                        description: "Generate unique identifiers";
-                        icon: AppIcons.fingerprint;
-                        accent_color: MaterialPalette.primary;
-                        entrance_index: 3;
-                        is_entered: root.is_entered;
-                        is_favorite: root.tool_favorites[4];
-                        clicked => { root.home-open-tool(4); }
-                        toggle_favorite => { root.home-toggle-favorite(4); }
-                    }
-                }
-
-                HorizontalLayout {
-                    spacing: root.grid_gap;
-                    ToolCard {
-                        horizontal-stretch: 1;
-                        title: "Timestamp";
-                        description: "Epoch & date conversions";
-                        icon: AppIcons.timer;
-                        accent_color: MaterialPalette.secondary;
-                        entrance_index: 4;
-                        is_entered: root.is_entered;
-                        is_favorite: root.tool_favorites[5];
-                        clicked => { root.home-open-tool(5); }
-                        toggle_favorite => { root.home-toggle-favorite(5); }
-                    }
-                    ToolCard {
-                        horizontal-stretch: 1;
-                        title: "Regex Tester";
-                        description: "Evaluate pattern matches";
-                        icon: AppIcons.regex;
-                        accent_color: MaterialPalette.tertiary;
-                        entrance_index: 5;
-                        is_entered: root.is_entered;
-                        is_favorite: root.tool_favorites[6];
-                        clicked => { root.home-open-tool(6); }
-                        toggle_favorite => { root.home-toggle-favorite(6); }
-                    }
-                    ToolCard {
-                        horizontal-stretch: 1;
-                        title: "JSON ↔ YAML";
-                        description: "Convert between formats";
-                        icon: AppIcons.swap;
-                        accent_color: MaterialPalette.primary;
-                        entrance_index: 6;
-                        is_entered: root.is_entered;
-                        is_favorite: root.tool_favorites[7];
-                        clicked => { root.home-open-tool(7); }
-                        toggle_favorite => { root.home-toggle-favorite(7); }
-                    }
-                    ToolCard {
-                        horizontal-stretch: 1;
-                        title: "CRON Parser";
-                        description: "Parse schedule syntax";
-                        icon: AppIcons.schedule;
-                        accent_color: MaterialPalette.secondary;
-                        entrance_index: 7;
-                        is_entered: root.is_entered;
-                        is_favorite: root.tool_favorites[8];
-                        clicked => { root.home-open-tool(8); }
-                        toggle_favorite => { root.home-toggle-favorite(8); }
-                    }
-                }
-
-                HorizontalLayout {
-                    spacing: root.grid_gap;
-                    ToolCard {
-                        horizontal-stretch: 1;
-                        title: "GZip";
-                        description: "Compress & decompress";
-                        icon: AppIcons.archive;
-                        accent_color: MaterialPalette.tertiary;
-                        entrance_index: 8;
-                        is_entered: root.is_entered;
-                        is_favorite: root.tool_favorites[9];
-                        clicked => { root.home-open-tool(9); }
-                        toggle_favorite => { root.home-toggle-favorite(9); }
-                    }
-                    ToolCard {
-                        horizontal-stretch: 1;
-                        title: "Code Formatter";
-                        description: "Format code syntax";
-                        icon: AppIcons.formatter;
-                        accent_color: MaterialPalette.primary;
-                        entrance_index: 9;
-                        is_entered: root.is_entered;
-                        is_favorite: root.tool_favorites[10];
-                        clicked => { root.home-open-tool(10); }
-                        toggle_favorite => { root.home-toggle-favorite(10); }
-                    }
-                    ToolCard {
-                        horizontal-stretch: 1;
-                        title: "Chmod Calculator";
-                        description: "Octal & symbolic bits";
-                        icon: AppIcons.security;
-                        accent_color: MaterialPalette.secondary;
-                        entrance_index: 10;
-                        is_entered: root.is_entered;
-                        is_favorite: root.tool_favorites[11];
-                        clicked => { root.home-open-tool(11); }
-                        toggle_favorite => { root.home-toggle-favorite(11); }
-                    }
-                    ToolCard {
-                        horizontal-stretch: 1;
-                        title: "Color Converter";
-                        description: "HEX, RGB, HSL values";
-                        icon: AppIcons.palette;
-                        accent_color: MaterialPalette.tertiary;
-                        entrance_index: 11;
-                        is_entered: root.is_entered;
-                        is_favorite: root.tool_favorites[12];
-                        clicked => { root.home-open-tool(12); }
-                        toggle_favorite => { root.home-toggle-favorite(12); }
-                    }
-                }
-
-                HorizontalLayout {
-                    spacing: root.grid_gap;
-                    ToolCard {
-                        horizontal-stretch: 1;
-                        title: "Contrast Checker";
-                        description: "WCAG contrast ratio";
-                        icon: AppIcons.contrast;
-                        accent_color: MaterialPalette.primary;
-                        entrance_index: 12;
-                        is_entered: root.is_entered;
-                        is_favorite: root.tool_favorites[13];
-                        clicked => { root.home-open-tool(13); }
-                        toggle_favorite => { root.home-toggle-favorite(13); }
-                    }
-                    ToolCard {
-                        horizontal-stretch: 1;
-                        title: "JWT Decoder";
-                        description: "Decode headers & claims";
-                        icon: AppIcons.key;
-                        accent_color: MaterialPalette.secondary;
-                        entrance_index: 13;
-                        is_entered: root.is_entered;
-                        is_favorite: root.tool_favorites[14];
-                        clicked => { root.home-open-tool(14); }
-                        toggle_favorite => { root.home-toggle-favorite(14); }
-                    }
-                    ToolCard {
-                        horizontal-stretch: 1;
-                        title: "Diff Studio";
-                        description: "Visual diff & code patches";
-                        icon: AppIcons.diff;
-                        accent_color: MaterialPalette.tertiary;
-                        entrance_index: 14;
-                        is_entered: root.is_entered;
-                        is_favorite: root.tool_favorites[15];
-                        clicked => { root.home-open-tool(15); }
-                        toggle_favorite => { root.home-toggle-favorite(15); }
-                    }
-                    ToolCard {
-                        horizontal-stretch: 1;
-                        title: "QR Code Studio";
-                        description: "Wi-Fi, URLs & live TOTP 2FA";
-                        icon: AppIcons.qr_code;
-                        accent_color: MaterialPalette.primary;
-                        entrance_index: 15;
-                        is_entered: root.is_entered;
-                        is_favorite: root.tool_favorites[16];
-                        clicked => { root.home-open-tool(16); }
-                        toggle_favorite => { root.home-toggle-favorite(16); }
-                    }
-                }
-
-                HorizontalLayout {
-                    spacing: root.grid_gap;
-                    ToolCard {
-                        horizontal-stretch: 1;
-                        title: "HTTP Client";
-                        description: "Pocket cURL & inspector";
-                        icon: AppIcons.http;
-                        accent_color: MaterialPalette.secondary;
-                        entrance_index: 16;
-                        is_entered: root.is_entered;
-                        is_favorite: root.tool_favorites[17];
-                        clicked => { root.home-open-tool(17); }
-                        toggle_favorite => { root.home-toggle-favorite(17); }
-                    }
-                    ToolCard {
-                        horizontal-stretch: 1;
-                        title: "LAN Scout";
-                        description: "Port & dev service probe";
-                        icon: AppIcons.radar;
-                        accent_color: MaterialPalette.tertiary;
-                        entrance_index: 17;
-                        is_entered: root.is_entered;
-                        is_favorite: root.tool_favorites[18];
-                        clicked => { root.home-open-tool(18); }
-                        toggle_favorite => { root.home-toggle-favorite(18); }
-                    }
-                    Rectangle {
-                        horizontal-stretch: 1;
-                    }
-                    Rectangle {
-                        horizontal-stretch: 1;
-                    }
+                ToolGrid {
+                    tools: root.tools;
+                    columns: root.columns;
+                    gap: root.grid_gap;
+                    is_entered: root.is_entered;
+                    open_tool(id) => { root.home-open-tool(id); }
+                    toggle_favorite(id) => { root.home-toggle-favorite(id); }
                 }
             }
         }
     }
-}
 }

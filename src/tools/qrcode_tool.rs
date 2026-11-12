@@ -136,6 +136,16 @@ fn build_qr_result(
     })
 }
 
+/// Current TOTP code and seconds remaining for a Base32 secret (spaces/case ignored).
+pub fn totp_now(secret_base32: &str, now_secs: u64) -> Result<(String, u64), String> {
+    let clean = secret_base32.replace(' ', "").to_uppercase();
+    if clean.is_empty() {
+        return Err("Secret key cannot be empty".to_string());
+    }
+    let key = decode_base32(&clean).map_err(|e| format!("Invalid Base32 secret: {e}"))?;
+    Ok(calculate_totp_code(&key, now_secs))
+}
+
 /// Calculate current 6-digit TOTP code and countdown seconds (RFC 6238).
 pub fn calculate_totp_code(key: &[u8], now_secs: u64) -> (String, u64) {
     let period = 30u64;

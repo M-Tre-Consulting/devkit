@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2026 M-Tre Consulting
 
-import { Icons, ScrollView, MaterialPalette, MaterialStyleMetrics, MaterialTypography, MaterialText, StateLayerArea, Icon, TextField } from "@material";
+import { ScrollView, MaterialPalette, MaterialStyleMetrics, MaterialTypography, MaterialText, StateLayerArea, Icon, TextField } from "@material";
 import { TopBar } from "../components/top-bar.slint";
 import { ToolErrorBanner } from "../components/tool-error-banner.slint";
 import { ToolActionButton } from "../components/tool-action-button.slint";
@@ -16,24 +16,118 @@ export struct PortItem {
     latency_ms: int,
 }
 
+export struct HostItem {
+    ip: string,
+    latency_ms: int,
+    open_ports: string,
+    is_self: bool,
+    is_gateway: bool,
+}
+
+component Chip inherits Rectangle {
+    in property <string> text;
+    in property <bool> selected;
+    callback clicked();
+
+    height: 32px;
+    min-width: label.preferred-width + 24px;
+    border-radius: 8px;
+    background: root.selected ? MaterialPalette.secondary_container : MaterialPalette.surface_container;
+    border-width: 1px;
+    border-color: root.selected ? MaterialPalette.secondary : MaterialPalette.outline_variant;
+
+    label := MaterialText {
+        x: 12px;
+        y: (parent.height - self.height) / 2;
+        text: root.text;
+        style: MaterialTypography.label_medium;
+        color: root.selected ? MaterialPalette.on_secondary_container : MaterialPalette.on_surface_variant;
+    }
+
+    StateLayerArea {
+        width: 100%;
+        height: 100%;
+        border_radius: parent.border-radius;
+        color: MaterialPalette.on_surface;
+        clicked => { root.clicked(); }
+    }
+}
+
+component Badge inherits Rectangle {
+    in property <string> text;
+    in property <color> fg: MaterialPalette.on_surface_variant;
+    in property <color> bg: MaterialPalette.surface_container_highest;
+
+    height: 22px;
+    min-width: txt.preferred-width + 14px;
+    border-radius: 6px;
+    background: root.bg;
+
+    txt := MaterialText {
+        x: 7px;
+        y: (parent.height - self.height) / 2;
+        text: root.text;
+        style: MaterialTypography.label_small;
+        color: root.fg;
+    }
+}
+
+component SmallIconButton inherits Rectangle {
+    in property <image> icon;
+    callback clicked();
+    width: 36px;
+    height: 36px;
+    border-radius: 18px;
+    background: MaterialPalette.surface_container_high;
+
+    Icon {
+        x: (parent.width - self.width) / 2;
+        y: (parent.height - self.height) / 2;
+        source: root.icon;
+        width: 16px;
+        height: 16px;
+        colorize: MaterialPalette.on_surface_variant;
+    }
+
+    StateLayerArea {
+        width: 100%;
+        height: 100%;
+        border_radius: parent.border-radius;
+        color: MaterialPalette.primary;
+        clicked => { root.clicked(); }
+    }
+}
+
 export component LanScoutScreen inherits VerticalLayout {
     in property <length> status_bar_inset: 24px;
     in property <length> nav_bar_inset: 16px;
     callback scout-back();
-    callback scout-scan(string, int);
+    // (host, timeout_ms, mode, custom_ports) — mode 0 = known services, 1 = custom ports
+    callback scout-scan(string, int, int, string);
+    callback scout-discover(int);
     callback scout-copy(string);
+    callback scout-refresh-network();
+    // Hand a target to another tool (tool id, payload).
+    callback scout-open-tool(int, string);
 
-    in-out property <string> detected_gateway: "192.168.0.1";
-    in-out property <string> detected_device_ip: "127.0.0.1";
+    in property <string> detected_gateway: "192.168.0.1";
+    in property <string> detected_device_ip: "127.0.0.1";
+    in property <string> network_summary: "";
     in-out property <string> target_host: "192.168.0.1";
-    in-out property <int> selected_timeout_ms: 600; // 300, 600, 1200
-    in-out property <bool> is_scanning: false;
-    in-out property <bool> filter_only_open: false;
-    in-out property <string> error_message: "";
+    in-out property <int> selected_timeout_ms: 600;
+    in-out property <int> mode: 0; // 0 = services, 1 = custom ports, 2 = discover hosts
+    in-out property <string> custom_ports: "22,80,443,3000-3010,5000,8000-8100";
+    in property <bool> is_scanning: false;
+    in property <string> progress_text: "";
+    in-out property <bool> filter_only_open: true;
+    in property <string> error_message: "";
 
-    in-out property <int> open_ports_count: 0;
-    in-out property <int> total_scanned_count: 0;
-    in-out property <[PortItem]> scan_results: [];
+    in property <int> open_ports_count: 0;
+    in property <int> total_scanned_count: 0;
+    in property <[PortItem]> scan_results: [];
+    in property <[PortItem]> open_results: [];
+    in property <[HostItem]> hosts: [];
+    in property <int> hosts_probed: 0;
 
     property <bool> is_entered: false;
     init => {
@@ -59,149 +153,72 @@ export component LanScoutScreen inherits VerticalLayout {
         VerticalLayout {
             padding_left: MaterialStyleMetrics.padding_16;
             padding_right: MaterialStyleMetrics.padding_16;
-            padding_top: MaterialStyleMetrics.padding_16;
+            padding_top: MaterialStyleMetrics.padding_8;
             padding_bottom: 96px + root.nav_bar_inset;
             spacing: MaterialStyleMetrics.spacing_16;
             alignment: start;
+
+            // Network identity card
+            Rectangle {
+                background: MaterialPalette.surface_container_low;
+                border-radius: MaterialStyleMetrics.border_radius_12;
+                border-width: 1px;
+                border-color: MaterialPalette.outline_variant.with_alpha(40%);
+
+                HorizontalLayout {
+                    padding: 12px;
+                    spacing: 12px;
+
+                    VerticalLayout {
+                        alignment: center;
+                        Icon {
+                            source: AppIcons.lan;
+                            colorize: MaterialPalette.primary;
+                            width: 22px;
+                            height: 22px;
+                        }
+                    }
+
+                    VerticalLayout {
+                        horizontal-stretch: 1;
+                        alignment: center;
+                        spacing: 2px;
+                        MaterialText {
+                            text: "This device: " + root.detected_device_ip + "  ·  Gateway: " + root.detected_gateway;
+                            style: MaterialTypography.label_large;
+                            color: MaterialPalette.on_surface;
+                            wrap: word-wrap;
+                        }
+                        if root.network_summary != "" : MaterialText {
+                            text: root.network_summary;
+                            style: MaterialTypography.body_small;
+                            color: MaterialPalette.on_surface_variant;
+                            wrap: word-wrap;
+                        }
+                    }
+
+                    SmallIconButton {
+                        y: (parent.height - self.height) / 2;
+                        icon: AppIcons.history;
+                        clicked => { root.scout-refresh-network(); }
+                    }
+                }
+            }
+
+            // Mode selector
+            HorizontalLayout {
+                spacing: MaterialStyleMetrics.spacing_8;
+                alignment: start;
+                Chip { text: "Services"; selected: root.mode == 0; clicked => { root.mode = 0; } }
+                Chip { text: "Custom Ports"; selected: root.mode == 1; clicked => { root.mode = 1; } }
+                Chip { text: "Discover Hosts"; selected: root.mode == 2; clicked => { root.mode = 2; } }
+            }
 
             ToolErrorBanner {
                 message: root.error_message;
             }
 
-            // Quick Host Preset Chips (Horizontally Scrollable)
-            ScrollView {
-                vertical_scrollbar_policy: ScrollBarPolicy.always_off;
-                horizontal_scrollbar_policy: ScrollBarPolicy.as_needed;
-                height: 38px;
-
-                HorizontalLayout {
-                    spacing: MaterialStyleMetrics.spacing_8;
-                    alignment: start;
-                    padding_right: 16px;
-
-                    // Gateway Chip
-                    Rectangle {
-                        horizontal-stretch: 0;
-                        min-width: 160px;
-                        border-radius: 8px;
-                        background: root.target_host == root.detected_gateway ? MaterialPalette.secondary_container : MaterialPalette.surface_container;
-                        border-width: 1px;
-                        border-color: root.target_host == root.detected_gateway ? MaterialPalette.secondary : MaterialPalette.outline_variant;
-                        height: 32px;
-
-                        HorizontalLayout {
-                            padding_left: 12px;
-                            padding_right: 12px;
-                            alignment: center;
-
-                            MaterialText {
-                                text: "Gateway (" + root.detected_gateway + ")";
-                                style: MaterialTypography.label_medium;
-                                color: root.target_host == root.detected_gateway ? MaterialPalette.on_secondary_container : MaterialPalette.on_surface_variant;
-                                vertical_alignment: center;
-                            }
-                        }
-
-                        StateLayerArea {
-                            clicked => {
-                                root.target_host = root.detected_gateway;
-                            }
-                        }
-                    }
-
-                    // Device IP Chip
-                    Rectangle {
-                        horizontal-stretch: 0;
-                        min-width: 170px;
-                        border-radius: 8px;
-                        background: root.target_host == root.detected_device_ip ? MaterialPalette.secondary_container : MaterialPalette.surface_container;
-                        border-width: 1px;
-                        border-color: root.target_host == root.detected_device_ip ? MaterialPalette.secondary : MaterialPalette.outline_variant;
-                        height: 32px;
-
-                        HorizontalLayout {
-                            padding_left: 12px;
-                            padding_right: 12px;
-                            alignment: center;
-
-                            MaterialText {
-                                text: "My Device (" + root.detected_device_ip + ")";
-                                style: MaterialTypography.label_medium;
-                                color: root.target_host == root.detected_device_ip ? MaterialPalette.on_secondary_container : MaterialPalette.on_surface_variant;
-                                vertical_alignment: center;
-                            }
-                        }
-
-                        StateLayerArea {
-                            clicked => {
-                                root.target_host = root.detected_device_ip;
-                            }
-                        }
-                    }
-
-                    // localhost Chip
-                    Rectangle {
-                        horizontal-stretch: 0;
-                        min-width: 90px;
-                        border-radius: 8px;
-                        background: root.target_host == "127.0.0.1" ? MaterialPalette.secondary_container : MaterialPalette.surface_container;
-                        border-width: 1px;
-                        border-color: root.target_host == "127.0.0.1" ? MaterialPalette.secondary : MaterialPalette.outline_variant;
-                        height: 32px;
-
-                        HorizontalLayout {
-                            padding_left: 12px;
-                            padding_right: 12px;
-                            alignment: center;
-
-                            MaterialText {
-                                text: "localhost";
-                                style: MaterialTypography.label_medium;
-                                color: root.target_host == "127.0.0.1" ? MaterialPalette.on_secondary_container : MaterialPalette.on_surface_variant;
-                                vertical_alignment: center;
-                            }
-                        }
-
-                        StateLayerArea {
-                            clicked => {
-                                root.target_host = "127.0.0.1";
-                            }
-                        }
-                    }
-
-                    // Host Emulator Chip
-                    Rectangle {
-                        horizontal-stretch: 0;
-                        min-width: 125px;
-                        border-radius: 8px;
-                        background: root.target_host == "10.0.2.2" ? MaterialPalette.secondary_container : MaterialPalette.surface_container;
-                        border-width: 1px;
-                        border-color: root.target_host == "10.0.2.2" ? MaterialPalette.secondary : MaterialPalette.outline_variant;
-                        height: 32px;
-
-                        HorizontalLayout {
-                            padding_left: 12px;
-                            padding_right: 12px;
-                            alignment: center;
-
-                            MaterialText {
-                                text: "Host (10.0.2.2)";
-                                style: MaterialTypography.label_medium;
-                                color: root.target_host == "10.0.2.2" ? MaterialPalette.on_secondary_container : MaterialPalette.on_surface_variant;
-                                vertical_alignment: center;
-                            }
-                        }
-
-                        StateLayerArea {
-                            clicked => {
-                                root.target_host = "10.0.2.2";
-                            }
-                        }
-                    }
-                }
-            }
-
-            // Target IP Input Card
+            // Target / options card
             Rectangle {
                 background: MaterialPalette.surface_container_low;
                 border-radius: MaterialStyleMetrics.border_radius_12;
@@ -212,15 +229,47 @@ export component LanScoutScreen inherits VerticalLayout {
                     padding: MaterialStyleMetrics.padding_16;
                     spacing: MaterialStyleMetrics.spacing_12;
 
-                    MaterialText {
-                        text: "Target IP or Hostname";
-                        style: MaterialTypography.title_small;
-                        color: MaterialPalette.on_surface;
+                    if root.mode != 2 : VerticalLayout {
+                        spacing: MaterialStyleMetrics.spacing_12;
+
+                        MaterialText {
+                            text: "Target IP or Hostname";
+                            style: MaterialTypography.title_small;
+                            color: MaterialPalette.on_surface;
+                        }
+
+                        TextField {
+                            text <=> root.target_host;
+                            placeholder_text: "e.g. 192.168.1.100 or myserver.local";
+                        }
+
+                        HorizontalLayout {
+                            spacing: MaterialStyleMetrics.spacing_8;
+                            alignment: start;
+                            Chip { text: "Gateway"; selected: root.target_host == root.detected_gateway; clicked => { root.target_host = root.detected_gateway; } }
+                            Chip { text: "This device"; selected: root.target_host == root.detected_device_ip; clicked => { root.target_host = root.detected_device_ip; } }
+                            Chip { text: "localhost"; selected: root.target_host == "127.0.0.1"; clicked => { root.target_host = "127.0.0.1"; } }
+                        }
+
+                        if root.mode == 1 : VerticalLayout {
+                            spacing: MaterialStyleMetrics.spacing_8;
+                            MaterialText {
+                                text: "Ports (comma separated, ranges allowed, max 1024)";
+                                style: MaterialTypography.title_small;
+                                color: MaterialPalette.on_surface;
+                            }
+                            TextField {
+                                text <=> root.custom_ports;
+                                placeholder_text: "22, 80, 443, 8000-8100";
+                            }
+                        }
                     }
 
-                    TextField {
-                        text <=> root.target_host;
-                        placeholder_text: "e.g. 192.168.1.100 or myserver.local";
+                    if root.mode == 2 : MaterialText {
+                        text: "Sweeps the local /24 around " + root.detected_device_ip + ". A host counts as alive when it accepts or actively refuses a TCP connection, so even firewalled phones usually show up.";
+                        style: MaterialTypography.body_small;
+                        color: MaterialPalette.on_surface_variant;
+                        wrap: word-wrap;
                     }
 
                     HorizontalLayout {
@@ -228,288 +277,206 @@ export component LanScoutScreen inherits VerticalLayout {
                         alignment: start;
 
                         MaterialText {
-                            text: "Timeout:";
+                            text: "Timeout";
                             style: MaterialTypography.label_medium;
                             color: MaterialPalette.on_surface_variant;
                             vertical_alignment: center;
                         }
-
-                        Rectangle {
-                            border-radius: 6px;
-                            background: root.selected_timeout_ms == 300 ? MaterialPalette.tertiary_container : MaterialPalette.surface_container;
-                            height: 26px;
-
-                            HorizontalLayout {
-                                padding_left: 8px;
-                                padding_right: 8px;
-                                alignment: center;
-
-                                MaterialText {
-                                    text: "Fast (300ms)";
-                                    style: MaterialTypography.label_small;
-                                    color: root.selected_timeout_ms == 300 ? MaterialPalette.on_tertiary_container : MaterialPalette.on_surface_variant;
-                                    vertical_alignment: center;
-                                }
-                            }
-                            StateLayerArea {
-                                clicked => { root.selected_timeout_ms = 300; }
-                            }
-                        }
-
-                        Rectangle {
-                            border-radius: 6px;
-                            background: root.selected_timeout_ms == 600 ? MaterialPalette.tertiary_container : MaterialPalette.surface_container;
-                            height: 26px;
-
-                            HorizontalLayout {
-                                padding_left: 8px;
-                                padding_right: 8px;
-                                alignment: center;
-
-                                MaterialText {
-                                    text: "Balanced (600ms)";
-                                    style: MaterialTypography.label_small;
-                                    color: root.selected_timeout_ms == 600 ? MaterialPalette.on_tertiary_container : MaterialPalette.on_surface_variant;
-                                    vertical_alignment: center;
-                                }
-                            }
-                            StateLayerArea {
-                                clicked => { root.selected_timeout_ms = 600; }
-                            }
-                        }
-
-                        Rectangle {
-                            border-radius: 6px;
-                            background: root.selected_timeout_ms == 1500 ? MaterialPalette.tertiary_container : MaterialPalette.surface_container;
-                            height: 26px;
-
-                            HorizontalLayout {
-                                padding_left: 8px;
-                                padding_right: 8px;
-                                alignment: center;
-
-                                MaterialText {
-                                    text: "Reliable (1.5s)";
-                                    style: MaterialTypography.label_small;
-                                    color: root.selected_timeout_ms == 1500 ? MaterialPalette.on_tertiary_container : MaterialPalette.on_surface_variant;
-                                    vertical_alignment: center;
-                                }
-                            }
-                            StateLayerArea {
-                                clicked => { root.selected_timeout_ms = 1500; }
-                            }
-                        }
+                        Chip { text: "Fast"; selected: root.selected_timeout_ms == 300; clicked => { root.selected_timeout_ms = 300; } }
+                        Chip { text: "Balanced"; selected: root.selected_timeout_ms == 600; clicked => { root.selected_timeout_ms = 600; } }
+                        Chip { text: "Reliable"; selected: root.selected_timeout_ms == 1500; clicked => { root.selected_timeout_ms = 1500; } }
                     }
                 }
             }
 
-            // Action Button
             ToolActionButton {
-                text: root.is_scanning ? "Scanning Target Host..." : "Scan Known Services";
+                text: root.is_scanning ? (root.progress_text != "" ? root.progress_text : "Scanning…") : (root.mode == 2 ? "Discover Hosts" : (root.mode == 1 ? "Scan Ports" : "Scan Known Services"));
+                enabled: !root.is_scanning;
                 has_clear: false;
                 clicked => {
-                    if (!root.is_scanning) {
-                        root.scout-scan(root.target_host, root.selected_timeout_ms);
+                    if root.mode == 2 {
+                        root.scout-discover(root.selected_timeout_ms);
+                    } else {
+                        root.scout-scan(root.target_host, root.selected_timeout_ms, root.mode, root.custom_ports);
                     }
                 }
             }
 
-            // Results Header & Filter
-            if root.total_scanned_count > 0: HorizontalLayout {
+            // ---------------- Port results ----------------
+            if root.mode != 2 && root.total_scanned_count > 0 : HorizontalLayout {
                 spacing: MaterialStyleMetrics.spacing_8;
-                alignment: space-between;
 
-                HorizontalLayout {
-                    spacing: MaterialStyleMetrics.spacing_8;
-                    alignment: start;
-
-                    Rectangle {
-                        border-radius: 10px;
-                        background: root.open_ports_count > 0 ? MaterialPalette.primary_container : MaterialPalette.surface_container_highest;
-                        height: 24px;
-
-                        HorizontalLayout {
-                            padding_left: 8px;
-                            padding_right: 8px;
-                            alignment: center;
-
-                            MaterialText {
-                                text: root.open_ports_count + " Open";
-                                style: MaterialTypography.label_medium;
-                                color: root.open_ports_count > 0 ? MaterialPalette.on_primary_container : MaterialPalette.on_surface_variant;
-                                vertical_alignment: center;
-                            }
-                        }
-                    }
-
-                    Rectangle {
-                        border-radius: 10px;
-                        background: MaterialPalette.surface_container_highest;
-                        height: 24px;
-
-                        HorizontalLayout {
-                            padding_left: 8px;
-                            padding_right: 8px;
-                            alignment: center;
-
-                            MaterialText {
-                                text: root.total_scanned_count + " Probed";
-                                style: MaterialTypography.label_medium;
-                                color: MaterialPalette.on_surface_variant;
-                                vertical_alignment: center;
-                            }
-                        }
-                    }
+                Badge {
+                    text: root.open_ports_count + " open";
+                    bg: root.open_ports_count > 0 ? MaterialPalette.primary_container : MaterialPalette.surface_container_highest;
+                    fg: root.open_ports_count > 0 ? MaterialPalette.on_primary_container : MaterialPalette.on_surface_variant;
                 }
-
-                // Filter button
-                Rectangle {
-                    border-radius: 6px;
-                    background: root.filter_only_open ? MaterialPalette.secondary_container : MaterialPalette.surface_container;
-                    border-width: 1px;
-                    border-color: root.filter_only_open ? MaterialPalette.secondary : MaterialPalette.outline_variant;
-                    height: 24px;
-
-                    HorizontalLayout {
-                        padding_left: 8px;
-                        padding_right: 8px;
-                        alignment: center;
-
-                        MaterialText {
-                            text: root.filter_only_open ? "Showing Open Only" : "Show All";
-                            style: MaterialTypography.label_small;
-                            color: root.filter_only_open ? MaterialPalette.on_secondary_container : MaterialPalette.on_surface_variant;
-                            vertical_alignment: center;
-                        }
-                    }
-
-                    StateLayerArea {
-                        clicked => {
-                            root.filter_only_open = !root.filter_only_open;
-                        }
-                    }
+                Badge { text: root.total_scanned_count + " probed"; }
+                Rectangle { horizontal-stretch: 1; }
+                Chip {
+                    text: root.filter_only_open ? "Open only" : "All ports";
+                    selected: root.filter_only_open;
+                    clicked => { root.filter_only_open = !root.filter_only_open; }
                 }
             }
 
-            // Results Port Cards
-            for item in root.scan_results: Rectangle {
-                // If filter is active and port is closed, hide height
-                visible: !root.filter_only_open || item.is_open;
-                background: item.is_open ? MaterialPalette.surface_container : MaterialPalette.surface_container_lowest;
-                border-radius: MaterialStyleMetrics.border_radius_8;
-                border-width: 1px;
-                border-color: item.is_open ? MaterialPalette.primary : MaterialPalette.outline_variant;
+            if root.mode != 2 && root.total_scanned_count > 0 && root.filter_only_open && root.open_ports_count == 0 : MaterialText {
+                text: "No open ports found. Try a longer timeout or another target.";
+                style: MaterialTypography.body_medium;
+                color: MaterialPalette.on_surface_variant;
+                horizontal_alignment: center;
+                wrap: word-wrap;
+            }
 
-                HorizontalLayout {
-                    padding: MaterialStyleMetrics.padding_12;
-                    spacing: MaterialStyleMetrics.spacing_12;
-                    alignment: space-between;
+            // A filtered model (computed in Rust) instead of `visible: false` rows, so
+            // hidden rows don't leave empty gaps in the layout.
+            if root.mode != 2 : VerticalLayout {
+                spacing: MaterialStyleMetrics.spacing_8;
 
-                    // Left side: Port and Service Info
-                    VerticalLayout {
-                        spacing: 2px;
-                        horizontal-stretch: 1;
+                for item in (root.filter_only_open ? root.open_results : root.scan_results) : Rectangle {
+                    background: item.is_open ? MaterialPalette.surface_container : MaterialPalette.surface_container_lowest;
+                    border-radius: MaterialStyleMetrics.border_radius_8;
+                    border-width: 1px;
+                    border-color: item.is_open ? MaterialPalette.primary.with_alpha(60%) : MaterialPalette.outline_variant.with_alpha(50%);
 
-                        HorizontalLayout {
-                            spacing: MaterialStyleMetrics.spacing_8;
-                            alignment: start;
-
-                            MaterialText {
-                                text: ":" + item.port;
-                                style: MaterialTypography.title_medium;
-                                color: item.is_open ? MaterialPalette.primary : MaterialPalette.on_surface_variant;
-                            }
-
-                            Rectangle {
-                                border-radius: 4px;
-                                background: item.is_open ? MaterialPalette.tertiary_container : MaterialPalette.surface_container_highest;
-                                height: 20px;
-
-                                HorizontalLayout {
-                                    padding_left: 6px;
-                                    padding_right: 6px;
-                                    alignment: center;
-
-                                    MaterialText {
-                                        text: item.service_name;
-                                        style: MaterialTypography.label_small;
-                                        color: item.is_open ? MaterialPalette.on_tertiary_container : MaterialPalette.outline;
-                                        vertical_alignment: center;
-                                    }
-                                }
-                            }
-
-                            Rectangle {
-                                border-radius: 4px;
-                                background: MaterialPalette.surface_container_high;
-                                height: 20px;
-
-                                HorizontalLayout {
-                                    padding_left: 6px;
-                                    padding_right: 6px;
-                                    alignment: center;
-
-                                    MaterialText {
-                                        text: item.service_category;
-                                        style: MaterialTypography.label_small;
-                                        color: MaterialPalette.on_surface_variant;
-                                        vertical_alignment: center;
-                                    }
-                                }
-                            }
-                        }
-
-                        MaterialText {
-                            text: item.description;
-                            style: MaterialTypography.body_small;
-                            color: MaterialPalette.outline;
-                        }
-                    }
-
-                    // Right side: Status and Latency badge + copy button
                     HorizontalLayout {
+                        padding: MaterialStyleMetrics.padding_12;
                         spacing: MaterialStyleMetrics.spacing_8;
-                        alignment: end;
 
-                        Rectangle {
-                            border-radius: 12px;
-                            background: item.is_open ? MaterialPalette.primary_container : MaterialPalette.surface_container_highest;
-                            height: 24px;
+                        VerticalLayout {
+                            horizontal-stretch: 1;
+                            spacing: 4px;
+                            alignment: center;
 
                             HorizontalLayout {
-                                padding_left: 8px;
-                                padding_right: 8px;
-                                alignment: center;
-
+                                spacing: MaterialStyleMetrics.spacing_8;
+                                alignment: start;
                                 MaterialText {
-                                    text: item.is_open ? (item.latency_ms + "ms") : "Closed";
-                                    style: MaterialTypography.label_small;
-                                    color: item.is_open ? MaterialPalette.on_primary_container : MaterialPalette.outline;
+                                    text: ":" + item.port;
+                                    style: MaterialTypography.title_medium;
+                                    color: item.is_open ? MaterialPalette.primary : MaterialPalette.on_surface_variant;
                                     vertical_alignment: center;
                                 }
+                                Badge {
+                                    y: (parent.height - self.height) / 2;
+                                    text: item.service_name;
+                                    bg: item.is_open ? MaterialPalette.tertiary_container : MaterialPalette.surface_container_highest;
+                                    fg: item.is_open ? MaterialPalette.on_tertiary_container : MaterialPalette.outline;
+                                }
+                            }
+
+                            MaterialText {
+                                text: item.service_category + " · " + item.description;
+                                style: MaterialTypography.body_small;
+                                color: MaterialPalette.outline;
+                                overflow: elide;
                             }
                         }
 
-                        if item.is_open: Rectangle {
-                            width: 28px;
-                            height: 28px;
-                            border-radius: 14px;
-                            background: MaterialPalette.surface_container_high;
+                        Badge {
+                            y: (parent.height - self.height) / 2;
+                            text: item.is_open ? (item.latency_ms + " ms") : "closed";
+                            bg: item.is_open ? MaterialPalette.primary_container : MaterialPalette.surface_container_highest;
+                            fg: item.is_open ? MaterialPalette.on_primary_container : MaterialPalette.outline;
+                        }
 
-                            Icon {
-                                source: AppIcons.copy;
-                                width: 14px;
-                                height: 14px;
-                                colorize: MaterialPalette.on_surface_variant;
-                                x: (parent.width - self.width) / 2;
-                                y: (parent.height - self.height) / 2;
-                            }
+                        // Cross-tool actions for open ports
+                        if item.is_open && (item.port == 443 || item.port == 8443 || item.port == 6443 || item.port == 993 || item.port == 465) : SmallIconButton {
+                            y: (parent.height - self.height) / 2;
+                            icon: AppIcons.shield;
+                            clicked => { root.scout-open-tool(19, root.target_host + ":" + item.port); }
+                        }
+                        if item.is_open && item.service_category != "Database" && item.port != 22 && item.port != 443 && item.port != 8443 : SmallIconButton {
+                            y: (parent.height - self.height) / 2;
+                            icon: AppIcons.http;
+                            clicked => { root.scout-open-tool(17, "http://" + root.target_host + ":" + item.port + "/"); }
+                        }
+                        if item.is_open : SmallIconButton {
+                            y: (parent.height - self.height) / 2;
+                            icon: AppIcons.copy;
+                            clicked => { root.scout-copy(root.target_host + ":" + item.port); }
+                        }
+                    }
+                }
+            }
 
-                            StateLayerArea {
-                                clicked => {
-                                    root.scout-copy("http://" + root.target_host + ":" + item.port);
+            // ---------------- Host discovery results ----------------
+            if root.mode == 2 && root.hosts_probed > 0 : HorizontalLayout {
+                spacing: MaterialStyleMetrics.spacing_8;
+                Badge {
+                    text: root.hosts.length + " hosts alive";
+                    bg: MaterialPalette.primary_container;
+                    fg: MaterialPalette.on_primary_container;
+                }
+                Badge { text: root.hosts_probed + " addresses probed"; }
+            }
+
+            if root.mode == 2 : VerticalLayout {
+                spacing: MaterialStyleMetrics.spacing_8;
+
+                for host in root.hosts : Rectangle {
+                    background: MaterialPalette.surface_container;
+                    border-radius: MaterialStyleMetrics.border_radius_8;
+                    border-width: 1px;
+                    border-color: MaterialPalette.outline_variant.with_alpha(50%);
+
+                    HorizontalLayout {
+                        padding: MaterialStyleMetrics.padding_12;
+                        spacing: MaterialStyleMetrics.spacing_8;
+
+                        VerticalLayout {
+                            horizontal-stretch: 1;
+                            spacing: 4px;
+                            alignment: center;
+
+                            HorizontalLayout {
+                                spacing: MaterialStyleMetrics.spacing_8;
+                                alignment: start;
+                                MaterialText {
+                                    text: host.ip;
+                                    style: MaterialTypography.title_medium;
+                                    color: MaterialPalette.on_surface;
+                                    vertical_alignment: center;
+                                }
+                                if host.is_gateway : Badge {
+                                    y: (parent.height - self.height) / 2;
+                                    text: "gateway";
+                                    bg: MaterialPalette.tertiary_container;
+                                    fg: MaterialPalette.on_tertiary_container;
+                                }
+                                if host.is_self : Badge {
+                                    y: (parent.height - self.height) / 2;
+                                    text: "this device";
+                                    bg: MaterialPalette.secondary_container;
+                                    fg: MaterialPalette.on_secondary_container;
                                 }
                             }
+
+                            MaterialText {
+                                text: host.open_ports != "" ? ("Responds on :" + host.open_ports) : "Alive (connection refused)";
+                                style: MaterialTypography.body_small;
+                                color: MaterialPalette.outline;
+                            }
+                        }
+
+                        Badge {
+                            y: (parent.height - self.height) / 2;
+                            text: host.latency_ms + " ms";
+                        }
+
+                        SmallIconButton {
+                            y: (parent.height - self.height) / 2;
+                            icon: AppIcons.radar;
+                            clicked => {
+                                root.target_host = host.ip;
+                                root.mode = 0;
+                                root.scout-scan(host.ip, root.selected_timeout_ms, 0, root.custom_ports);
+                            }
+                        }
+                        SmallIconButton {
+                            y: (parent.height - self.height) / 2;
+                            icon: AppIcons.copy;
+                            clicked => { root.scout-copy(host.ip); }
                         }
                     }
                 }

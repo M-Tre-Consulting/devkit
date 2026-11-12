@@ -213,8 +213,8 @@ pub fn handle_cron(expression: &str) -> Result<CronOutput, String> {
     let outcome = catch_unwind(AssertUnwindSafe(|| cron::parse(&input)));
     match outcome {
         Ok(Ok(output)) => Ok(output),
-        Ok(Err(err)) => Err(format!("CRON error: {err:?}")),
-        Err(_) => Err("CRON parsing not yet implemented (todo stub)".to_string()),
+        Ok(Err(err)) => Err(err.to_string()),
+        Err(_) => Err("CRON parsing failed unexpectedly".to_string()),
     }
 }
 

@@ -28,6 +28,18 @@ export component SettingsScreen inherits VerticalLayout {
     callback settings-default-uuid-version-changed(int);
     callback settings-default-timestamp-format-changed(int);
 
+    in-out property <int> graphics_backend: 0; // 0 = Auto, 1 = Vulkan, 2 = OpenGL ES
+    in property <string> active_renderer: "";
+    in-out property <bool> peak_refresh_enabled: false;
+    callback settings-graphics-backend-changed(int);
+    callback settings-peak-refresh-changed(bool);
+
+    pure function backend_name(idx: int) -> string {
+        if idx == 1 { return "Vulkan"; }
+        if idx == 2 { return "OpenGL ES"; }
+        return "Auto";
+    }
+
     pure function hash_algo_name(idx: int) -> string {
         if idx == 0 { return "MD5"; }
         if idx == 1 { return "SHA-1"; }
@@ -406,6 +418,127 @@ export component SettingsScreen inherits VerticalLayout {
 
             // Section 3: Data & Storage
             SectionHeader {
+                title: "PERFORMANCE";
+            }
+
+            Rectangle {
+                border_radius: MaterialStyleMetrics.border_radius_16;
+                background: MaterialPalette.surface_container;
+                border_width: 1px;
+                border_color: MaterialPalette.outline_variant.with_alpha(15%);
+
+                VerticalLayout {
+                    StateLayerArea {
+                        width: 100%;
+                        color: MaterialPalette.on_surface;
+                        clicked => { backend_menu.show(); }
+
+                        HorizontalLayout {
+                            padding: MaterialStyleMetrics.padding_16;
+                            alignment: space-between;
+
+                            VerticalLayout {
+                                horizontal-stretch: 1;
+                                alignment: center;
+                                spacing: MaterialStyleMetrics.spacing_4;
+
+                                MaterialText {
+                                    text: "Rendering Engine";
+                                    style: MaterialTypography.title_medium;
+                                    color: MaterialPalette.on_surface;
+                                }
+                                MaterialText {
+                                    text: "Active: " + root.active_renderer + ". Changes apply on next launch.";
+                                    style: MaterialTypography.body_small;
+                                    color: MaterialPalette.on_surface_variant;
+                                    wrap: word-wrap;
+                                }
+                            }
+
+                            HorizontalLayout {
+                                alignment: center;
+                                spacing: 4px;
+                                MaterialText {
+                                    text: root.backend_name(root.graphics_backend);
+                                    style: MaterialTypography.label_medium;
+                                    color: MaterialPalette.primary;
+                                    vertical_alignment: center;
+                                }
+                                Icon {
+                                    source: Icons.arrow_drop_down;
+                                    colorize: MaterialPalette.primary;
+                                    width: 20px;
+                                    height: 20px;
+                                }
+                            }
+                        }
+
+                        backend_menu := PopupMenu {
+                            width: 260px;
+                            x: parent.width - self.width - 16px;
+                            y: parent.height;
+                            current_index: root.graphics_backend;
+                            items: [
+                                { icon: @image-url(""), text: "Auto (recommended)", trailing_text: "", enabled: true },
+                                { icon: @image-url(""), text: "Vulkan", trailing_text: "", enabled: true },
+                                { icon: @image-url(""), text: "OpenGL ES", trailing_text: "", enabled: true },
+                            ];
+                            activated(index) => {
+                                root.graphics_backend = index;
+                                root.settings-graphics-backend-changed(index);
+                                backend_menu.close();
+                            }
+                        }
+                    }
+
+                    HorizontalDivider {}
+
+                    StateLayerArea {
+                        width: 100%;
+                        color: MaterialPalette.on_surface;
+                        clicked => {
+                            root.peak_refresh_enabled = !root.peak_refresh_enabled;
+                            root.settings-peak-refresh-changed(root.peak_refresh_enabled);
+                        }
+
+                        HorizontalLayout {
+                            padding: MaterialStyleMetrics.padding_16;
+                            alignment: space-between;
+
+                            VerticalLayout {
+                                horizontal-stretch: 1;
+                                alignment: center;
+                                spacing: MaterialStyleMetrics.spacing_4;
+
+                                MaterialText {
+                                    text: "Force Peak Refresh Rate";
+                                    style: MaterialTypography.title_medium;
+                                    color: MaterialPalette.on_surface;
+                                }
+                                MaterialText {
+                                    text: "Pin the display to its highest rate. Smoother, but warmer and hungrier on battery; off lets Android adapt.";
+                                    style: MaterialTypography.body_small;
+                                    color: MaterialPalette.on_surface_variant;
+                                    wrap: word-wrap;
+                                }
+                            }
+
+                            VerticalLayout {
+                                alignment: center;
+                                Switch {
+                                    checked: root.peak_refresh_enabled;
+                                    checked_state_changed(checked) => {
+                                        root.peak_refresh_enabled = checked;
+                                        root.settings-peak-refresh-changed(checked);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            SectionHeader {
                 title: "DATA & STORAGE";
             }
 
@@ -598,7 +731,7 @@ export component SettingsScreen inherits VerticalLayout {
                                         color: MaterialPalette.on_surface;
                                     }
                                     MaterialText {
-                                        text: "Version 0.2.4 • Slint attribution & license";
+                                        text: "Version 0.3.0 • Slint attribution & license";
                                         style: MaterialTypography.body_small;
                                         color: MaterialPalette.on_surface_variant;
                                     }

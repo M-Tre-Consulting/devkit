@@ -461,7 +461,7 @@ mod tests {
     #[test]
     fn test_format_toml() {
         let input = FormatterInput {
-            source_code: "[package]\nname=\"devkit\"\nversion=\"0.2.4\"\n\n[dependencies]\nserde=\"1.0\""
+            source_code: "[package]\nname=\"devkit\"\nversion=\"0.3.0\"\n\n[dependencies]\nserde=\"1.0\""
                 .to_string(),
             language: SupportedLanguage::Toml,
             indent_size: 2,

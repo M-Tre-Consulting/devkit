@@ -131,7 +131,6 @@ mod tests {
     use super::*;
 
     #[test]
-    #[ignore = "not implemented yet"]
     fn test_calculate_sha256() {
         let input = HashInput {
             input_text: "hello world".to_string(),
@@ -142,7 +141,6 @@ mod tests {
     }
 
     #[test]
-    #[ignore = "not implemented yet"]
     fn test_calculate_empty_input() {
         let input = HashInput {
             input_text: "".to_string(),

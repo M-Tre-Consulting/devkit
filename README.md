@@ -28,12 +28,16 @@ DevKit provides an offline-first suite of essential utility tools for software e
 
 ## Features
 
-DevKit packs 18 dedicated developer tools designed for speed, ergonomics, and touch friendliness:
+DevKit packs 19 dedicated developer tools designed for speed, ergonomics, and touch friendliness.
+
+**Smart Paste:** tap the clipboard button in the Home search bar (or just paste into it) and DevKit recognises what you copied — JWT, cURL command, URL, IP/CIDR, timestamp, cron expression, color, JSON/YAML, Base64, `otpauth://` URI, domain — and opens the right tool already filled in.
 
 ### 🌐 Networking & Sysadmin
 - **Subnet Calculator:** IPv4 CIDR calculations, netmask, network and broadcast addresses, usable IP range, host capacity, and binary mask breakdowns.
 - **Chmod Calculator:** Linux permissions calculator featuring an interactive permission matrix (Owner, Group, Others × Read, Write, Execute), octal and symbolic (`rwxr-xr-x`) representations, and common presets (755, 644, 777, 600).
-- **LAN Scout:** Local network device discovery and subnet scanner to inspect connected hostnames and IP addresses.
+- **LAN Scout:** Discover live hosts on the local subnet, scan known developer services or custom port ranges (e.g. `22,80,8000-8100`), and hand an open port straight to the HTTP Client or TLS Inspector.
+- **HTTP Client:** Pocket cURL: send requests, inspect status, TTFB, headers and pretty-printed JSON, import/export cURL commands.
+- **TLS Inspector:** Handshake with any host to see protocol, cipher, ALPN, timings, trust verdict, hostname match and the full certificate chain (SANs, expiry countdown, key, SHA-256 fingerprint).
 
 ### 🔐 Cryptography & Identifiers
 - **Hash Calculator:** Fast hashing supporting MD5, SHA-1, SHA-256, SHA-512, BLAKE2b, and BLAKE3 with one-tap Hex and Base64 digest output.

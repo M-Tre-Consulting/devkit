@@ -25,10 +25,13 @@ import { JwtScreen } from "./screens/jwt.slint";
 import { DiffScreen } from "./screens/diff.slint";
 import { QrCodeScreen } from "./screens/qrcode.slint";
 import { HttpClientScreen } from "./screens/http_client.slint";
-import { LanScoutScreen, PortItem } from "./screens/lan_scout.slint";
+import { LanScoutScreen, PortItem, HostItem } from "./screens/lan_scout.slint";
+import { TlsScreen, TlsOutputResult, TlsCertItem } from "./screens/tls.slint";
 import { PillNavBar } from "./components/pill-nav-bar.slint";
-import { AppIcons } from "./components/app-icons.slint";
+import { AppIcons, ToolInfo } from "./components/app-icons.slint";
+import { SmartSuggestion } from "./screens/home.slint";
 export { MaterialWindowAdapter } from "@material";
+export { ToolInfo, SmartSuggestion, PortItem, HostItem, TlsOutputResult, TlsCertItem }
 
 export struct SubnetResult {
     network_address: string,
@@ -165,10 +168,19 @@ export struct HttpOutputResult {
     status: int,
     status_text: string,
     latency_ms: int,
+    ttfb_ms: int,
     size_bytes: int,
     headers: string,
     body: string,
+    final_url: string,
+    content_type: string,
+    truncated: bool,
     error_message: string,
+}
+
+export struct TotpTick {
+    code: string,
+    remaining: int,
 }
 
 export struct HttpImportResult {
@@ -183,6 +195,9 @@ export struct LanScoutOutputResult {
     open_count: int,
     total_count: int,
     ports: [PortItem],
+    open_ports: [PortItem],
+    hosts: [HostItem],
+    hosts_probed: int,
     error_message: string,
 }
 
@@ -194,13 +209,16 @@ export component AppWindow inherits Window {
 
     in-out property <int> current_mode: 0;
     in-out property <int> active_tool: 0;
-    in-out property <length> status_bar_inset: 24px;
-    in-out property <length> nav_bar_inset: 16px;
+    // Insets: prefer the live safe area reported by Slint (follows rotation / cutouts),
+    // falling back to the values queried over JNI at startup.
+    in property <length> status_bar_fallback: 0px;
+    in property <length> nav_bar_fallback: 0px;
+    out property <length> status_bar_inset: root.safe-area-insets.top > 0 ? root.safe-area-insets.top : root.status_bar_fallback;
+    out property <length> nav_bar_inset: root.safe-area-insets.bottom > 0 ? root.safe-area-insets.bottom : root.nav_bar_fallback;
     property <length> pill_bottom_margin: 24px;
-    in-out property <length> keyboard_height: root.virtual-keyboard-size.height;
-    in-out property <bool> keyboard_open: root.keyboard_height > 20px;
-    in-out property <[bool]> tool_favorites: [false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false];
-    in-out property <[int]> recent_tools: [];
+    // Driven natively (and animated) by Slint's IME insets: no polling needed.
+    out property <length> keyboard_height: root.virtual-keyboard-size.height;
+    out property <bool> keyboard_open: root.keyboard_height > 20px;
     in-out property <bool> modal_open: false;
     in-out property <bool> about_open: false;
     in-out property <bool> welcome_open: false;
@@ -223,8 +241,41 @@ export component AppWindow inherits Window {
     in-out property <int> default_hash_algorithm: 2;
     in-out property <int> default_uuid_version: 1;
     in-out property <int> default_timestamp_format: 0;
+    in-out property <int> graphics_backend: 0;
+    in-out property <string> active_renderer: "";
+    in-out property <bool> peak_refresh_enabled: false;
+
+    // Tool lists (built in Rust from the catalog)
+    in-out property <[ToolInfo]> home_tools: [];
+    in-out property <[ToolInfo]> favorite_tools: [];
+    in-out property <[ToolInfo]> recent_tools: [];
+    in-out property <string> search_query: "";
+    in-out property <[SmartSuggestion]> smart_suggestions: [];
+    in-out property <string> smart_source: "";
+    in-out property <string> paste_feedback: "";
+
+    // Smart Paste prefill: a tool reacts when prefill_tool matches its id.
+    in-out property <int> prefill_tool: 0;
+    in-out property <string> prefill_text: "";
+    in-out property <int> prefill_mode: 0;
+    in-out property <int> prefill_seq: 0;
+
+    // Network state, filled asynchronously from worker threads
     in-out property <string> detected_gateway: "192.168.0.1";
     in-out property <string> detected_device_ip: "127.0.0.1";
+    in-out property <string> network_summary: "";
+    in-out property <bool> http_busy: false;
+    in-out property <HttpOutputResult> http_result;
+    in-out property <bool> lan_busy: false;
+    in-out property <string> lan_progress: "";
+    in-out property <LanScoutOutputResult> lan_result;
+    in-out property <bool> tls_busy: false;
+    in-out property <TlsOutputResult> tls_result;
+
+    // Live TOTP
+    in-out property <string> totp_secret_active: "";
+    in-out property <string> totp_live_code: "";
+    in-out property <int> totp_live_remaining: 30;
 
     // Navigation and state callbacks
     callback switch_mode(int);
@@ -238,11 +289,18 @@ export component AppWindow inherits Window {
     callback default_hash_algorithm_changed(int);
     callback default_uuid_version_changed(int);
     callback default_timestamp_format_changed(int);
+    callback graphics_backend_changed(int);
+    callback peak_refresh_changed(bool);
     callback dismiss_welcome();
     callback reset_welcome();
     callback back();
     callback handle_back() -> bool;
     callback copy_text(string);
+    callback search_edited(string);
+    callback clear_search();
+    callback smart_paste();
+    callback open_suggestion(int);
+    callback open_tool_with(int, string);
 
     // Tool execution callbacks
     callback subnet-calculate(string) -> SubnetResult;
@@ -265,10 +323,14 @@ export component AppWindow inherits Window {
     callback qrcode-generate-text(string) -> QrOutputResult;
     callback qrcode-generate-wifi(string, string, int, bool) -> QrOutputResult;
     callback qrcode-generate-totp(string, string, string) -> QrOutputResult;
-    callback http-send(int, string, string, string) -> HttpOutputResult;
+    callback http-send(int, string, string, string);
     callback http-import-curl(string) -> HttpImportResult;
     callback http-export-curl(int, string, string, string) -> string;
-    callback lan-scout-scan(string, int) -> LanScoutOutputResult;
+    callback lan-scout-scan(string, int, int, string);
+    callback lan-scout-discover(int);
+    callback refresh-network();
+    callback tls-inspect(string);
+    callback totp-tick(string) -> TotpTick;
 
     property <int> last_tool: 1;
     changed active_tool => {
@@ -286,7 +348,19 @@ export component AppWindow inherits Window {
     }
 
     property <bool> is_tool: root.active_tool > 0;
+    // Keep the last tool alive while it slides out, then render it no more.
     property <int> displayed_tool: root.is_tool ? root.active_tool : root.last_tool;
+
+    // Live TOTP countdown for the QR Studio (only ticks while that screen is open).
+    Timer {
+        interval: 1s;
+        running: root.is_tool && root.active_tool == 16 && root.totp_secret_active != "";
+        triggered => {
+            let t = root.totp-tick(root.totp_secret_active);
+            root.totp_live_code = t.code;
+            root.totp_live_remaining = t.remaining;
+        }
+    }
 
     back_focus := FocusScope {
         x: 0px;
@@ -312,35 +386,35 @@ export component AppWindow inherits Window {
             reject
         }
 
-        // Base layer: Mode Screens (0: Home, 1: Recent, 2: Favorites, 3: Settings)
+        // Base layer: mode screens (0: Home, 1: Recent, 2: Favorites, 3: Settings).
+        // Only opacity and a render transform are animated: animating width/height (as
+        // before) re-ran layout for every card on every frame of the transition.
         mode_container := Rectangle {
-            x: (parent.width - self.width) / 2;
-            y: (parent.height - self.height) / 2;
-            width: parent.width * (root.is_tool ? 0.96 : 1.0);
-            height: parent.height * (root.is_tool ? 0.96 : 1.0);
+            width: 100%;
+            height: 100%;
+            transform-scale: root.is_tool ? 0.96 : 1.0;
             opacity: root.is_tool ? 0.0 : 1.0;
-            visible: self.opacity > 0.01;
+            // Not rendered (nor hit-tested) under the opaque welcome flow.
+            visible: self.opacity > 0.01 && !root.welcome_open;
 
-            animate width, height, opacity {
+            animate transform-scale, opacity {
                 duration: 200ms;
                 easing: cubic-bezier(0.05, 0.7, 0.1, 1.0);
             }
 
-            // Screen 0: Home
             screen_0 := Rectangle {
                 property <bool> is_active: root.current_mode == 0;
+                // The active screen is always on top, so during a cross-fade the outgoing
+                // screen can never intercept taps meant for the incoming one.
+                z: self.is_active ? 1 : 0;
                 x: self.is_active ? 0px : (0 > root.current_mode ? 24px : -24px);
                 opacity: self.is_active ? 1.0 : 0.0;
                 visible: self.opacity > 0.01;
                 width: 100%;
                 height: 100%;
 
-                animate x {
-                    duration: self.is_active ? 280ms : 200ms;
-                    easing: self.is_active ? cubic-bezier(0.05, 0.7, 0.1, 1.0) : cubic-bezier(0.3, 0, 0.8, 0.15);
-                }
-                animate opacity {
-                    duration: self.is_active ? 280ms : 200ms;
+                animate x, opacity {
+                    duration: self.is_active ? 260ms : 180ms;
                     easing: self.is_active ? cubic-bezier(0.05, 0.7, 0.1, 1.0) : cubic-bezier(0.3, 0, 0.8, 0.15);
                 }
 
@@ -349,31 +423,33 @@ export component AppWindow inherits Window {
                     nav_bar_inset: root.nav_bar_inset;
                     pill_height: pill_nav.height;
                     pill_bottom_margin: root.pill_bottom_margin;
-                    tool_favorites: root.tool_favorites;
-                    home-open-tool(id) => {
-                        root.open_tool(id);
-                    }
-                    home-toggle-favorite(id) => {
-                        root.toggle_favorite(id);
-                    }
+                    tools: root.home_tools;
+                    search_query <=> root.search_query;
+                    suggestions: root.smart_suggestions;
+                    suggestion_source: root.smart_source;
+                    paste_feedback: root.paste_feedback;
+                    home-open-tool(id) => { root.open_tool(id); }
+                    home-toggle-favorite(id) => { root.toggle_favorite(id); }
+                    search-edited(text) => { root.search_edited(text); }
+                    clear-search => { root.clear_search(); }
+                    smart-paste => { root.smart_paste(); }
+                    open-suggestion(i) => { root.open_suggestion(i); }
                 }
             }
 
-            // Screen 1: Recent
             screen_1 := Rectangle {
                 property <bool> is_active: root.current_mode == 1;
+                // The active screen is always on top, so during a cross-fade the outgoing
+                // screen can never intercept taps meant for the incoming one.
+                z: self.is_active ? 1 : 0;
                 x: self.is_active ? 0px : (1 > root.current_mode ? 24px : -24px);
                 opacity: self.is_active ? 1.0 : 0.0;
                 visible: self.opacity > 0.01;
                 width: 100%;
                 height: 100%;
 
-                animate x {
-                    duration: self.is_active ? 280ms : 200ms;
-                    easing: self.is_active ? cubic-bezier(0.05, 0.7, 0.1, 1.0) : cubic-bezier(0.3, 0, 0.8, 0.15);
-                }
-                animate opacity {
-                    duration: self.is_active ? 280ms : 200ms;
+                animate x, opacity {
+                    duration: self.is_active ? 260ms : 180ms;
                     easing: self.is_active ? cubic-bezier(0.05, 0.7, 0.1, 1.0) : cubic-bezier(0.3, 0, 0.8, 0.15);
                 }
 
@@ -383,31 +459,24 @@ export component AppWindow inherits Window {
                     pill_height: pill_nav.height;
                     pill_bottom_margin: root.pill_bottom_margin;
                     recent_tools: root.recent_tools;
-                    tool_favorites: root.tool_favorites;
-                    recent-open-tool(id) => {
-                        root.open_tool(id);
-                    }
-                    recent-toggle-favorite(id) => {
-                        root.toggle_favorite(id);
-                    }
+                    recent-open-tool(id) => { root.open_tool(id); }
+                    recent-toggle-favorite(id) => { root.toggle_favorite(id); }
                 }
             }
 
-            // Screen 2: Favorites
             screen_2 := Rectangle {
                 property <bool> is_active: root.current_mode == 2;
+                // The active screen is always on top, so during a cross-fade the outgoing
+                // screen can never intercept taps meant for the incoming one.
+                z: self.is_active ? 1 : 0;
                 x: self.is_active ? 0px : (2 > root.current_mode ? 24px : -24px);
                 opacity: self.is_active ? 1.0 : 0.0;
                 visible: self.opacity > 0.01;
                 width: 100%;
                 height: 100%;
 
-                animate x {
-                    duration: self.is_active ? 280ms : 200ms;
-                    easing: self.is_active ? cubic-bezier(0.05, 0.7, 0.1, 1.0) : cubic-bezier(0.3, 0, 0.8, 0.15);
-                }
-                animate opacity {
-                    duration: self.is_active ? 280ms : 200ms;
+                animate x, opacity {
+                    duration: self.is_active ? 260ms : 180ms;
                     easing: self.is_active ? cubic-bezier(0.05, 0.7, 0.1, 1.0) : cubic-bezier(0.3, 0, 0.8, 0.15);
                 }
 
@@ -416,31 +485,25 @@ export component AppWindow inherits Window {
                     nav_bar_inset: root.nav_bar_inset;
                     pill_height: pill_nav.height;
                     pill_bottom_margin: root.pill_bottom_margin;
-                    tool_favorites: root.tool_favorites;
-                    favorites-open-tool(id) => {
-                        root.open_tool(id);
-                    }
-                    favorites-toggle-favorite(id) => {
-                        root.toggle_favorite(id);
-                    }
+                    favorite_tools: root.favorite_tools;
+                    favorites-open-tool(id) => { root.open_tool(id); }
+                    favorites-toggle-favorite(id) => { root.toggle_favorite(id); }
                 }
             }
 
-            // Screen 3: Settings
             screen_3 := Rectangle {
                 property <bool> is_active: root.current_mode == 3;
+                // The active screen is always on top, so during a cross-fade the outgoing
+                // screen can never intercept taps meant for the incoming one.
+                z: self.is_active ? 1 : 0;
                 x: self.is_active ? 0px : (3 > root.current_mode ? 24px : -24px);
                 opacity: self.is_active ? 1.0 : 0.0;
                 visible: self.opacity > 0.01;
                 width: 100%;
                 height: 100%;
 
-                animate x {
-                    duration: self.is_active ? 280ms : 200ms;
-                    easing: self.is_active ? cubic-bezier(0.05, 0.7, 0.1, 1.0) : cubic-bezier(0.3, 0, 0.8, 0.15);
-                }
-                animate opacity {
-                    duration: self.is_active ? 280ms : 200ms;
+                animate x, opacity {
+                    duration: self.is_active ? 260ms : 180ms;
                     easing: self.is_active ? cubic-bezier(0.05, 0.7, 0.1, 1.0) : cubic-bezier(0.3, 0, 0.8, 0.15);
                 }
 
@@ -454,6 +517,9 @@ export component AppWindow inherits Window {
                     default_hash_algorithm: root.default_hash_algorithm;
                     default_uuid_version: root.default_uuid_version;
                     default_timestamp_format: root.default_timestamp_format;
+                    graphics_backend: root.graphics_backend;
+                    active_renderer: root.active_renderer;
+                    peak_refresh_enabled: root.peak_refresh_enabled;
                     settings-dark-theme-changed(enabled) => {
                         root.dark_theme_enabled = enabled;
                         root.dark_theme_changed(enabled);
@@ -474,23 +540,24 @@ export component AppWindow inherits Window {
                         root.default_timestamp_format = fmt;
                         root.default_timestamp_format_changed(fmt);
                     }
-                    settings-clear-recents => {
-                        root.clear_recents();
+                    settings-graphics-backend-changed(v) => {
+                        root.graphics_backend = v;
+                        root.graphics_backend_changed(v);
                     }
-                    settings-clear-favorites => {
-                        root.clear_favorites();
+                    settings-peak-refresh-changed(v) => {
+                        root.peak_refresh_enabled = v;
+                        root.peak_refresh_changed(v);
                     }
-                    settings-reset-welcome => {
-                        root.reset_welcome();
-                    }
-                    settings-open-about => {
-                        root.open_about();
-                    }
+                    settings-clear-recents => { root.clear_recents(); }
+                    settings-clear-favorites => { root.clear_favorites(); }
+                    settings-reset-welcome => { root.reset_welcome(); }
+                    settings-open-about => { root.open_about(); }
                 }
             }
+
         }
 
-        // Overlay layer: Tool Screen with slide and fade transition
+        // Overlay layer: tool screen with slide and fade transition
         tool_container := Rectangle {
             x: root.is_tool ? 0px : (root.width * 0.15);
             y: root.status_bar_inset;
@@ -499,16 +566,38 @@ export component AppWindow inherits Window {
             opacity: root.is_tool ? 1.0 : 0.0;
             visible: self.opacity > 0.01;
 
-            animate x {
-                duration: 200ms;
-                easing: root.is_tool ? cubic-bezier(0.05, 0.7, 0.1, 1.0) : cubic-bezier(0.3, 0, 0.8, 0.15);
-            }
-            animate opacity {
+            animate x, opacity {
                 duration: 200ms;
                 easing: root.is_tool ? cubic-bezier(0.05, 0.7, 0.1, 1.0) : cubic-bezier(0.3, 0, 0.8, 0.15);
             }
 
+            // Input shield: taps on empty parts of a tool must not reach the home grid
+            // that is still fading out underneath.
+            TouchArea {
+                width: 100%;
+                height: 100%;
+                enabled: root.is_tool;
+                scroll-event(e) => { accept }
+            }
+
+            // Closing shield (declared after the tool, so it sits on top of it): while the
+            // tool fades out, its buttons must not react to taps meant for the screen below.
+            TouchArea {
+                width: 100%;
+                height: 100%;
+                z: 10;
+                enabled: !root.is_tool;
+                scroll-event(e) => { accept }
+            }
+
             if root.displayed_tool == 1 : SubnetScreen {
+                property <int> pf: root.prefill_tool == 1 ? root.prefill_seq : 0;
+                function apply_prefill() {
+                    self.ip_input = root.prefill_text;
+                    self.subnet-calculate();
+                }
+                init => { if self.pf > 0 { self.apply_prefill(); } }
+                changed pf => { if self.pf > 0 { self.apply_prefill(); } }
                 x: 0px;
                 y: 0px;
                 width: 100%;
@@ -532,6 +621,13 @@ export component AppWindow inherits Window {
             }
 
             if root.displayed_tool == 2 : HashScreen {
+                property <int> pf: root.prefill_tool == 2 ? root.prefill_seq : 0;
+                function apply_prefill() {
+                    self.input_text = root.prefill_text;
+                    self.hash-calculate();
+                }
+                init => { if self.pf > 0 { self.apply_prefill(); } }
+                changed pf => { if self.pf > 0 { self.apply_prefill(); } }
                 x: 0px;
                 y: 0px;
                 width: 100%;
@@ -550,6 +646,14 @@ export component AppWindow inherits Window {
             }
 
             if root.displayed_tool == 3 : Base64Screen {
+                property <int> pf: root.prefill_tool == 3 ? root.prefill_seq : 0;
+                function apply_prefill() {
+                    self.input_text = root.prefill_text;
+                    self.mode = root.prefill_mode;
+                    self.base64-convert();
+                }
+                init => { if self.pf > 0 { self.apply_prefill(); } }
+                changed pf => { if self.pf > 0 { self.apply_prefill(); } }
                 x: 0px;
                 y: 0px;
                 width: 100%;
@@ -587,6 +691,14 @@ export component AppWindow inherits Window {
             }
 
             if root.displayed_tool == 5 : TimestampScreen {
+                property <int> pf: root.prefill_tool == 5 ? root.prefill_seq : 0;
+                function apply_prefill() {
+                    self.input_value = root.prefill_text;
+                    self.mode = root.prefill_mode;
+                    self.timestamp-convert();
+                }
+                init => { if self.pf > 0 { self.apply_prefill(); } }
+                changed pf => { if self.pf > 0 { self.apply_prefill(); } }
                 x: 0px;
                 y: 0px;
                 width: 100%;
@@ -650,6 +762,14 @@ export component AppWindow inherits Window {
             }
 
             if root.displayed_tool == 7 : JsonYamlScreen {
+                property <int> pf: root.prefill_tool == 7 ? root.prefill_seq : 0;
+                function apply_prefill() {
+                    self.source_text = root.prefill_text;
+                    self.direction = root.prefill_mode;
+                    self.json-yaml-convert();
+                }
+                init => { if self.pf > 0 { self.apply_prefill(); } }
+                changed pf => { if self.pf > 0 { self.apply_prefill(); } }
                 x: 0px;
                 y: 0px;
                 width: 100%;
@@ -666,6 +786,13 @@ export component AppWindow inherits Window {
             }
 
             if root.displayed_tool == 8 : CronScreen {
+                property <int> pf: root.prefill_tool == 8 ? root.prefill_seq : 0;
+                function apply_prefill() {
+                    self.expression = root.prefill_text;
+                    self.cron-parse();
+                }
+                init => { if self.pf > 0 { self.apply_prefill(); } }
+                changed pf => { if self.pf > 0 { self.apply_prefill(); } }
                 x: 0px;
                 y: 0px;
                 width: 100%;
@@ -710,6 +837,14 @@ export component AppWindow inherits Window {
             }
 
             if root.displayed_tool == 10 : FormatterScreen {
+                property <int> pf: root.prefill_tool == 10 ? root.prefill_seq : 0;
+                function apply_prefill() {
+                    self.source_code = root.prefill_text;
+                    self.selected_lang = root.prefill_mode;
+                    self.format-format();
+                }
+                init => { if self.pf > 0 { self.apply_prefill(); } }
+                changed pf => { if self.pf > 0 { self.apply_prefill(); } }
                 x: 0px;
                 y: 0px;
                 width: 100%;
@@ -726,6 +861,13 @@ export component AppWindow inherits Window {
             }
 
             if root.displayed_tool == 11 : ChmodScreen {
+                property <int> pf: root.prefill_tool == 11 ? root.prefill_seq : 0;
+                function apply_prefill() {
+                    self.octal_input = root.prefill_text;
+                    self.chmod-apply-octal(root.prefill_text);
+                }
+                init => { if self.pf > 0 { self.apply_prefill(); } }
+                changed pf => { if self.pf > 0 { self.apply_prefill(); } }
                 x: 0px;
                 y: 0px;
                 width: 100%;
@@ -783,6 +925,14 @@ export component AppWindow inherits Window {
             }
 
             if root.displayed_tool == 12 : ColorScreen {
+                property <int> pf: root.prefill_tool == 12 ? root.prefill_seq : 0;
+                function apply_prefill() {
+                    self.color_input = root.prefill_text;
+                    self.selected_format = 0;
+                    self.color-convert();
+                }
+                init => { if self.pf > 0 { self.apply_prefill(); } }
+                changed pf => { if self.pf > 0 { self.apply_prefill(); } }
                 x: 0px;
                 y: 0px;
                 width: 100%;
@@ -802,6 +952,13 @@ export component AppWindow inherits Window {
             }
 
             if root.displayed_tool == 13 : ContrastScreen {
+                property <int> pf: root.prefill_tool == 13 ? root.prefill_seq : 0;
+                function apply_prefill() {
+                    self.fg_color_text = root.prefill_text;
+                    self.contrast-check();
+                }
+                init => { if self.pf > 0 { self.apply_prefill(); } }
+                changed pf => { if self.pf > 0 { self.apply_prefill(); } }
                 x: 0px;
                 y: 0px;
                 width: 100%;
@@ -822,6 +979,13 @@ export component AppWindow inherits Window {
             }
 
             if root.displayed_tool == 14 : JwtScreen {
+                property <int> pf: root.prefill_tool == 14 ? root.prefill_seq : 0;
+                function apply_prefill() {
+                    self.token_input = root.prefill_text;
+                    self.jwt-decode();
+                }
+                init => { if self.pf > 0 { self.apply_prefill(); } }
+                changed pf => { if self.pf > 0 { self.apply_prefill(); } }
                 x: 0px;
                 y: 0px;
                 width: 100%;
@@ -844,6 +1008,13 @@ export component AppWindow inherits Window {
             }
 
             if root.displayed_tool == 15 : DiffScreen {
+                property <int> pf: root.prefill_tool == 15 ? root.prefill_seq : 0;
+                function apply_prefill() {
+                    self.original_text = root.prefill_text;
+                    self.view_mode = 0;
+                }
+                init => { if self.pf > 0 { self.apply_prefill(); } }
+                changed pf => { if self.pf > 0 { self.apply_prefill(); } }
                 x: 0px;
                 y: 0px;
                 width: 100%;
@@ -862,14 +1033,25 @@ export component AppWindow inherits Window {
             }
 
             if root.displayed_tool == 16 : QrCodeScreen {
+                property <int> pf: root.prefill_tool == 16 ? root.prefill_seq : 0;
+                function apply_prefill() {
+                    self.selected_type = 0;
+                    self.text_payload = root.prefill_text;
+                    self.qrcode-generate();
+                }
+                init => { if self.pf > 0 { self.apply_prefill(); } }
+                changed pf => { if self.pf > 0 { self.apply_prefill(); } }
                 x: 0px;
                 y: 0px;
                 width: 100%;
                 height: 100%;
                 nav_bar_inset: root.nav_bar_inset;
+                live_totp_code: root.totp_live_code;
+                totp_remaining_secs: root.totp_live_remaining;
                 qrcode-back => { root.back(); }
                 qrcode-generate => {
                     if self.selected_type == 0 {
+                        root.totp_secret_active = "";
                         let res = root.qrcode-generate-text(self.text_payload);
                         self.qr_image = res.qr_image;
                         self.encoded_payload = res.payload;
@@ -883,8 +1065,9 @@ export component AppWindow inherits Window {
                         let res = root.qrcode-generate-totp(self.totp_issuer, self.totp_account, self.totp_secret);
                         self.qr_image = res.qr_image;
                         self.encoded_payload = res.payload;
-                        self.live_totp_code = res.totp_code;
-                        self.totp_remaining_secs = res.totp_remaining_secs;
+                        root.totp_secret_active = res.error_message == "" ? self.totp_secret : "";
+                        root.totp_live_code = res.totp_code;
+                        root.totp_live_remaining = res.totp_remaining_secs;
                         self.error_message = res.error_message;
                     }
                 }
@@ -892,23 +1075,41 @@ export component AppWindow inherits Window {
             }
 
             if root.displayed_tool == 17 : HttpClientScreen {
+                property <int> pf: root.prefill_tool == 17 ? root.prefill_seq : 0;
+                function apply_prefill() {
+                    if root.prefill_mode == 1 {
+                        self.curl_command = root.prefill_text;
+                        self.active_tab = 2;
+                        self.http-import-curl(root.prefill_text);
+                    } else {
+                        self.url = root.prefill_text;
+                        self.selected_method = 0;
+                    }
+                }
+                init => { if self.pf > 0 { self.apply_prefill(); } }
+                changed pf => { if self.pf > 0 { self.apply_prefill(); } }
                 x: 0px;
                 y: 0px;
                 width: 100%;
                 height: 100%;
                 nav_bar_inset: root.nav_bar_inset;
                 http-back => { root.back(); }
+                is_loading: root.http_busy;
+                response_status: root.http_result.status;
+                response_status_text: root.http_result.status_text;
+                response_latency_ms: root.http_result.latency_ms;
+                response_ttfb_ms: root.http_result.ttfb_ms;
+                response_size_bytes: root.http_result.size_bytes;
+                response_headers: root.http_result.headers;
+                response_body: root.http_result.body;
+                response_final_url: root.http_result.final_url;
+                response_content_type: root.http_result.content_type;
+                response_truncated: root.http_result.truncated;
+                request_error: root.http_result.error_message;
                 http-send => {
-                    self.is_loading = true;
-                    let res = root.http-send(self.selected_method, self.url, self.headers_text, self.body_text);
-                    self.is_loading = false;
-                    self.response_status = res.status;
-                    self.response_status_text = res.status_text;
-                    self.response_latency_ms = res.latency_ms;
-                    self.response_size_bytes = res.size_bytes;
-                    self.response_headers = res.headers;
-                    self.response_body = res.body;
-                    self.error_message = res.error_message;
+                    if !root.http_busy {
+                        root.http-send(self.selected_method, self.url, self.headers_text, self.body_text);
+                    }
                 }
                 http-copy(val) => { root.copy_text(val); }
                 http-import-curl(cmd) => {
@@ -934,22 +1135,64 @@ export component AppWindow inherits Window {
                 nav_bar_inset: root.nav_bar_inset;
                 detected_gateway: root.detected_gateway;
                 detected_device_ip: root.detected_device_ip;
+                network_summary: root.network_summary;
                 target_host: root.detected_gateway;
-                scout-back => { root.back(); }
-                scout-scan(host, timeout_ms) => {
-                    self.is_scanning = true;
-                    let res = root.lan-scout-scan(host, timeout_ms);
-                    self.is_scanning = false;
-                    self.open_ports_count = res.open_count;
-                    self.total_scanned_count = res.total_count;
-                    self.scan_results = res.ports;
-                    self.error_message = res.error_message;
+                is_scanning: root.lan_busy;
+                progress_text: root.lan_progress;
+                error_message: root.lan_result.error_message;
+                open_ports_count: root.lan_result.open_count;
+                total_scanned_count: root.lan_result.total_count;
+                scan_results: root.lan_result.ports;
+                open_results: root.lan_result.open_ports;
+                hosts: root.lan_result.hosts;
+                hosts_probed: root.lan_result.hosts_probed;
+                property <int> pf: root.prefill_tool == 18 ? root.prefill_seq : 0;
+                function apply_prefill() {
+                    self.target_host = root.prefill_text;
+                    self.mode = 0;
                 }
+                init => { if self.pf > 0 { self.apply_prefill(); } }
+                changed pf => { if self.pf > 0 { self.apply_prefill(); } }
+                scout-back => { root.back(); }
+                scout-scan(host, timeout_ms, mode, ports) => {
+                    if !root.lan_busy { root.lan-scout-scan(host, timeout_ms, mode, ports); }
+                }
+                scout-discover(timeout_ms) => {
+                    if !root.lan_busy { root.lan-scout-discover(timeout_ms); }
+                }
+                scout-refresh-network => { root.refresh-network(); }
+                scout-open-tool(id, payload) => { root.open_tool_with(id, payload); }
                 scout-copy(val) => { root.copy_text(val); }
+            }
+
+            if root.displayed_tool == 19 : TlsScreen {
+                x: 0px;
+                y: 0px;
+                width: 100%;
+                height: 100%;
+                nav_bar_inset: root.nav_bar_inset;
+                is_loading: root.tls_busy;
+                result: root.tls_result;
+                property <int> pf: root.prefill_tool == 19 ? root.prefill_seq : 0;
+                function apply_prefill() {
+                    self.target = root.prefill_text;
+                    self.expanded_cert = 0;
+                    root.tls-inspect(root.prefill_text);
+                }
+                init => { if self.pf > 0 { self.apply_prefill(); } }
+                changed pf => { if self.pf > 0 { self.apply_prefill(); } }
+                tls-back => { root.back(); }
+                tls-inspect(target) => {
+                    if !root.tls_busy {
+                        self.expanded_cert = 0;
+                        root.tls-inspect(target);
+                    }
+                }
+                tls-copy(val) => { root.copy_text(val); }
             }
         }
 
-        // Overlay layer: About Screen with slide and fade transition
+        // Overlay layer: About screen with slide and fade transition
         about_container := Rectangle {
             background: MaterialPalette.surface;
             x: root.about_open ? 0px : (root.width * 0.15);
@@ -959,13 +1202,17 @@ export component AppWindow inherits Window {
             opacity: root.about_open ? 1.0 : 0.0;
             visible: self.opacity > 0.01;
 
-            animate x {
-                duration: root.about_open ? 400ms : 200ms;
+            animate x, opacity {
+                duration: root.about_open ? 320ms : 200ms;
                 easing: root.about_open ? cubic-bezier(0.05, 0.7, 0.1, 1.0) : cubic-bezier(0.3, 0, 0.8, 0.15);
             }
-            animate opacity {
-                duration: root.about_open ? 400ms : 200ms;
-                easing: root.about_open ? cubic-bezier(0.05, 0.7, 0.1, 1.0) : cubic-bezier(0.3, 0, 0.8, 0.15);
+
+            // Input shield (About is opaque, but a bare Rectangle lets taps through).
+            TouchArea {
+                width: 100%;
+                height: 100%;
+                enabled: root.about_open;
+                scroll-event(e) => { accept }
             }
 
             AboutScreen {
@@ -977,8 +1224,15 @@ export component AppWindow inherits Window {
                     root.back();
                 }
             }
-        }
 
+            // Closing shield: About stays drawn while it fades out; swallow taps meanwhile.
+            TouchArea {
+                width: 100%;
+                height: 100%;
+                enabled: !root.about_open;
+                scroll-event(e) => { accept }
+            }
+        }
     }
 
     // Floating pill navigation bar anchored above system nav bar / gesture inset
@@ -1001,7 +1255,7 @@ export component AppWindow inherits Window {
             width: 100%;
 
             pill_nav := PillNavBar {
-                active_index: root.current_mode;
+                active_index: root.is_tool ? -1 : root.current_mode;
                 items: [
                     { icon: AppIcons.home, label: "Home" },
                     { icon: AppIcons.history, label: "Recent" },
@@ -1015,14 +1269,36 @@ export component AppWindow inherits Window {
         }
     }
 
-    // First-launch Welcome Screen
-    if root.welcome_open : WelcomeScreen {
-        status_bar_inset: root.status_bar_inset;
-        nav_bar_inset: root.nav_bar_inset;
-        current_page <=> root.welcome_page;
-        finish => {
-            root.dismiss_welcome();
+    // First-launch Welcome flow (topmost; blocks all input underneath).
+    // It fades out instead of vanishing, and keeps swallowing input while it does: a quick
+    // double tap on "Get Started" used to land on the tool card that appeared under it.
+    welcome_layer := Rectangle {
+        width: 100%;
+        height: 100%;
+        opacity: root.welcome_open ? 1.0 : 0.0;
+        visible: self.opacity > 0.01;
+
+        animate opacity {
+            duration: 260ms;
+            easing: cubic-bezier(0.3, 0, 0.8, 0.15);
+        }
+
+        if root.welcome_open || welcome_layer.visible : WelcomeScreen {
+            status_bar_inset: root.status_bar_inset;
+            nav_bar_inset: root.nav_bar_inset;
+            current_page <=> root.welcome_page;
+            finish => {
+                if root.welcome_open {
+                    root.dismiss_welcome();
+                }
+            }
+        }
+
+        TouchArea {
+            width: 100%;
+            height: 100%;
+            enabled: !root.welcome_open;
+            scroll-event(e) => { accept }
         }
     }
 }
-

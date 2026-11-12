@@ -30,6 +30,44 @@ export global AppIcons {
     out property <image> error: @image-url("../icons/error.svg");
     out property <image> delete: @image-url("../icons/delete.svg");
     out property <image> add: @image-url("../icons/add.svg");
+    out property <image> search: @image-url("../icons/search.svg");
+    out property <image> paste: @image-url("../icons/content_paste.svg");
+    out property <image> close: @image-url("../icons/close.svg");
+    out property <image> shield: @image-url("../icons/verified_user.svg");
+    out property <image> sparkle: @image-url("../icons/auto_awesome.svg");
+    out property <image> arrow_forward: @image-url("../icons/arrow_forward.svg");
     out property <image> mtre_logo: @image-url("../images/mtre-logo.png");
+
+    /// Icon for a tool ID from the Rust catalog (src/catalog.rs).
+    public pure function tool_icon(id: int) -> image {
+        if id == 1 { return self.lan; }
+        if id == 2 { return self.lock; }
+        if id == 3 { return self.code; }
+        if id == 4 { return self.fingerprint; }
+        if id == 5 { return self.timer; }
+        if id == 6 { return self.regex; }
+        if id == 7 { return self.swap; }
+        if id == 8 { return self.schedule; }
+        if id == 9 { return self.archive; }
+        if id == 10 { return self.formatter; }
+        if id == 11 { return self.security; }
+        if id == 12 { return self.palette; }
+        if id == 13 { return self.contrast; }
+        if id == 14 { return self.key; }
+        if id == 15 { return self.diff; }
+        if id == 16 { return self.qr_code; }
+        if id == 17 { return self.http; }
+        if id == 18 { return self.radar; }
+        if id == 19 { return self.shield; }
+        return self.wrench;
+    }
 }
 
+/// Shared data model for a tool card (built in Rust from src/catalog.rs).
+export struct ToolInfo {
+    id: int,
+    title: string,
+    description: string,
+    accent: int,
+    is_favorite: bool,
+}

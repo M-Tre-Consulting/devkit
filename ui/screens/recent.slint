@@ -2,9 +2,9 @@
 // Copyright 2026 M-Tre Consulting
 
 import { Icons, ScrollView, MaterialPalette, MaterialStyleMetrics, MaterialTypography, MaterialText, Icon } from "@material";
-import { ToolCard } from "../components/tool-card.slint";
+import { ToolGrid } from "../components/tool-grid.slint";
 import { SectionHeader } from "../components/section-header.slint";
-import { AppIcons } from "../components/app-icons.slint";
+import { AppIcons, ToolInfo } from "../components/app-icons.slint";
 import { TopBar } from "../components/top-bar.slint";
 
 export component RecentScreen inherits VerticalLayout {
@@ -14,8 +14,7 @@ export component RecentScreen inherits VerticalLayout {
     in property <length> pill_height: 56px;
     in property <length> pill_bottom_margin: 28px;
     property <length> bottom_clearance: root.pill_height + root.pill_bottom_margin + root.nav_bar_inset + 24px;
-    in property <[int]> recent_tools: [];
-    in property <[bool]> tool_favorites: [false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false];
+    in property <[ToolInfo]> recent_tools;
     callback recent-open-tool(int);
     callback recent-toggle-favorite(int);
 
@@ -120,7 +119,7 @@ export component RecentScreen inherits VerticalLayout {
             width: 100%;
 
             VerticalLayout {
-                max_width: 720px;
+                max_width: 1040px;
                 width: 100%;
                 padding_left: root.width >= 600px ? 24px : 16px;
                 padding_right: root.width >= 600px ? 24px : 16px;
@@ -129,196 +128,19 @@ export component RecentScreen inherits VerticalLayout {
                 spacing: MaterialStyleMetrics.spacing_16;
                 alignment: start;
 
-            SectionHeader {
-                title: "RECENTLY OPENED";
-            }
+                SectionHeader {
+                    title: "RECENTLY OPENED";
+                }
 
-            VerticalLayout {
-                spacing: MaterialStyleMetrics.spacing_12;
-
-                for tool_id in root.recent_tools : VerticalLayout {
-                    if tool_id == 1 : ToolCard {
-                        title: "Subnet Calculator";
-                        description: "IPv4 CIDR, netmask & range";
-                        icon: AppIcons.lan;
-                        accent_color: MaterialPalette.primary;
-                        is_favorite: root.tool_favorites[1];
-                        clicked => { root.recent-open-tool(1); }
-                        toggle_favorite => { root.recent-toggle-favorite(1); }
-                    }
-
-                    if tool_id == 2 : ToolCard {
-                        title: "Hash Calculator";
-                        description: "MD5, SHA-256 checksums";
-                        icon: AppIcons.lock;
-                        accent_color: MaterialPalette.secondary;
-                        is_favorite: root.tool_favorites[2];
-                        clicked => { root.recent-open-tool(2); }
-                        toggle_favorite => { root.recent-toggle-favorite(2); }
-                    }
-
-                    if tool_id == 3 : ToolCard {
-                        title: "Base64";
-                        description: "Encode & decode strings";
-                        icon: AppIcons.code;
-                        accent_color: MaterialPalette.tertiary;
-                        is_favorite: root.tool_favorites[3];
-                        clicked => { root.recent-open-tool(3); }
-                        toggle_favorite => { root.recent-toggle-favorite(3); }
-                    }
-
-                    if tool_id == 4 : ToolCard {
-                        title: "UUID Generator";
-                        description: "Generate unique identifiers";
-                        icon: AppIcons.fingerprint;
-                        accent_color: MaterialPalette.primary;
-                        is_favorite: root.tool_favorites[4];
-                        clicked => { root.recent-open-tool(4); }
-                        toggle_favorite => { root.recent-toggle-favorite(4); }
-                    }
-
-                    if tool_id == 5 : ToolCard {
-                        title: "Timestamp";
-                        description: "Epoch & date conversions";
-                        icon: AppIcons.timer;
-                        accent_color: MaterialPalette.secondary;
-                        is_favorite: root.tool_favorites[5];
-                        clicked => { root.recent-open-tool(5); }
-                        toggle_favorite => { root.recent-toggle-favorite(5); }
-                    }
-
-                    if tool_id == 6 : ToolCard {
-                        title: "Regex Tester";
-                        description: "Evaluate pattern matches";
-                        icon: AppIcons.regex;
-                        accent_color: MaterialPalette.tertiary;
-                        is_favorite: root.tool_favorites[6];
-                        clicked => { root.recent-open-tool(6); }
-                        toggle_favorite => { root.recent-toggle-favorite(6); }
-                    }
-
-                    if tool_id == 7 : ToolCard {
-                        title: "JSON ↔ YAML";
-                        description: "Convert between formats";
-                        icon: AppIcons.swap;
-                        accent_color: MaterialPalette.primary;
-                        is_favorite: root.tool_favorites[7];
-                        clicked => { root.recent-open-tool(7); }
-                        toggle_favorite => { root.recent-toggle-favorite(7); }
-                    }
-
-                    if tool_id == 8 : ToolCard {
-                        title: "CRON Parser";
-                        description: "Parse schedule syntax";
-                        icon: AppIcons.schedule;
-                        accent_color: MaterialPalette.secondary;
-                        is_favorite: root.tool_favorites[8];
-                        clicked => { root.recent-open-tool(8); }
-                        toggle_favorite => { root.recent-toggle-favorite(8); }
-                    }
-
-                    if tool_id == 9 : ToolCard {
-                        title: "GZip";
-                        description: "Compress & decompress";
-                        icon: AppIcons.archive;
-                        accent_color: MaterialPalette.tertiary;
-                        is_favorite: root.tool_favorites[9];
-                        clicked => { root.recent-open-tool(9); }
-                        toggle_favorite => { root.recent-toggle-favorite(9); }
-                    }
-
-                    if tool_id == 10 : ToolCard {
-                        title: "Code Formatter";
-                        description: "Format code syntax";
-                        icon: AppIcons.formatter;
-                        accent_color: MaterialPalette.primary;
-                        is_favorite: root.tool_favorites[10];
-                        clicked => { root.recent-open-tool(10); }
-                        toggle_favorite => { root.recent-toggle-favorite(10); }
-                    }
-
-                    if tool_id == 11 : ToolCard {
-                        title: "Chmod Calculator";
-                        description: "Octal & symbolic bits";
-                        icon: AppIcons.security;
-                        accent_color: MaterialPalette.secondary;
-                        is_favorite: root.tool_favorites[11];
-                        clicked => { root.recent-open-tool(11); }
-                        toggle_favorite => { root.recent-toggle-favorite(11); }
-                    }
-
-                    if tool_id == 12 : ToolCard {
-                        title: "Color Converter";
-                        description: "HEX, RGB, HSL values";
-                        icon: AppIcons.palette;
-                        accent_color: MaterialPalette.tertiary;
-                        is_favorite: root.tool_favorites[12];
-                        clicked => { root.recent-open-tool(12); }
-                        toggle_favorite => { root.recent-toggle-favorite(12); }
-                    }
-
-                    if tool_id == 13 : ToolCard {
-                        title: "Contrast Checker";
-                        description: "WCAG contrast ratio";
-                        icon: AppIcons.contrast;
-                        accent_color: MaterialPalette.primary;
-                        is_favorite: root.tool_favorites[13];
-                        clicked => { root.recent-open-tool(13); }
-                        toggle_favorite => { root.recent-toggle-favorite(13); }
-                    }
-
-                    if tool_id == 14 : ToolCard {
-                        title: "JWT Decoder";
-                        description: "Decode headers & claims";
-                        icon: AppIcons.key;
-                        accent_color: MaterialPalette.secondary;
-                        is_favorite: root.tool_favorites[14];
-                        clicked => { root.recent-open-tool(14); }
-                        toggle_favorite => { root.recent-toggle-favorite(14); }
-                    }
-
-                    if tool_id == 15 : ToolCard {
-                        title: "Diff Studio";
-                        description: "Visual diff & code patches";
-                        icon: AppIcons.diff;
-                        accent_color: MaterialPalette.tertiary;
-                        is_favorite: root.tool_favorites[15];
-                        clicked => { root.recent-open-tool(15); }
-                        toggle_favorite => { root.recent-toggle-favorite(15); }
-                    }
-
-                    if tool_id == 16 : ToolCard {
-                        title: "QR Code Studio";
-                        description: "Wi-Fi, URLs & live TOTP 2FA";
-                        icon: AppIcons.qr_code;
-                        accent_color: MaterialPalette.primary;
-                        is_favorite: root.tool_favorites[16];
-                        clicked => { root.recent-open-tool(16); }
-                        toggle_favorite => { root.recent-toggle-favorite(16); }
-                    }
-
-                    if tool_id == 17 : ToolCard {
-                        title: "HTTP Client";
-                        description: "Pocket cURL & inspector";
-                        icon: AppIcons.http;
-                        accent_color: MaterialPalette.secondary;
-                        is_favorite: root.tool_favorites[17];
-                        clicked => { root.recent-open-tool(17); }
-                        toggle_favorite => { root.recent-toggle-favorite(17); }
-                    }
-
-                    if tool_id == 18 : ToolCard {
-                        title: "LAN Scout";
-                        description: "Port & dev service probe";
-                        icon: AppIcons.radar;
-                        accent_color: MaterialPalette.tertiary;
-                        is_favorite: root.tool_favorites[18];
-                        clicked => { root.recent-open-tool(18); }
-                        toggle_favorite => { root.recent-toggle-favorite(18); }
-                    }
+                ToolGrid {
+                    tools: root.recent_tools;
+                    columns: root.width >= 840px ? 3 : (root.width >= 560px ? 2 : 1);
+                    card_height: root.width >= 560px ? 168px : 128px;
+                    gap: MaterialStyleMetrics.spacing_12;
+                    open_tool(id) => { root.recent-open-tool(id); }
+                    toggle_favorite(id) => { root.recent-toggle-favorite(id); }
                 }
             }
         }
     }
-}
 }

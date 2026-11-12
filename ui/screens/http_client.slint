@@ -20,7 +20,7 @@ export component HttpClientScreen inherits VerticalLayout {
 
     in-out property <int> selected_method: 0; // 0: GET, 1: POST, 2: PUT, 3: DELETE, 4: PATCH, 5: HEAD
     in-out property <string> url: "https://httpbin.org/get";
-    in-out property <string> headers_text: "Accept: application/json\nUser-Agent: DevKit-Mobile/0.2.4";
+    in-out property <string> headers_text: "Accept: application/json";
     in-out property <string> body_text: "{\n  \"message\": \"Hello from DevKit!\"\n}";
     in-out property <int> active_tab: 0; // 0: Headers, 1: Body, 2: cURL
     in-out property <string> curl_command: "curl -X GET \"https://httpbin.org/get\" -H \"Accept: application/json\"";
@@ -33,6 +33,12 @@ export component HttpClientScreen inherits VerticalLayout {
     in-out property <string> response_headers: "";
     in-out property <string> response_body: "";
     in-out property <string> error_message: "";
+    // Filled from the background request worker.
+    in property <string> request_error: "";
+    in property <int> response_ttfb_ms: 0;
+    in property <string> response_final_url: "";
+    in property <string> response_content_type: "";
+    in property <bool> response_truncated: false;
 
     property <bool> is_entered: false;
     init => {
@@ -65,6 +71,10 @@ export component HttpClientScreen inherits VerticalLayout {
 
             ToolErrorBanner {
                 message: root.error_message;
+            }
+
+            ToolErrorBanner {
+                message: root.request_error;
             }
 
             // Method Selector Chips (Horizontally Scrollable)
@@ -371,7 +381,7 @@ export component HttpClientScreen inherits VerticalLayout {
             }
 
             // Response Section
-            if root.response_body != "" || root.response_latency_ms > 0 : VerticalLayout {
+            if root.response_status > 0 : VerticalLayout {
                 spacing: MaterialStyleMetrics.spacing_12;
 
                 // Status & Metrics Row
@@ -406,16 +416,46 @@ export component HttpClientScreen inherits VerticalLayout {
                             spacing: 12px;
                             alignment: end;
                             MaterialText {
-                                text: root.response_latency_ms + " ms";
+                                text: "TTFB " + root.response_ttfb_ms + " ms";
                                 style: MaterialTypography.label_medium;
                                 color: MaterialPalette.on_surface_variant;
+                                vertical_alignment: center;
                             }
                             MaterialText {
-                                text: root.response_size_bytes + " bytes";
+                                text: root.response_latency_ms + " ms";
+                                style: MaterialTypography.label_medium;
+                                color: MaterialPalette.on_surface;
+                                vertical_alignment: center;
+                            }
+                            MaterialText {
+                                text: root.response_size_bytes >= 1024 ? (round(root.response_size_bytes / 102.4) / 10) + " KB" : root.response_size_bytes + " B";
                                 style: MaterialTypography.label_medium;
                                 color: MaterialPalette.on_surface_variant;
+                                vertical_alignment: center;
                             }
                         }
+                    }
+                }
+
+                if root.response_final_url != "" || root.response_content_type != "" || root.response_truncated : VerticalLayout {
+                    spacing: 4px;
+                    padding_left: 4px;
+                    if root.response_final_url != "" : MaterialText {
+                        text: "↪ Redirected to " + root.response_final_url;
+                        style: MaterialTypography.body_small;
+                        color: MaterialPalette.tertiary;
+                        wrap: word-wrap;
+                    }
+                    if root.response_content_type != "" : MaterialText {
+                        text: "Content-Type: " + root.response_content_type;
+                        style: MaterialTypography.body_small;
+                        color: MaterialPalette.on_surface_variant;
+                        wrap: word-wrap;
+                    }
+                    if root.response_truncated : MaterialText {
+                        text: "Large body: preview truncated for performance.";
+                        style: MaterialTypography.body_small;
+                        color: MaterialPalette.error;
                     }
                 }
 
@@ -423,6 +463,7 @@ export component HttpClientScreen inherits VerticalLayout {
                 ToolOutputArea {
                     title: "RESPONSE BODY";
                     text: root.response_body;
+                    max_box_height: 420px;
                     copy(val) => { root.http-copy(val); }
                 }
 

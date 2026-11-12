@@ -33,6 +33,26 @@ export component WelcomeScreen inherits Rectangle {
         }
     }
 
+    // Full-screen input shield. The welcome flow is drawn on top of the app, and a plain
+    // Rectangle does not consume pointer events: without this, taps on empty areas fell
+    // through and opened the tool cards underneath. It also adds swipe paging.
+    TouchArea {
+        width: 100%;
+        height: 100%;
+        property <length> drag_x: self.mouse-x - self.pressed-x;
+
+        pointer-event(event) => {
+            if event.kind == PointerEventKind.up {
+                if self.drag_x < -64px && root.current_page < 3 {
+                    root.go_next();
+                } else if self.drag_x > 64px {
+                    root.go_back();
+                }
+            }
+        }
+        scroll-event(event) => { accept }
+    }
+
     // Top action bar area (Skip button)
     top_bar := Rectangle {
         x: 0;

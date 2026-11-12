@@ -17,6 +17,8 @@ pub mod jwt;
 pub mod lan_scout;
 pub mod qrcode_tool;
 pub mod regex;
+pub mod smart_detect;
 pub mod subnet;
 pub mod timestamp;
+pub mod tls_inspector;
 pub mod uuid;

@@ -2,6 +2,7 @@
 // Copyright 2026 M-Tre Consulting
 
 pub mod app;
+pub mod catalog;
 pub mod navigation;
 pub mod platform;
 pub mod storage;

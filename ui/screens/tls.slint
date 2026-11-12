@@ -1,0 +1,330 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2026 M-Tre Consulting
+
+import { ScrollView, MaterialPalette, MaterialStyleMetrics, MaterialTypography, MaterialText, StateLayerArea, Icon, TextField } from "@material";
+import { TopBar } from "../components/top-bar.slint";
+import { ToolErrorBanner } from "../components/tool-error-banner.slint";
+import { ToolActionButton } from "../components/tool-action-button.slint";
+import { AppIcons } from "../components/app-icons.slint";
+
+export struct TlsCertItem {
+    common_name: string,
+    subject: string,
+    issuer: string,
+    serial: string,
+    not_before: string,
+    not_after: string,
+    days_left: int,
+    sans: string,
+    san_count: int,
+    signature_algorithm: string,
+    public_key: string,
+    sha256: string,
+    is_ca: bool,
+}
+
+export struct TlsOutputResult {
+    host: string,
+    port: int,
+    ip: string,
+    protocol: string,
+    cipher_suite: string,
+    alpn: string,
+    connect_ms: int,
+    handshake_ms: int,
+    trusted: bool,
+    verify_error: string,
+    hostname_matches: bool,
+    chain: [TlsCertItem],
+    error_message: string,
+}
+
+component KeyValue inherits HorizontalLayout {
+    in property <string> key;
+    in property <string> value;
+    in property <color> value_color: MaterialPalette.on_surface;
+    spacing: 12px;
+
+    MaterialText {
+        width: 104px;
+        text: root.key;
+        style: MaterialTypography.label_medium;
+        color: MaterialPalette.on_surface_variant;
+    }
+    MaterialText {
+        horizontal-stretch: 1;
+        text: root.value;
+        style: MaterialTypography.body_medium;
+        color: root.value_color;
+        wrap: word-wrap;
+    }
+}
+
+component Pill inherits Rectangle {
+    in property <string> text;
+    in property <color> fg;
+    in property <color> bg;
+    height: 26px;
+    min-width: t.preferred-width + 18px;
+    border-radius: 13px;
+    background: root.bg;
+    t := MaterialText {
+        x: 9px;
+        y: (parent.height - self.height) / 2;
+        text: root.text;
+        style: MaterialTypography.label_medium;
+        color: root.fg;
+    }
+}
+
+export component TlsScreen inherits VerticalLayout {
+    in property <length> nav_bar_inset: 16px;
+    callback tls-back();
+    callback tls-inspect(string);
+    callback tls-copy(string);
+
+    in-out property <string> target: "github.com";
+    in property <bool> is_loading: false;
+    in property <TlsOutputResult> result;
+    in-out property <int> expanded_cert: 0;
+
+    property <bool> has_result: root.result.chain.length > 0;
+    property <bool> is_entered: false;
+    init => { self.is_entered = true; }
+
+    pure function expiry_color(days: int) -> color {
+        if days < 0 { return MaterialPalette.error; }
+        if days < 21 { return #e6a23c; }
+        return #4caf50;
+    }
+
+    pure function expiry_text(days: int) -> string {
+        if days < 0 { return "Expired " + (-days) + " days ago"; }
+        if days == 0 { return "Expires today"; }
+        return days + " days left";
+    }
+
+    TopBar {
+        title: "TLS Inspector";
+        has_back: true;
+        back => { root.tls-back(); }
+    }
+
+    ScrollView {
+        vertical-stretch: 1;
+        opacity: root.is_entered ? 1.0 : 0.0;
+        animate opacity { duration: 200ms; delay: 150ms; easing: cubic-bezier(0.05, 0.7, 0.1, 1.0); }
+
+        VerticalLayout {
+            padding_left: MaterialStyleMetrics.padding_16;
+            padding_right: MaterialStyleMetrics.padding_16;
+            padding_top: MaterialStyleMetrics.padding_8;
+            padding_bottom: 96px + root.nav_bar_inset;
+            spacing: MaterialStyleMetrics.spacing_16;
+            alignment: start;
+
+            ToolErrorBanner {
+                message: root.result.error_message;
+            }
+
+            Rectangle {
+                background: MaterialPalette.surface_container_low;
+                border-radius: MaterialStyleMetrics.border_radius_12;
+                border-width: 1px;
+                border-color: MaterialPalette.outline_variant;
+
+                VerticalLayout {
+                    padding: MaterialStyleMetrics.padding_16;
+                    spacing: MaterialStyleMetrics.spacing_12;
+
+                    MaterialText {
+                        text: "Host, host:port or https:// URL";
+                        style: MaterialTypography.title_small;
+                        color: MaterialPalette.on_surface;
+                    }
+                    TextField {
+                        text <=> root.target;
+                        placeholder_text: "example.com or 10.0.0.5:8443";
+                        accepted => { if !root.is_loading { root.tls-inspect(root.target); } }
+                    }
+                }
+            }
+
+            ToolActionButton {
+                text: root.is_loading ? "Handshaking…" : "Inspect Certificate";
+                enabled: !root.is_loading;
+                has_clear: false;
+                clicked => { root.tls-inspect(root.target); }
+            }
+
+            if root.has_result : VerticalLayout {
+                spacing: MaterialStyleMetrics.spacing_12;
+
+                // Verdict card
+                Rectangle {
+                    border-radius: MaterialStyleMetrics.border_radius_16;
+                    background: root.result.trusted && root.result.hostname_matches ? #2e7d32.with_alpha(16%) : MaterialPalette.error_container;
+                    border-width: 1px;
+                    border-color: root.result.trusted && root.result.hostname_matches ? #4caf50.with_alpha(50%) : MaterialPalette.error.with_alpha(40%);
+
+                    HorizontalLayout {
+                        padding: 16px;
+                        spacing: 14px;
+
+                        VerticalLayout {
+                            alignment: center;
+                            Icon {
+                                source: root.result.trusted && root.result.hostname_matches ? AppIcons.shield : AppIcons.error;
+                                colorize: root.result.trusted && root.result.hostname_matches ? #4caf50 : MaterialPalette.error;
+                                width: 32px;
+                                height: 32px;
+                            }
+                        }
+
+                        VerticalLayout {
+                            horizontal-stretch: 1;
+                            spacing: 4px;
+                            alignment: center;
+                            MaterialText {
+                                text: root.result.trusted && root.result.hostname_matches ? "Trusted connection" : "Not trusted";
+                                style: MaterialTypography.title_medium;
+                                color: root.result.trusted && root.result.hostname_matches ? MaterialPalette.on_surface : MaterialPalette.on_error_container;
+                            }
+                            MaterialText {
+                                text: root.result.verify_error != "" ? root.result.verify_error : (root.result.hostname_matches ? "Chain verified against the Mozilla root store" : "Certificate does not cover " + root.result.host);
+                                style: MaterialTypography.body_small;
+                                color: root.result.trusted && root.result.hostname_matches ? MaterialPalette.on_surface_variant : MaterialPalette.on_error_container;
+                                wrap: word-wrap;
+                            }
+                        }
+                    }
+                }
+
+                // Connection summary
+                HorizontalLayout {
+                    spacing: 8px;
+                    alignment: start;
+                    Pill { text: root.result.protocol; bg: MaterialPalette.primary_container; fg: MaterialPalette.on_primary_container; }
+                    Pill { text: "ALPN " + root.result.alpn; bg: MaterialPalette.surface_container_high; fg: MaterialPalette.on_surface_variant; }
+                    Pill {
+                        text: root.expiry_text(root.result.chain[0].days_left);
+                        bg: root.expiry_color(root.result.chain[0].days_left).with_alpha(18%);
+                        fg: root.expiry_color(root.result.chain[0].days_left);
+                    }
+                }
+
+                Rectangle {
+                    border-radius: MaterialStyleMetrics.border_radius_12;
+                    background: MaterialPalette.surface_container;
+
+                    VerticalLayout {
+                        padding: 14px;
+                        spacing: 8px;
+                        KeyValue { key: "Endpoint"; value: root.result.host + ":" + root.result.port + "  (" + root.result.ip + ")"; }
+                        KeyValue { key: "Cipher"; value: root.result.cipher_suite; }
+                        KeyValue { key: "Timing"; value: "TCP " + root.result.connect_ms + " ms · TLS handshake " + root.result.handshake_ms + " ms"; }
+                        KeyValue { key: "Chain"; value: root.result.chain.length + (root.result.chain.length == 1 ? " certificate" : " certificates") + " sent by server"; }
+                    }
+                }
+
+                MaterialText {
+                    text: "CERTIFICATE CHAIN";
+                    style: MaterialTypography.title_small;
+                    color: MaterialPalette.primary;
+                }
+
+                for cert[i] in root.result.chain : Rectangle {
+                    border-radius: MaterialStyleMetrics.border_radius_12;
+                    background: MaterialPalette.surface_container_low;
+                    border-width: 1px;
+                    border-color: root.expanded_cert == i ? MaterialPalette.primary.with_alpha(50%) : MaterialPalette.outline_variant.with_alpha(40%);
+
+                    VerticalLayout {
+                        StateLayerArea {
+                            color: MaterialPalette.on_surface;
+                            border_radius: MaterialStyleMetrics.border_radius_12;
+                            clicked => { root.expanded_cert = root.expanded_cert == i ? -1 : i; }
+
+                            HorizontalLayout {
+                                padding: 14px;
+                                spacing: 12px;
+
+                                Rectangle {
+                                    width: 28px;
+                                    height: 28px;
+                                    y: (parent.height - self.height) / 2;
+                                    border-radius: 14px;
+                                    background: MaterialPalette.secondary_container;
+                                    MaterialText {
+                                        text: i == 0 ? "L" : (cert.is_ca ? "CA" : "" + i);
+                                        style: MaterialTypography.label_small;
+                                        color: MaterialPalette.on_secondary_container;
+                                    }
+                                }
+
+                                VerticalLayout {
+                                    horizontal-stretch: 1;
+                                    spacing: 2px;
+                                    alignment: center;
+                                    MaterialText {
+                                        text: cert.common_name;
+                                        style: MaterialTypography.title_small;
+                                        color: MaterialPalette.on_surface;
+                                        overflow: elide;
+                                    }
+                                    MaterialText {
+                                        text: (i == 0 ? "Leaf" : "Intermediate") + " · " + root.expiry_text(cert.days_left);
+                                        style: MaterialTypography.body_small;
+                                        color: root.expiry_color(cert.days_left);
+                                    }
+                                }
+                            }
+                        }
+
+                        if root.expanded_cert == i : VerticalLayout {
+                            padding_left: 14px;
+                            padding_right: 14px;
+                            padding_bottom: 14px;
+                            spacing: 8px;
+
+                            KeyValue { key: "Subject"; value: cert.subject; }
+                            KeyValue { key: "Issuer"; value: cert.issuer; }
+                            KeyValue { key: "Valid from"; value: cert.not_before; }
+                            KeyValue { key: "Valid until"; value: cert.not_after; value_color: root.expiry_color(cert.days_left); }
+                            if cert.san_count > 0 : KeyValue { key: "SANs (" + cert.san_count + ")"; value: cert.sans; }
+                            KeyValue { key: "Public key"; value: cert.public_key; }
+                            KeyValue { key: "Signature"; value: cert.signature_algorithm; }
+                            KeyValue { key: "Serial"; value: cert.serial; }
+                            KeyValue { key: "SHA-256"; value: cert.sha256; }
+
+                            HorizontalLayout {
+                                alignment: end;
+                                spacing: 8px;
+                                Rectangle {
+                                    height: 34px;
+                                    min-width: cp.preferred-width + 24px;
+                                    border-radius: 17px;
+                                    background: MaterialPalette.surface_container_high;
+                                    cp := MaterialText {
+                                        x: 12px;
+                                        y: (parent.height - self.height) / 2;
+                                        text: "Copy fingerprint";
+                                        style: MaterialTypography.label_medium;
+                                        color: MaterialPalette.primary;
+                                    }
+                                    StateLayerArea {
+                                        width: 100%;
+                                        height: 100%;
+                                        border_radius: 17px;
+                                        color: MaterialPalette.primary;
+                                        clicked => { root.tls-copy(cert.sha256); }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

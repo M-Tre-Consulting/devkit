@@ -1,0 +1,39 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2026 M-Tre Consulting
+
+import { ToolCard } from "tool-card.slint";
+import { AppIcons, ToolInfo } from "app-icons.slint";
+
+/// Data-driven responsive grid of tool cards. Cards are absolutely positioned from
+/// their index, so a single `for` serves every column count (no duplicated layouts).
+export component ToolGrid inherits Rectangle {
+    in property <[ToolInfo]> tools;
+    in property <int> columns: 2;
+    in property <length> gap: 12px;
+    in property <length> card_height: 168px;
+    in property <bool> is_entered: true;
+
+    callback open_tool(int);
+    callback toggle_favorite(int);
+
+    property <int> rows: ceil(root.tools.length / root.columns);
+    property <length> card_width: (root.width - (root.columns - 1) * root.gap) / root.columns;
+
+    height: root.rows > 0 ? root.rows * root.card_height + (root.rows - 1) * root.gap : 0px;
+
+    for tool[index] in root.tools : ToolCard {
+        x: mod(index, root.columns) * (root.card_width + root.gap);
+        y: floor(index / root.columns) * (root.card_height + root.gap);
+        width: root.card_width;
+        height: root.card_height;
+        title: tool.title;
+        description: tool.description;
+        icon: AppIcons.tool_icon(tool.id);
+        accent: tool.accent;
+        is_favorite: tool.is_favorite;
+        entrance_index: index;
+        is_entered: root.is_entered;
+        clicked => { root.open_tool(tool.id); }
+        toggle_favorite => { root.toggle_favorite(tool.id); }
+    }
+}

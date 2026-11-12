@@ -170,6 +170,8 @@ export component QrCodeScreen inherits VerticalLayout {
                                 height: 100%;
                                 source: root.qr_image;
                                 image_fit: contain;
+                                // Nearest-neighbour scaling keeps modules sharp (smooth scaling blurred them).
+                                image-rendering: pixelated;
                             }
                         }
                     }
